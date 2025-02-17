@@ -1,0 +1,29 @@
+name: Publish docs via GitHub Pages
+on:
+  push:
+    branches: [ 'main' ]
+    paths: [ '.github/workflows/**', 'src/**' ]
+
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: Publish .NET Core Project
+        run: dotnet publish ./src/TableClothLite/TableClothLite.csproj -c Release -o release --nologo
+
+      - name: Add .nojekyll file
+        run: touch release/wwwroot/.nojekyll
+
+      - name: Commit wwwroot to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: release/wwwroot

@@ -1,0 +1,100 @@
+﻿@page "/"
+@inject SandboxViewModel Model
+
+<PageTitle>식탁보 라이트</PageTitle>
+
+<FluentMessageBar Title="프리뷰 버전 안내" Intent="@MessageIntent.Warning">
+	현재 식탁보 라이트는 기술 검증을 위하여 제작된 프리뷰 버전으로 예고 없이 제품의 상세 사양이 변경될 수 있습니다.
+</FluentMessageBar>
+
+<p>&nbsp;</p>
+
+<div>
+	<h1>식탁보 라이트</h1>
+	<p>설치하지 않고 사용하는 식탁보를 경험해보세요. Windows Sandbox만 설치되어있으면 인터넷 뱅킹 환경을 곧바로 격리된 경량 가상 PC에서 분리해서 실행할 수 있습니다.</p>
+</div>
+
+<p>&nbsp;</p>
+
+<div>
+	<FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
+		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+			<FluentButton Value="WooriBank" OnClick="Model.WooriBankCommand.ExecuteAsync">
+				<img src="images/WooriBank.png" alt="우리은행" style="height: 1em;" />
+				<span>우리은행 가상환경 시작</span>
+			</FluentButton>
+		</FluentGridItem>
+		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+			<FluentButton Value="ShinhanBank" OnClick="Model.ShinhanBankCommand.ExecuteAsync">
+				<img src="images/ShinhanBank.png" alt="신한은행" style="height: 1em;" />
+				<span>신한은행 가상환경 시작</span>
+			</FluentButton>
+		</FluentGridItem>
+		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+			<FluentButton Value="KookminBank" OnClick="Model.KookminBankCommand.ExecuteAsync">
+				<img src="images/KookminBank.png" alt="KB국민은행" style="height: 1em;" />
+				<span>KB국민은행 가상환경 시작</span>
+			</FluentButton>
+		</FluentGridItem>
+		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+			<FluentButton Value="HanaBank" OnClick="Model.HanaBankCommand.ExecuteAsync">
+				<img src="images/KEBHanaBank.png" alt="하나은행" style="height: 1em;" />
+				<span>하나은행 가상환경 시작</span>
+			</FluentButton>
+		</FluentGridItem>
+		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+			<FluentButton Value="NHInternetBank" OnClick="Model.NHInternetBankCommand.ExecuteAsync">
+				<img src="images/NHInternetBank.png" alt="농협인터넷은행" style="height: 1em;" />
+				<span>농협인터넷은행 가상환경 시작</span>
+			</FluentButton>
+		</FluentGridItem>
+	</FluentGrid>
+</div>
+
+<p>&nbsp;</p>
+
+<!--
+<div id="options">
+	<div>
+		<FluentCheckbox Name="enableVGPU" @bind-Value="Model.EnableVGPU">
+			가상 GPU 사용
+		</FluentCheckbox>
+	</div>
+
+	<div>
+		<FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
+			네트워크 사용
+		</FluentCheckbox>
+	</div>
+
+	<div>
+		<FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
+			오디오 녹음 사용
+		</FluentCheckbox>
+	</div>
+
+	<div>
+		<FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
+			비디오 녹화 사용
+		</FluentCheckbox>
+	</div>
+
+	<div>
+		<FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
+			프린터 공유 사용
+		</FluentCheckbox>
+	</div>
+
+	<div>
+		<FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
+			복사/붙여넣기 사용
+		</FluentCheckbox>
+	</div>
+</div>
+-->
+
+<p>&nbsp;</p>
+
+<div>
+	&copy; 2025 rkttu.com, All rights reserved.
+</div>
