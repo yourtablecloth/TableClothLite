@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "8AN8Hh2m",
+  "version": "XprPGcTp",
   "assets": [
     {
       "hash": "sha256-vHvXdYUYlmEZk97fUurcJV6GB5jPfYCarVGxIWYkbV0=",
@@ -326,11 +326,11 @@ self.assetsManifest = {
       "url": "_framework/System.Xml.ReaderWriter.6wqm56mhp6.wasm"
     },
     {
-      "hash": "sha256-Ah2jSNQAluwHpqyzBVSeI0jfFJgAJFz2BFnMyh5xHjY=",
-      "url": "_framework/TableClothLite.ay7r0va1th.wasm"
+      "hash": "sha256-bXRqbqkIzfUqXelyrB0Cj7R+DXZ39UZYs4H68GWnXwA=",
+      "url": "_framework/TableClothLite.9t5colcawq.wasm"
     },
     {
-      "hash": "sha256-RkrcRNzNtDndGE2tZ9/aHPHDAZ7H1yziqSxrd1JDzMU=",
+      "hash": "sha256-iXOhaD7QPaG3kKYAHKEXgSpHOPwdfxl7bRVjlJF/p6s=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -402,7 +402,7 @@ self.assetsManifest = {
       "url": "images/WooriBank.png"
     },
     {
-      "hash": "sha256-snJ2uvOiEYB4s+5bhVRjFxQ9qBr6HdIL4DVontAE3g0=",
+      "hash": "sha256-8lIgXSptws5YcJEELiI3Ql0x7dT9yWLAay9N+2CQfM0=",
       "url": "index.html"
     },
     {

@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TableClothLite",
   "resources": {
-    "hash": "sha256-pmgkbwlzAg9Y/knIQcH/IKwUi+xBP/Fc7g2LqeGkhc8=",
+    "hash": "sha256-EGQn6ZhfS6rshfCfO3FGN8wvWoK0G59mSZ+pmHCGipk=",
     "fingerprinting": {
       "CommunityToolkit.Mvvm.q3c1ofp6kt.wasm": "CommunityToolkit.Mvvm.wasm",
       "Microsoft.AspNetCore.Components.6p8b5psomz.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -48,7 +48,7 @@
       "System.Text.Json.u68zob5una.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.0e9rlv7vxy.wasm": "System.Text.RegularExpressions.wasm",
       "System.Xml.ReaderWriter.6wqm56mhp6.wasm": "System.Xml.ReaderWriter.wasm",
-      "TableClothLite.ay7r0va1th.wasm": "TableClothLite.wasm",
+      "TableClothLite.9t5colcawq.wasm": "TableClothLite.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.8bti36lthm.js": "dotnet.native.js",
       "dotnet.native.tr0cyonrwt.wasm": "dotnet.native.wasm",
@@ -119,7 +119,7 @@
       "System.Text.Json.u68zob5una.wasm": "sha256-yvfkdfKbG4ixDHGwZljQGUsDwTo237iljpz44YdYmPI=",
       "System.Text.RegularExpressions.0e9rlv7vxy.wasm": "sha256-SKkTQL9D0Loskr+NX705/WITcRNb/8VQlQorMrz5S6M=",
       "System.Xml.ReaderWriter.6wqm56mhp6.wasm": "sha256-WjFhNoqDakPfhmk06Q6kT90meqzgW79kWuCJ7bARXlI=",
-      "TableClothLite.ay7r0va1th.wasm": "sha256-Ah2jSNQAluwHpqyzBVSeI0jfFJgAJFz2BFnMyh5xHjY="
+      "TableClothLite.9t5colcawq.wasm": "sha256-bXRqbqkIzfUqXelyrB0Cj7R+DXZ39UZYs4H68GWnXwA="
     },
     "libraryInitializers": {
       "_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js": "sha256-htNuF2gbem5vP85zcYVih92CTJrIeZj4ghrN/AHd9VM="
