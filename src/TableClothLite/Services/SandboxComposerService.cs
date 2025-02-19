@@ -1,12 +1,13 @@
 ﻿using System.Text;
 using System.Xml;
+using TableClothLite.Models;
 using TableClothLite.ViewModels;
 
 namespace TableClothLite.Services;
 
 public sealed class SandboxComposerService
 {
-    public XmlDocument CreateSandboxDocument(SandboxViewModel viewModel, string url)
+    public XmlDocument CreateSandboxDocument(SandboxViewModel viewModel, ServiceInfo serviceInfo)
     {
         var doc = new XmlDocument();
         var configuration = doc.CreateElement("Configuration");
@@ -40,7 +41,7 @@ public sealed class SandboxComposerService
 
             var commandLines = new List<string>
             {
-                $"Start-Process -FilePath '{url}'"
+                $"Start-Process -FilePath '{serviceInfo.Url}'"
             };
 
             var base64Content = Convert.ToBase64String(

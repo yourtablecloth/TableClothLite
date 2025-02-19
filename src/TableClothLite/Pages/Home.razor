@@ -3,8 +3,16 @@
 
 <PageTitle>식탁보 라이트</PageTitle>
 
-<FluentMessageBar Title="프리뷰 버전 안내" Intent="@MessageIntent.Warning">
+<FluentMessageBar Title="프리뷰 버전 안내" Intent="@MessageIntent.Info">
 	현재 식탁보 라이트는 기술 검증을 위하여 제작된 프리뷰 버전으로 예고 없이 제품의 상세 사양이 변경될 수 있습니다.
+</FluentMessageBar>
+
+<FluentMessageBar Title="Windows Sandbox 설치 안내" Intent="@MessageIntent.Info">
+	식탁보 라이트로 가상 환경을 사용하려면 Windows Sandbox가 반드시 설치되어 있어야 합니다. <a href="https://yourtablecloth.app/howto_install_sandbox" target="_blank">설치 방법 보기</a>
+</FluentMessageBar>
+
+<FluentMessageBar Title="책임 부인" Intent="@MessageIntent.Warning">
+	식탁보 및 식탁보 라이트는 개인의 편의를 위하여 제공되는 오픈 소스 기반 유틸리티입니다. 사용 중 발생할 수 있는 금전적인 손해, 업무 지연 등을 예방하기 위하여, 중요한 거래는 실제 하드웨어에서 진행해주세요.
 </FluentMessageBar>
 
 <p>&nbsp;</p>
@@ -17,79 +25,76 @@
 <p>&nbsp;</p>
 
 <div>
-	<FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
-		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-			<FluentButton Value="WooriBank" OnClick="Model.WooriBankCommand.ExecuteAsync">
-				<img src="images/WooriBank.png" alt="우리은행" style="height: 1em;" />
-				<span>우리은행 가상환경 시작</span>
-			</FluentButton>
-		</FluentGridItem>
-		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-			<FluentButton Value="ShinhanBank" OnClick="Model.ShinhanBankCommand.ExecuteAsync">
-				<img src="images/ShinhanBank.png" alt="신한은행" style="height: 1em;" />
-				<span>신한은행 가상환경 시작</span>
-			</FluentButton>
-		</FluentGridItem>
-		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-			<FluentButton Value="KookminBank" OnClick="Model.KookminBankCommand.ExecuteAsync">
-				<img src="images/KookminBank.png" alt="KB국민은행" style="height: 1em;" />
-				<span>KB국민은행 가상환경 시작</span>
-			</FluentButton>
-		</FluentGridItem>
-		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-			<FluentButton Value="HanaBank" OnClick="Model.HanaBankCommand.ExecuteAsync">
-				<img src="images/KEBHanaBank.png" alt="하나은행" style="height: 1em;" />
-				<span>하나은행 가상환경 시작</span>
-			</FluentButton>
-		</FluentGridItem>
-		<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-			<FluentButton Value="NHInternetBank" OnClick="Model.NHInternetBankCommand.ExecuteAsync">
-				<img src="images/NHInternetBank.png" alt="농협인터넷은행" style="height: 1em;" />
-				<span>농협인터넷은행 가상환경 시작</span>
-			</FluentButton>
-		</FluentGridItem>
-	</FluentGrid>
+	@if (Model.Services.Any())
+	{
+		<FluentAccordion>
+			@foreach (var eachGroup in Model.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant()))
+			{
+				<FluentAccordionItem Heading="@Model.DisplayCategoryName(eachGroup.Key)" Expanded="true">
+					<FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
+						@foreach (var eachService in eachGroup)
+						{
+							<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
+								<FluentCard>
+									<img src="@Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)" style="width: 1em;" alt="@eachService.DisplayName 로고" />
+									<span>@eachService.DisplayName</span>
+									<br /><br />
+									<div style="text-align: right;">
+										<FluentButton style="cursor: pointer;" Appearance="Appearance.Accent" @onclick="() => Model.GenerateSandboxDocumentAsync(eachService)">가상 환경 시작</FluentButton>
+									</div>
+								</FluentCard>
+							</FluentGridItem>
+						}
+					</FluentGrid>
+				</FluentAccordionItem>
+			}
+		</FluentAccordion>
+	}
+	else
+	{
+		<p>불러오는 중입니다...</p>
+	}
 </div>
 
 <p>&nbsp;</p>
 
 <!--
 <div id="options">
-	<div>
-		<FluentCheckbox Name="enableVGPU" @bind-Value="Model.EnableVGPU">
-			가상 GPU 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enableVGPU" @bind-Value="Model.EnableVGPU">
+가상 GPU 사용
+</FluentCheckbox>
+</div>
 
-	<div>
-		<FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
-			네트워크 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
+네트워크 사용
+</FluentCheckbox>
+</div>
 
-	<div>
-		<FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
-			오디오 녹음 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
+오디오 녹음 사용
+</FluentCheckbox>
+</div>
 
-	<div>
-		<FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
-			비디오 녹화 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
+비디오 녹화 사용
+</FluentCheckbox>
+</div>
 
-	<div>
-		<FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
-			프린터 공유 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
+프린터 공유 사용
+</FluentCheckbox>
+</div>
 
-	<div>
-		<FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
-			복사/붙여넣기 사용
-		</FluentCheckbox>
-	</div>
+<div>
+<FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
+복사/붙여넣기 사용
+</FluentCheckbox>
+</div>
 </div>
 -->
 
@@ -98,3 +103,10 @@
 <div>
 	&copy; 2025 rkttu.com, All rights reserved.
 </div>
+
+@code {
+	protected override async Task OnInitializedAsync()
+	{
+		await Model.LoadCatalogCommand.ExecuteAsync(this);
+	}
+}

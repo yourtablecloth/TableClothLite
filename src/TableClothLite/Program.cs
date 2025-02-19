@@ -6,6 +6,12 @@ using TableClothLite.Services;
 using TableClothLite.ViewModels;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+{
+    { "TableClothCatalogBaseUrl", "https://yourtablecloth.app/TableClothCatalog/" },
+});
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
@@ -14,9 +20,11 @@ builder.Services.AddFluentUIComponents(options =>
     options.ValidateClassNames = false;
 });
 
+builder.Services.AddHttpClient();
 builder.Services.AddFluentUIComponents();
 
 builder.Services.AddSingleton<SandboxComposerService>();
+builder.Services.AddSingleton<CatalogService>();
 
 builder.Services.AddScoped<FileDownloadService>();
 

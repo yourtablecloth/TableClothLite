@@ -1,8 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Text;
-using System.Xml;
+using TableClothLite.Models;
 using TableClothLite.Services;
 
 namespace TableClothLite.ViewModels;
@@ -12,20 +11,27 @@ public sealed partial class SandboxViewModel : ObservableObject
     public SandboxViewModel(
         ILogger<SandboxViewModel> logger,
         FileDownloadService fileDownloadService,
-        SandboxComposerService sandboxComposerService)
+        SandboxComposerService sandboxComposerService,
+        CatalogService catalogService)
     {
         _logger = logger;
         _fileDownloadService = fileDownloadService;
         _sandboxComposerService = sandboxComposerService;
+        _catalogService = catalogService;
     }
 
     private readonly ILogger _logger;
     private readonly FileDownloadService _fileDownloadService;
     private readonly SandboxComposerService _sandboxComposerService;
+    private readonly CatalogService _catalogService;
 
-    private async Task DownloadSandboxDocumentAsync(string url)
+    [RelayCommand]
+    private Task LoadCatalogAsync()
+        => _catalogService.LoadCatalogDocumentAsync(Services);
+
+    public async Task GenerateSandboxDocumentAsync(ServiceInfo serviceInfo)
     {
-        var doc = _sandboxComposerService.CreateSandboxDocument(this, url);
+        var doc = _sandboxComposerService.CreateSandboxDocument(this, serviceInfo);
         using var memStream = new MemoryStream();
         doc.Save(memStream);
         memStream.Position = 0L;
@@ -34,25 +40,22 @@ public sealed partial class SandboxViewModel : ObservableObject
             memStream, "TableClothLite.wsb", "application/xml");
     }
 
-    [RelayCommand]
-    private Task WooriBankAsync()
-        => DownloadSandboxDocumentAsync("https://www.wooribank.com");
+    public string CalculateAbsoluteUrl(string relativePath)
+        => _catalogService.CalculateAbsoluteUrl(relativePath).AbsoluteUri;
 
-    [RelayCommand]
-    private Task ShinhanBankAsync()
-        => DownloadSandboxDocumentAsync("https://www.shinhan.com");
-
-    [RelayCommand]
-    private Task KookminBankAsync()
-        => DownloadSandboxDocumentAsync("https://www.kbstar.com");
-
-    [RelayCommand]
-    private Task HanaBankAsync()
-        => DownloadSandboxDocumentAsync("https://www.kebhana.com");
-
-    [RelayCommand]
-    private Task NHInternetBankAsync()
-        => DownloadSandboxDocumentAsync("https://banking.nonghyup.com");
+    public string DisplayCategoryName(string? category)
+        => (category?.ToLowerInvariant()?.Trim()) switch
+        {
+            "banking" => "은행",
+            "financing" => "저축은행",
+            "creditcard" => "신용카드",
+            "education" => "교육",
+            "security" => "증권",
+            "insurance" => "보험",
+            "government" => "정부",
+            "other" => "기타",
+            _ => category ?? string.Empty,
+        };
 
     [ObservableProperty]
     private bool _enableVGPU = true;
@@ -73,5 +76,5 @@ public sealed partial class SandboxViewModel : ObservableObject
     private bool _enableClipboardRedirection = true;
 
     [ObservableProperty]
-    private ObservableCollection<string> _selectedApplications = new();
+    private ObservableCollection<ServiceInfo> _services = new();
 }
