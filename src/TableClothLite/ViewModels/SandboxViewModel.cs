@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using TableClothLite.Models;
+using TableClothLite.Shared.Models;
 using TableClothLite.Services;
+using TableClothLite.Shared.Services;
 
 namespace TableClothLite.ViewModels;
 
@@ -37,7 +38,7 @@ public sealed partial class SandboxViewModel : ObservableObject
         memStream.Position = 0L;
 
         await _fileDownloadService.DownloadFileAsync(
-            memStream, "TableClothLite.wsb", "application/xml");
+            memStream, $"{serviceInfo.ServiceId}.wsb", "application/xml");
     }
 
     public string CalculateAbsoluteUrl(string relativePath)

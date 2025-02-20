@@ -1,0 +1,38 @@
+param (
+    [string]$ServiceIds = ""
+)
+
+$InstallerUrl = "https://yourtablecloth.app/TableClothLite/assets/installer.zip"
+$DownloadPath = Join-Path -Path "$env:TEMP" -ChildPath "installer.zip"
+$InstallerExe = Join-Path -Path "$env:TEMP" -ChildPath "TableClothLite.Installer.exe"
+
+Write-Output 'Downloading Installer...'
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+
+# 다운로드 폴더 경로 추출 및 폴더가 없으면 생성
+$DownloadDir = Split-Path -Path $DownloadPath -Parent
+if (!(Test-Path $DownloadDir)) {
+    New-Item -ItemType Directory -Path $DownloadDir -Force | Out-Null
+}
+
+# 다운로드 실행
+$ProgressPreference = 'SilentlyContinue'
+Write-Output "Installer URL: $InstallerUrl"
+Invoke-WebRequest -UseBasicParsing -Uri $InstallerUrl -OutFile $DownloadPath
+
+# 압축 해제 경로 설정
+$InstallerPath = Split-Path -Path $InstallerExe -Parent
+if (!(Test-Path $InstallerPath)) {
+    New-Item -ItemType Directory -Path $InstallerPath -Force | Out-Null
+}
+
+# 압축 파일 해제
+Expand-Archive -Path $DownloadPath -DestinationPath $InstallerPath -Force
+
+# 인스톨러 실행
+$Arguments = ""
+if ($ServiceIds -ne "") {
+    $Arguments = "--services=$ServiceIds"
+}
+
+Start-Process -FilePath $InstallerExe -ArgumentList $Arguments

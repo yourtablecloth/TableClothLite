@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using System.Xml;
-using TableClothLite.Models;
+using TableClothLite.Shared.Models;
 using TableClothLite.ViewModels;
 
 namespace TableClothLite.Services;
@@ -39,17 +39,17 @@ public sealed class SandboxComposerService
             var logonCommand = doc.CreateElement("LogonCommand");
             var command = doc.CreateElement("Command");
 
-            var commandLines = new List<string>
-            {
-                $"Start-Process -FilePath '{serviceInfo.Url}'"
-            };
+            var commandLines = new List<string>();
+            var url = "https://yourtablecloth.app/TableClothLite/assets/installer.txt";
+            commandLines.Add($"[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072");
+            commandLines.Add($"Invoke-Command -ScriptBlock ([scriptblock]::Create([System.Text.Encoding]::UTF8.GetString((New-Object System.Net.WebClient).DownloadData('{url}')))) -ArgumentList @('{serviceInfo.ServiceId}')");
 
-            var base64Content = Convert.ToBase64String(
-                Encoding.UTF8.GetBytes(string.Join("; ", commandLines)));
             command.InnerText = string.Join(" ", [
+                @"C:\Windows\System32\cmd.exe",
+                "/c", "start",
                 @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",
                 "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-                @$"""[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; Invoke-Expression ([System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{base64Content}')))"""
+                $"\"{string.Join(";", commandLines)}\""
             ]);
 
             logonCommand.AppendChild(command);

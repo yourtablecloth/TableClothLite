@@ -5,7 +5,30 @@ on:
     paths: [ '.github/workflows/**', 'src/**' ]
 
 jobs:
-  deploy-to-github-pages:
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.x"
+
+      - name: Publish Installer Project
+        run: |
+          dotnet publish ./src/TableClothLite.Installer/TableClothLite.Installer.csproj -c Release -o installer -r win-x64 --nologo
+          pushd installer
+          7z a -tzip installer.zip .\* -r
+          popd
+
+      - name: Upload installer.zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-zip
+          path: installer/installer.zip
+
+  build-blazor:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,8 +38,32 @@ jobs:
         with:
           dotnet-version: "9.x"
 
-      - name: Publish .NET Core Project
+      - name: Publish Blazor Project
         run: dotnet publish ./src/TableClothLite/TableClothLite.csproj -c Release -o release --nologo
+
+      - name: Upload wwwroot folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: blazor-wwwroot
+          path: release/wwwroot
+
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    needs: [build-installer, build-blazor] # 두 작업이 모두 끝난 후 실행
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download wwwroot folder
+        uses: actions/download-artifact@v4
+        with:
+          name: blazor-wwwroot
+          path: release/wwwroot
+
+      - name: Download installer.zip
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-zip
+          path: release/wwwroot/assets
 
       - name: Add .nojekyll file
         run: touch release/wwwroot/.nojekyll

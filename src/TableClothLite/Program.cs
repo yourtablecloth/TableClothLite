@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.FluentUI.AspNetCore.Components;
 using TableClothLite;
 using TableClothLite.Services;
+using TableClothLite.Shared.Services;
 using TableClothLite.ViewModels;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
