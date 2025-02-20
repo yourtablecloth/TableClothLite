@@ -36,11 +36,13 @@
 						{
 							<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
 								<FluentCard>
-									<img src="@Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)" style="width: 1em;" alt="@eachService.DisplayName 로고" />
+									<FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" />
 									<span>@eachService.DisplayName</span>
 									<br /><br />
 									<div style="text-align: right;">
-										<FluentButton style="cursor: pointer;" Appearance="Appearance.Accent" @onclick="() => Model.GenerateSandboxDocumentAsync(eachService)">가상 환경 시작</FluentButton>
+										<FluentButton style="cursor: pointer;" Appearance="Appearance.Neutral" @onclick="() => Model.GenerateSandboxDocumentAsync(eachService)">
+											<FluentEmoji Value="@(new Emojis.Symbols.Color.Default.PlayButton())" />
+										</FluentButton>
 									</div>
 								</FluentCard>
 							</FluentGridItem>
