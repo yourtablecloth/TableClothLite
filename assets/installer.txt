@@ -35,4 +35,4 @@ if ($ServiceIds -ne "") {
     $Arguments = "--services=$ServiceIds"
 }
 
-Start-Process -FilePath $InstallerExe -ArgumentList $Arguments -Wait
+Start-Process -FilePath $InstallerExe -ArgumentList $Arguments
