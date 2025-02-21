@@ -6,6 +6,7 @@ param (
 )
 
 Write-Output 'Downloading Installer...'
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 
 # 다운로드 폴더 경로 추출 및 폴더가 없으면 생성
 $DownloadDir = Split-Path -Path $DownloadPath -Parent
