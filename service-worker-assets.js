@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "66X1+HAv",
+  "version": "v7pBa8bQ",
   "assets": [
     {
       "hash": "sha256-vHvXdYUYlmEZk97fUurcJV6GB5jPfYCarVGxIWYkbV0=",
@@ -334,15 +334,15 @@ self.assetsManifest = {
       "url": "_framework/System.Xml.ReaderWriter.6wqm56mhp6.wasm"
     },
     {
-      "hash": "sha256-MZ4L7bdkx0Koj7dPHbqnTr4/yY7a/D6qh74TmLFsQk4=",
-      "url": "_framework/TableClothLite.Shared.3n1qn8gdd6.wasm"
+      "hash": "sha256-6AQT0I9mTPOqJ7dfvOEacBVT1aJ+YlGTpcB5szbruxI=",
+      "url": "_framework/TableClothLite.Shared.szh4vmfdag.wasm"
     },
     {
-      "hash": "sha256-h9YtFpxcd6BzgJeNs28F+OMJdijQq1YTjn1YbFB/pcQ=",
-      "url": "_framework/TableClothLite.brjyewnadd.wasm"
+      "hash": "sha256-6hQHttV6vRQyElUwAwo4b7ezpv9g3Zy1iIRQ0c4Q/KM=",
+      "url": "_framework/TableClothLite.q8b04ixfq8.wasm"
     },
     {
-      "hash": "sha256-CLpjLoclRz/QG5skRZq7uM/5bLDZz3b9E6+vDAbRWAc=",
+      "hash": "sha256-d6DhXEOE5Y9o1V3/n3417gqieUAqEeFm6yVdTqDBWxI=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -378,7 +378,7 @@ self.assetsManifest = {
       "url": "_framework/icudt_no_CJK.lfu7j35m59.dat"
     },
     {
-      "hash": "sha256-XFf0zOm+IFISW0HiuSK8d1GS9I3K2balYlZsJMII4qQ=",
+      "hash": "sha256-S45pcT7lBkq5O9EXmUat+p5vJJkC0ghASx15HE+nBm8=",
       "url": "assets/installer.txt"
     },
     {

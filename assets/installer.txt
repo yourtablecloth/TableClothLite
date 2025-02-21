@@ -1,4 +1,4 @@
-﻿param (
+param (
     [string]$InstallerUrl = "https://yourtablecloth.app/TableClothLite/assets/installer.zip",
     [string]$DownloadPath = "C:\installer.zip",
     [string]$InstallerExe = "C:\installer\TableClothLite.Installer.exe",
