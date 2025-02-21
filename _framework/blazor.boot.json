@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TableClothLite",
   "resources": {
-    "hash": "sha256-DPbmQvdGwvim5J9tvmYq9jlD2zKNLLrP1rJV8Kg+66E=",
+    "hash": "sha256-YbZwAMT2U9hHcWLvBJgBg1bXlkLZCjV3QjAKQXS5Gmw=",
     "fingerprinting": {
       "CommunityToolkit.Mvvm.q3c1ofp6kt.wasm": "CommunityToolkit.Mvvm.wasm",
       "Microsoft.AspNetCore.Components.6p8b5psomz.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -50,8 +50,8 @@
       "System.Text.Json.u68zob5una.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.0e9rlv7vxy.wasm": "System.Text.RegularExpressions.wasm",
       "System.Xml.ReaderWriter.6wqm56mhp6.wasm": "System.Xml.ReaderWriter.wasm",
-      "TableClothLite.Shared.sq2vs0yeyo.wasm": "TableClothLite.Shared.wasm",
-      "TableClothLite.8ga1res1f1.wasm": "TableClothLite.wasm",
+      "TableClothLite.Shared.ix4m7hi2e8.wasm": "TableClothLite.Shared.wasm",
+      "TableClothLite.ixkw0evqem.wasm": "TableClothLite.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.8bti36lthm.js": "dotnet.native.js",
       "dotnet.native.tr0cyonrwt.wasm": "dotnet.native.wasm",
@@ -124,8 +124,8 @@
       "System.Text.Json.u68zob5una.wasm": "sha256-yvfkdfKbG4ixDHGwZljQGUsDwTo237iljpz44YdYmPI=",
       "System.Text.RegularExpressions.0e9rlv7vxy.wasm": "sha256-SKkTQL9D0Loskr+NX705/WITcRNb/8VQlQorMrz5S6M=",
       "System.Xml.ReaderWriter.6wqm56mhp6.wasm": "sha256-WjFhNoqDakPfhmk06Q6kT90meqzgW79kWuCJ7bARXlI=",
-      "TableClothLite.Shared.sq2vs0yeyo.wasm": "sha256-XKRyIIpF8N6BEhPnDw3gRQ30KE/CtY/VR3l3jcm9fpI=",
-      "TableClothLite.8ga1res1f1.wasm": "sha256-KN6Q6np7SN4+cg/faZhO7kEfsckAtyjC1KsqWIX0FLk="
+      "TableClothLite.Shared.ix4m7hi2e8.wasm": "sha256-dq3hfYEPnMlhv2i8ZFzJ+uQdR5wJqhLldarUbborlIs=",
+      "TableClothLite.ixkw0evqem.wasm": "sha256-CmZ43QBGa5XyWLfxYP7cAdNuRCc3dgTLnZF5Naxk58g="
     },
     "libraryInitializers": {
       "_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js": "sha256-htNuF2gbem5vP85zcYVih92CTJrIeZj4ghrN/AHd9VM="

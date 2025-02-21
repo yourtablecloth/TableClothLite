@@ -16,6 +16,7 @@ if (!(Test-Path $DownloadDir)) {
 
 # 다운로드 실행
 $ProgressPreference = 'SilentlyContinue'
+Write-Output "Installer URL: $InstallerUrl"
 Invoke-WebRequest -UseBasicParsing -Uri $InstallerUrl -OutFile $DownloadPath
 
 # 압축 해제 경로 설정
