@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "NHBaAigc",
+  "version": "m7jldJpz",
   "assets": [
     {
       "hash": "sha256-vHvXdYUYlmEZk97fUurcJV6GB5jPfYCarVGxIWYkbV0=",
@@ -334,15 +334,15 @@ self.assetsManifest = {
       "url": "_framework/System.Xml.ReaderWriter.6wqm56mhp6.wasm"
     },
     {
-      "hash": "sha256-8q+cPKtTFREd4aA8ctGoB6gxjBFQMGShKiG2NtXGKjg=",
-      "url": "_framework/TableClothLite.Shared.6jkwg4ukkz.wasm"
+      "hash": "sha256-S4Wk2bJ8DrIifvPzqzfEEZ4i46YeTWsUwq/Tjit1hck=",
+      "url": "_framework/TableClothLite.Shared.7t7zba28jh.wasm"
     },
     {
-      "hash": "sha256-WojdVXnNLyz8AVL+bKraA1NCswydWHgOzw1IWOpuOzo=",
-      "url": "_framework/TableClothLite.uyo1r6v2ap.wasm"
+      "hash": "sha256-urvsYeO6jJRYph0aHliRkEXGtVHn+vt1jhE1OFS7mt4=",
+      "url": "_framework/TableClothLite.mp2snu53qz.wasm"
     },
     {
-      "hash": "sha256-KSiAjHnYnNTD4eompeKNKOn4uuqBPiEsF6SAZCzuJxw=",
+      "hash": "sha256-fMv2BG2St+YEA4R80AKzBn0kjbN0oCzXHtuurBkqqM4=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -386,36 +386,16 @@ self.assetsManifest = {
       "url": "css/app.css"
     },
     {
-      "hash": "sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg=",
+      "hash": "sha256-6137ORcv2I0QD3yFSFTlha10nbY05fAhgh+4NKdNXwQ=",
       "url": "favicon.png"
     },
     {
-      "hash": "sha256-DbpQaq68ZSb5IoPosBErM1QWBfsbTxpJqhU0REi6wP4=",
+      "hash": "sha256-MTMjfKgyVIECYmky/sqXeuQhADa081bxf9xQNVD0QTM=",
       "url": "icon-192.png"
     },
     {
-      "hash": "sha256-oEo6d+KqX5fjxTiZk/w9NB3Mi0+ycS5yLwCKwr4IkbA=",
+      "hash": "sha256-u/F3yhtHl/7OrMQzmMcgpJjRHP7L+pQV46Abv9Zf7Gk=",
       "url": "icon-512.png"
-    },
-    {
-      "hash": "sha256-5HtJQWGDy+V3eCEZDbuDM7gXdbPSVPKy1RwjlCuWvmk=",
-      "url": "images/KEBHanaBank.png"
-    },
-    {
-      "hash": "sha256-dZbZjAIIst/l5TSC8ETTf791rDYkxM2Oi8ZmHTG+kxs=",
-      "url": "images/KookminBank.png"
-    },
-    {
-      "hash": "sha256-v9nH8rCwXaMApv7zW30bnIfQvD4iWLEGsQve0/17Ntw=",
-      "url": "images/NHInternetBank.png"
-    },
-    {
-      "hash": "sha256-0Ogg7/h/NZkA2nzN2AoLbdDY79tI/g7sYE+P6V4SOho=",
-      "url": "images/ShinhanBank.png"
-    },
-    {
-      "hash": "sha256-+w1cCvk5lx1DeTAqHbUaxtz9Rh0T/jGe8+cduBBByMw=",
-      "url": "images/WooriBank.png"
     },
     {
       "hash": "sha256-qzzGsmvps4++By+AgvJ7fKclSig/rXV+/tuTSZaJO9w=",
