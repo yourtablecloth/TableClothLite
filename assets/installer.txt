@@ -1,9 +1,10 @@
 param (
-    [string]$InstallerUrl = "https://yourtablecloth.app/TableClothLite/assets/installer.zip",
-    [string]$DownloadPath = "C:\installer.zip",
-    [string]$InstallerExe = "C:\installer\TableClothLite.Installer.exe",
     [string]$ServiceIds = ""
 )
+
+$InstallerUrl = "https://yourtablecloth.app/TableClothLite/assets/installer.zip"
+$DownloadPath = Join-Path -Path "$env:TEMP" -ChildPath "installer.zip"
+$InstallerExe = Join-Path -Path "$env:TEMP" -ChildPath "TableClothLite.Installer.exe"
 
 Write-Output 'Downloading Installer...'
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
