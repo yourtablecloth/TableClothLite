@@ -8,12 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TableClothLite.Installer", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TableClothLite.Shared", "TableClothLite.Shared\TableClothLite.Shared.csproj", "{7EFACCCA-729E-4410-85FA-184684ACA024}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "??? ??", "??? ??", "{2A3A057F-5D22-31FD-628C-DF5EF75AEF1E}"
-	ProjectSection(SolutionItems) = preProject
-		..\LICENSE = ..\LICENSE
-		..\README.md = ..\README.md
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

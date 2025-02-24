@@ -102,7 +102,26 @@ public sealed class InstallerService : BackgroundService
                     Path.GetFileName(eachInstallTask.FileName), process.ExitCode);
             }
 
-            // TODO: ASTX Configuration
+            var stsessFilePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                "AhnLab", "Safe Transaction", "StSess.exe");
+
+            if (File.Exists(stsessFilePath))
+            {
+                await TryShowMessageAsync(
+                    "AhnLab Safe Transaction이 설치되어있습니다. 원격 접속 차단 설정을 꺼야 샌드박스 창이 닫히지 않습니다.",
+                    stoppingToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Launching 'StSess.exe' with '/config' option...");
+                using var stsessProcess = Process.Start(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
+                    $"/c \"{stsessFilePath}\" /config");
+                await stsessProcess.WaitForExitAsync(stoppingToken).ConfigureAwait(false);
+
+                await TryShowMessageAsync(
+                    "설정을 완료했다면 확인 버튼을 눌러주세요.",
+                    stoppingToken).ConfigureAwait(false);
+            }
 
             foreach (var eachService in foundServices)
             {
@@ -126,5 +145,20 @@ public sealed class InstallerService : BackgroundService
             _logger.LogInformation("Exit code: {exitCode}", Environment.ExitCode);
             _lifetime.StopApplication();
         }
+    }
+
+    private async Task<bool> TryShowMessageAsync(string message, CancellationToken cancellationToken = default)
+    {
+        var msgPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "msg.exe");
+
+        if (!File.Exists(msgPath))
+            return false;
+
+        _logger.LogInformation("Launching 'msg.exe' for user notification...");
+        using var msgProcess = Process.Start(msgPath, $"{Environment.UserName} /w \"{message}\"");
+        await msgProcess.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        return true;
     }
 }
