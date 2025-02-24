@@ -7,33 +7,45 @@ namespace TableClothLite.Services;
 
 public sealed class SandboxComposerService
 {
-    public XmlDocument CreateSandboxDocument(SandboxViewModel viewModel, ServiceInfo serviceInfo)
+    public SandboxComposerService(
+        ConfigService configService)
     {
+        _configService = configService;
+    }
+
+    private readonly ConfigService _configService;
+
+    public async Task<XmlDocument> CreateSandboxDocumentAsync(
+        SandboxViewModel viewModel,
+        ServiceInfo serviceInfo,
+        CancellationToken cancellationToken = default)
+    {
+        var model = await _configService.LoadAsync(cancellationToken).ConfigureAwait(false);
         var doc = new XmlDocument();
         var configuration = doc.CreateElement("Configuration");
         {
             var gpu = doc.CreateElement("vGPU");
-            gpu.InnerText = viewModel.EnableVGPU ? "Enable" : "Disable";
+            gpu.InnerText = "Disable";
             configuration.AppendChild(gpu);
 
             var networking = doc.CreateElement("Networking");
-            networking.InnerText = viewModel.EnableNetworking ? "Enable" : "Disable";
+            networking.InnerText = model.EnableNetworking ? "Enable" : "Disable";
             configuration.AppendChild(networking);
 
             var audioInput = doc.CreateElement("AudioInput");
-            audioInput.InnerText = viewModel.EnableAudioInput ? "Enable" : "Disable";
+            audioInput.InnerText = model.EnableAudioInput ? "Enable" : "Disable";
             configuration.AppendChild(audioInput);
 
             var videoInput = doc.CreateElement("VideoInput");
-            videoInput.InnerText = viewModel.EnableVideoInput ? "Enable" : "Disable";
+            videoInput.InnerText = model.EnableVideoInput ? "Enable" : "Disable";
             configuration.AppendChild(videoInput);
 
             var printerRedirection = doc.CreateElement("PrinterRedirection");
-            printerRedirection.InnerText = viewModel.EnablePrinterRedirection ? "Enable" : "Disable";
+            printerRedirection.InnerText = model.EnablePrinterRedirection ? "Enable" : "Disable";
             configuration.AppendChild(printerRedirection);
 
             var clipboardRedirection = doc.CreateElement("ClipboardRedirection");
-            clipboardRedirection.InnerText = viewModel.EnableClipboardRedirection ? "Enable" : "Disable";
+            clipboardRedirection.InnerText = model.EnableClipboardRedirection ? "Enable" : "Disable";
             configuration.AppendChild(clipboardRedirection);
 
             var logonCommand = doc.CreateElement("LogonCommand");

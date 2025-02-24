@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.FluentUI.AspNetCore.Components;
@@ -23,13 +24,16 @@ builder.Services.AddFluentUIComponents(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddFluentUIComponents();
+builder.Services.AddBlazoredLocalStorageAsSingleton();
 
 builder.Services.AddSingleton<SandboxComposerService>();
 builder.Services.AddSingleton<CatalogService>();
+builder.Services.AddSingleton<ConfigService>();
 
 builder.Services.AddScoped<FileDownloadService>();
 
 builder.Services.AddScoped<SandboxViewModel>();
+builder.Services.AddScoped<SandboxSettingsViewModel>();
 
 builder.Services.AddScoped(sp =>
 {

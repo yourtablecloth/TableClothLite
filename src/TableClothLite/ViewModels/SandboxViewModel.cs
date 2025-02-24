@@ -30,15 +30,18 @@ public sealed partial class SandboxViewModel : ObservableObject
     private Task LoadCatalogAsync()
         => _catalogService.LoadCatalogDocumentAsync(Services);
 
-    public async Task GenerateSandboxDocumentAsync(ServiceInfo serviceInfo)
+    public async Task GenerateSandboxDocumentAsync(
+        ServiceInfo serviceInfo,
+        CancellationToken cancellationToken = default)
     {
-        var doc = _sandboxComposerService.CreateSandboxDocument(this, serviceInfo);
+        var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(this, serviceInfo, cancellationToken).ConfigureAwait(false);
         using var memStream = new MemoryStream();
         doc.Save(memStream);
         memStream.Position = 0L;
 
         await _fileDownloadService.DownloadFileAsync(
-            memStream, $"{serviceInfo.ServiceId}.wsb", "application/xml");
+            memStream, $"{serviceInfo.ServiceId}.wsb", "application/xml",
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     public string CalculateAbsoluteUrl(string relativePath)
@@ -57,24 +60,6 @@ public sealed partial class SandboxViewModel : ObservableObject
             "other" => "기타",
             _ => category ?? string.Empty,
         };
-
-    [ObservableProperty]
-    private bool _enableVGPU = true;
-
-    [ObservableProperty]
-    private bool _enableNetworking = true;
-
-    [ObservableProperty]
-    private bool _enableAudioInput = true;
-
-    [ObservableProperty]
-    private bool _enableVideoInput = true;
-
-    [ObservableProperty]
-    private bool _enablePrinterRedirection = true;
-
-    [ObservableProperty]
-    private bool _enableClipboardRedirection = true;
 
     [ObservableProperty]
     private ObservableCollection<ServiceInfo> _services = new();
