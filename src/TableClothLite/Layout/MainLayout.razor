@@ -3,10 +3,10 @@
 
 <div class="page">
     <header class="header">
-        <h2 class="title">
+        <a class="title" href="/">
             <img src="/favicon.png" alt="">
             <span>식탁보 라이트</span>
-        </h2>
+        </a>
 
         <div class="external-site">
             <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog">
@@ -15,7 +15,7 @@
             <FluentAnchor Appearance="Appearance.Stealth" Href="https://github.com/yourtablecloth/TableClothLite" Target="_blank">
                 <FluentIcon Value="@(new Github())" />
             </FluentAnchor>
-            <FluentAnchor Appearance="Appearance.Stealth" Href="https://yourtablecloth.app/" target="_blank"
+            <FluentAnchor Class="text-anchor" Appearance="Appearance.Lightweight" Href="https://yourtablecloth.app/" target="_blank"
                 IconEnd="@(new Icons.Regular.Size12.Open().WithColor("currentColor"))">식탁보 홈페이지</FluentAnchor>
         </div>
     </header>
