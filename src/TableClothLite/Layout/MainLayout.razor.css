@@ -1,7 +1,5 @@
 .page {
     position: relative;
-    display: flex;
-    flex-direction: column;
 }
 
 main {
@@ -74,4 +72,42 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+}
+
+.message-container {
+    padding: 16px 20px;
+}
+
+.message-container ::deep > .fluent-messagebar-notification {
+    border-top: 1px solid #d1d1d1;
+}
+
+.message-container ::deep > .fluent-messagebar-notification + .fluent-messagebar-notification {
+    border-bottom: 1px solid #d1d1d1;
+}
+
+.header {
+    display: flex;
+    padding: 16px;
+    background-color: var(--neutral-fill-stealth-rest);
+    border-bottom: 1px solid var(--neurutal-stroke-rest);
+}
+
+.header .title {
+    display: flex;
+    align-items: center;
+    font-size: 1.35rem;
+}
+
+
+.header .external-site {
+    display: flex;
+    align-items: center;
+    column-gap: 10px;
+    margin-left: auto;
+}
+
+.header .external-site ::deep span,
+.header .external-site ::deep svg {
+    color: var(--neutral-foreground-rest);
 }
