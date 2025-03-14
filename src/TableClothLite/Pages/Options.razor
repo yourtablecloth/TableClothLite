@@ -1,67 +1,194 @@
 ﻿@page "/Options"
+@using KristofferStrube.Blazor.FileSystem
 @inject SandboxSettingsViewModel Model
 @inject ConfigService ConfigService
+@inject IFileSystemAccessService FileSystemAccessService
+@inject IndexedDBManager IndexedDbManger
 
 <PageTitle>식탁보 라이트 Preview 설정</PageTitle>
 
 <FluentMessageBar Title="프리뷰 버전 안내" Intent="@MessageIntent.Info" Type="MessageType.Notification">
-	현재 식탁보 라이트는 기술 검증을 위하여 제작된 프리뷰 버전으로 예고 없이 제품의 상세 사양이 변경될 수 있습니다.
+    현재 식탁보 라이트는 기술 검증을 위하여 제작된 프리뷰 버전으로 예고 없이 제품의 상세 사양이 변경될 수 있습니다.
 </FluentMessageBar>
 
 <FluentMessageBar Title="책임 부인" Intent="@MessageIntent.Warning" Type="MessageType.Notification">
-	식탁보 및 식탁보 라이트는 개인의 편의를 위하여 제공되는 오픈 소스 기반 유틸리티입니다. 사용 중 발생할 수 있는 금전적인 손해, 업무 지연 등을 예방하기 위하여, 중요한 거래는 실제 하드웨어에서 진행해주세요.
+    식탁보 및 식탁보 라이트는 개인의 편의를 위하여 제공되는 오픈 소스 기반 유틸리티입니다. 사용 중 발생할 수 있는 금전적인 손해, 업무 지연 등을 예방하기 위하여, 중요한 거래는 실제 하드웨어에서 진행해주세요.
 </FluentMessageBar>
 
 <div id="options">
-	<div>&nbsp;</div>
+    <div>&nbsp;</div>
 
-	<div>
-		<FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
-			네트워크 사용
-		</FluentCheckbox>
-	</div>
+    <div>
+        <FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
+            네트워크 사용
+        </FluentCheckbox>
+    </div>
 
-	<div>
-		<FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
-			오디오 녹음 사용
-		</FluentCheckbox>
-	</div>
+    <div>
+        <FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
+            오디오 녹음 사용
+        </FluentCheckbox>
+    </div>
 
-	<div>
-		<FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
-			비디오 녹화 사용
-		</FluentCheckbox>
-	</div>
+    <div>
+        <FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
+            비디오 녹화 사용
+        </FluentCheckbox>
+    </div>
 
-	<div>
-		<FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
-			프린터 공유 사용
-		</FluentCheckbox>
-	</div>
+    <div>
+        <FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
+            프린터 공유 사용
+        </FluentCheckbox>
+    </div>
 
-	<div>
-		<FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
-			복사/붙여넣기 사용
-		</FluentCheckbox>
-	</div>
+    <div>
+        <FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
+            복사/붙여넣기 사용
+        </FluentCheckbox>
+    </div>
 
-	<div>&nbsp;</div>
+    <!--
+    <div>
+        <div>@_currentPath</div>
+        <FluentButton Style="cursor: pointer;" OnClick="OnScanCertsButtonClick">공동인증서 불러오기</FluentButton>
+    </div>
+    -->
 
-	<div>
-		<FluentButton style="cursor: pointer;" Appearance="Appearance.Accent" OnClick="OnSaveButtonClick">저장</FluentButton>
-	</div>
+    <div>&nbsp;</div>
+
+    <div>
+        <FluentButton style="cursor: pointer;" Appearance="Appearance.Accent" OnClick="OnSaveButtonClick">저장</FluentButton>
+    </div>
 </div>
 
 @code {
-	protected override async Task OnInitializedAsync()
-	{
-		var config = await ConfigService.LoadAsync();
-		Model.ImportFromSandboxConfig(config);
-	}
+    private string? _currentPath;
 
-	protected async Task OnSaveButtonClick()
-	{
-		var model = Model.ExportToSandboxConfig();
-		await ConfigService.SaveAsync(model);
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        var config = await ConfigService.LoadAsync();
+        Model.ImportFromSandboxConfig(config);
+    }
+
+    protected async Task OnSaveButtonClick()
+    {
+        var model = Model.ExportToSandboxConfig();
+        await ConfigService.SaveAsync(model);
+    }
+
+    protected async Task OnScanCertsButtonClick()
+    {
+        if (!(await FileSystemAccessService.IsSupportedAsync()))
+        {
+            _currentPath = "이 브라우저에서는 파일 시스템에 접근할 수 있는 기능이 제공되지 않습니다.";
+            return;
+        }
+
+        var directoryHandle = await FileSystemAccessService.ShowDirectoryPickerAsync(new DirectoryPickerOptionsStartInWellKnownDirectory()
+		{
+			StartIn = WellKnownDirectory.Downloads,
+		});
+
+        var collection = new Dictionary<string, FileSystemFileHandle>(
+            StringComparer.OrdinalIgnoreCase);
+
+        _currentPath = "공동인증서 파일을 검색 중입니다.";
+        StateHasChanged();
+
+        await CollectCertificatesAsync(directoryHandle, collection);
+
+        _currentPath = $"숨김 파일을 제외하고 총 {collection.Count}개 파일을 확인했습니다.";
+        StateHasChanged();
+
+        var foundCertCount = 0;
+        foreach (var eachCertFile in collection)
+        {
+            if (!eachCertFile.Key.EndsWith("signCert.der", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var signPriKey = string.Join('/', eachCertFile.Key
+                .Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0..^1]
+                .Concat(new string[] { "signPri.key" }));
+
+            if (!collection.TryGetValue(signPriKey, out var privateFileHandle))
+                continue;
+
+            await using var certFile = await eachCertFile.Value.GetFileAsync();
+            var certFileContent = await certFile.ArrayBufferAsync();
+
+            await using var privateFile = await privateFileHandle.GetFileAsync();
+            var privateFileContent = await privateFile.ArrayBufferAsync();
+
+            await IndexedDbManger.AddRecord(new StoreRecord<CertPairModel>()
+            {
+                Data = new CertPairModel(eachCertFile.Key, certFileContent, privateFileContent),
+				Storename = "certificates",
+            });
+            foundCertCount++;
+
+            await eachCertFile.Value.DisposeAsync();
+        }
+
+        _currentPath = $"숨김 파일을 제외하고 총 {foundCertCount}개 공동인증서를 웹 브라우저 내부 DB에 저장했습니다.";
+        StateHasChanged();
+
+        if (directoryHandle != null)
+            await directoryHandle.DisposeAsync();
+    }
+
+    private async Task CollectCertificatesAsync(
+        FileSystemDirectoryHandle directoryHandle,
+        Dictionary<string, FileSystemFileHandle> list,
+        Stack<string>? parentNames = default)
+    {
+        try
+        {
+            if (directoryHandle == null)
+                return;
+
+            if (parentNames == null)
+            {
+                parentNames = new Stack<string>();
+                parentNames.Push(await directoryHandle.GetNameAsync());
+            }
+
+            var entries = await directoryHandle.ValuesAsync();
+
+            foreach (var entry in entries)
+            {
+                if (entry is FileSystemDirectoryHandle subDirectoryHandle)
+                {
+                    parentNames.Push(await entry.GetNameAsync());
+                    await CollectCertificatesAsync(subDirectoryHandle, list, parentNames);
+                    await subDirectoryHandle.DisposeAsync();
+                    continue;
+                }
+
+                if (entry is FileSystemFileHandle fileHandle)
+                {
+                    var directoryName = string.Join('/', parentNames.ToArray().Reverse().Skip(1));
+                    var fileName = await fileHandle.GetNameAsync();
+                    var relPath = string.Join('/', directoryName, fileName);
+
+                    if (fileName.EndsWith(".der", StringComparison.OrdinalIgnoreCase) ||
+                        fileName.EndsWith(".key", StringComparison.OrdinalIgnoreCase) ||
+                        fileName.EndsWith(".pfx", StringComparison.OrdinalIgnoreCase))
+                    {
+                        list.Add(relPath, fileHandle);
+                        continue;
+                    }
+                    await fileHandle.DisposeAsync();
+                }
+            }
+        }
+		catch (Exception ex)
+		{
+			Console.WriteLine(ex);
+		}
+        finally
+        {
+            parentNames?.Pop();
+        }
+    }
 }

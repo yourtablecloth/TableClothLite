@@ -1,11 +1,14 @@
 using Blazored.LocalStorage;
+using KristofferStrube.Blazor.FileSystemAccess;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.FluentUI.AspNetCore.Components;
 using TableClothLite;
+using TableClothLite.Models;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
 using TableClothLite.ViewModels;
+using TG.Blazor.IndexedDB;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -25,6 +28,7 @@ builder.Services.AddFluentUIComponents(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddFluentUIComponents();
 builder.Services.AddBlazoredLocalStorageAsSingleton();
+builder.Services.AddFileSystemAccessService();
 
 builder.Services.AddSingleton<SandboxComposerService>();
 builder.Services.AddSingleton<CatalogService>();
@@ -41,6 +45,23 @@ builder.Services.AddScoped(sp =>
     {
         BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
     };
+});
+
+builder.Services.AddIndexedDB(dbStore =>
+{
+    dbStore.DbName = "TableClothLite";
+    dbStore.Version = 1;
+
+    dbStore.Stores.Add(new StoreSchema
+    {
+        Name = "certificates",
+        PrimaryKey = new IndexSpec
+        {
+            Name = "path",
+            KeyPath = "path",
+            Auto = true,
+        },
+    });
 });
 
 await using var app = builder.Build();
