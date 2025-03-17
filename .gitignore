@@ -401,3 +401,5 @@ FodyWeavers.xsd
 
 # Project Specific
 installer/
+
+.DS_Store
