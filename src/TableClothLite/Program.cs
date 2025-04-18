@@ -1,10 +1,10 @@
 using Blazored.LocalStorage;
 using KristofferStrube.Blazor.FileSystemAccess;
+using Markdig;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.FluentUI.AspNetCore.Components;
 using TableClothLite;
-using TableClothLite.Models;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
 using TableClothLite.ViewModels;
@@ -34,6 +34,8 @@ builder.Services.AddSingleton<SandboxComposerService>();
 builder.Services.AddSingleton<CatalogService>();
 builder.Services.AddSingleton<ConfigService>();
 
+builder.Services.AddScoped<OpenRouterAuthService>();
+builder.Services.AddScoped<OpenAIChatService>();
 builder.Services.AddScoped<FileDownloadService>();
 
 builder.Services.AddScoped<SandboxViewModel>();
@@ -46,6 +48,11 @@ builder.Services.AddScoped(sp =>
         BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
     };
 });
+
+builder.Services.AddHttpClient("OpenRouter")
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+    .AddHttpMessageHandler(() => new OpenRouterHeaderManipHandler())
+    .AddDefaultLogger();
 
 builder.Services.AddIndexedDB(dbStore =>
 {
@@ -62,6 +69,15 @@ builder.Services.AddIndexedDB(dbStore =>
             Auto = true,
         },
     });
+});
+
+builder.Services.AddScoped(sp =>
+{
+    return new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .UseBootstrap()
+        .DisableHtml()
+        .Build();
 });
 
 await using var app = builder.Build();

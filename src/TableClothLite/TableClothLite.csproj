@@ -8,13 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.2.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="KristofferStrube.Blazor.FileSystemAccess" Version="3.2.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.2" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.11.4" />
-    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.4" />
+    <PackageReference Include="KristofferStrube.Blazor.FileSystemAccess" Version="3.3.0" />
+    <PackageReference Include="Markdig" Version="0.41.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.4" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Emoji" Version="4.11.8" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.11.8" />
+    <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="TG.Blazor.IndexedDB" Version="1.5.0-preview" />
   </ItemGroup>
 
