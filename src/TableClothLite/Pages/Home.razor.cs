@@ -41,7 +41,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if(module is not null)
+        if (module is not null)
             await module.DisposeAsync();
     }
 }

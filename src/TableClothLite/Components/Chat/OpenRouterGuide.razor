@@ -1,4 +1,6 @@
-﻿<FluentDialogHeader ShowDismiss="true">
+﻿@inject OpenRouterAuthService AuthService
+
+<FluentDialogHeader ShowDismiss="true">
     <FluentStack VerticalAlignment="VerticalAlignment.Center">
         <FluentIcon Value="@(new Icons.Regular.Size24.Bot())" />
         <FluentLabel Typo="Typography.PaneHeader">
@@ -6,16 +8,15 @@
         </FluentLabel>
     </FluentStack>
 </FluentDialogHeader>
+
 <FluentDialogBody>
     <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
         <FluentLabel>
             채팅 서비스를 이용하기 위해서는 OpenRouter 계정이 필요합니다.
         </FluentLabel>
-        
         <FluentLabel>
             계속 진행하시면 OpenRouter 인증 페이지로 이동하여 계정을 연결하게 됩니다.
         </FluentLabel>
-
         <FluentLabel Style="font-weight: bold;">
             처음 이용하시는 경우 OpenRouter에 회원가입이 필요할 수 있습니다.
         </FluentLabel>

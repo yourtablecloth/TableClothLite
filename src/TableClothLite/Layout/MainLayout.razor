@@ -1,5 +1,9 @@
-﻿@using static CustomIcon;
-@inherits LayoutComponentBase;
+﻿@inherits LayoutComponentBase
+
+@inject IDialogService DialogService
+@inject OpenRouterAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <div class="page">
     <header class="header">

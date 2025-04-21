@@ -1,26 +1,18 @@
 using KristofferStrube.Blazor.FileSystem;
 using KristofferStrube.Blazor.FileSystemAccess;
-using TG.Blazor.IndexedDB;
 using Microsoft.AspNetCore.Components;
 using Microsoft.FluentUI.AspNetCore.Components;
-using TableClothLite.Services;
-using TableClothLite.ViewModels;
 using TableClothLite.Models;
+using TableClothLite.Services;
+using TG.Blazor.IndexedDB;
 
 namespace TableClothLite.Components.Setting;
+
 public partial class Setting : ComponentBase, IDialogContentComponent
 {
-    [Inject]
-    SandboxSettingsViewModel Model { get; set; } = default!;
-    [Inject]
-    ConfigService ConfigService { get; set; } = default!;
-    [Inject]
-    IFileSystemAccessService FileSystemAccessService { get; set; } = default!;
-    [Inject]
-    IndexedDBManager IndexedDbManger { get; set; } = default!;
-
     [CascadingParameter]
     public FluentDialog? Dialog { get; set; } = default!;
+
     private string? _currentPath;
 
 	protected override async Task OnInitializedAsync()

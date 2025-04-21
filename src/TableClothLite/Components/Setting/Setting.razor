@@ -1,3 +1,8 @@
+@inject SandboxSettingsViewModel Model
+@inject ConfigService ConfigService
+@inject IFileSystemAccessService FileSystemAccessService
+@inject IndexedDBManager IndexedDbManger
+
 <FluentDialogHeader ShowDismiss="true">
     <FluentStack VerticalAlignment="VerticalAlignment.Center">
         <FluentIcon Value="@(new Icons.Regular.Size24.Settings())" />
@@ -6,44 +11,39 @@
         </FluentLabel>
     </FluentStack>
 </FluentDialogHeader>
+
 <FluentDialogBody>
-<FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
         <div>
-    <FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
-        네트워크 사용
-    </FluentCheckbox>
-</div>
+            <FluentCheckbox Name="enableNetworking" @bind-Value="Model.EnableNetworking">
+                네트워크 사용
+            </FluentCheckbox>
+        </div>
 
-<div>
-    <FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
-        오디오 녹음 사용
-    </FluentCheckbox>
-</div>
+        <div>
+            <FluentCheckbox Name="enableAudioInput" @bind-Value="Model.EnableAudioInput">
+                오디오 녹음 사용
+            </FluentCheckbox>
+        </div>
 
-<div>
-    <FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
-        비디오 녹화 사용
-    </FluentCheckbox>
-</div>
+        <div>
+            <FluentCheckbox Name="enableVideoInput" @bind-Value="Model.EnableVideoInput">
+                비디오 녹화 사용
+            </FluentCheckbox>
+        </div>
 
-<div>
-    <FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
-        프린터 공유 사용
-    </FluentCheckbox>
-</div>
+        <div>
+            <FluentCheckbox Name="enablePrinterRedirection" @bind-Value="Model.EnablePrinterRedirection">
+                프린터 공유 사용
+            </FluentCheckbox>
+        </div>
 
-<div>
-    <FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
-        복사/붙여넣기 사용
-    </FluentCheckbox>
-</div>
-<!--
-    <div>
-        <div>@_currentPath</div>
-        <FluentButton Style="cursor: pointer;" OnClick="OnScanCertsButtonClick">공동인증서 불러오기</FluentButton>
-    </div>
--->
-</FluentStack>
+        <div>
+            <FluentCheckbox Name="enableClipboardRedirection" @bind-Value="Model.EnableClipboardRedirection">
+                복사/붙여넣기 사용
+            </FluentCheckbox>
+        </div>
+    </FluentStack>
 </FluentDialogBody>
 
 <FluentDialogFooter>
