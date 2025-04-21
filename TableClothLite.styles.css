@@ -80,6 +80,27 @@ main[b-3zwydhbc4h] {
         display: none;
     }
 }
+/* /Pages/Chat.razor.rz.scp.css */
+/* FluentUI 스타일 오버라이드 */
+[b-1eksyvqne5] .fluent-text-area {
+    width: 100%;
+}
+
+[b-1eksyvqne5] .fluent-text-input-wrapper {
+    width: 100%;
+}
+
+[b-1eksyvqne5] textarea.fluent-text-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+    [b-1eksyvqne5] textarea.fluent-text-input:focus {
+        box-shadow: 0 0 0 2px var(--accent-fill-rest);
+    }
 /* /Pages/Home.razor.rz.scp.css */
 .service-section[b-5coph13hgo] {
     position: relative;
