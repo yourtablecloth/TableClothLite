@@ -4,6 +4,7 @@
 @using AngleSharp.Html.Parser
 @using OpenAI
 @using System.Xml
+@using System.Net
 @using TableClothLite.Services
 @using Markdig
 @inject OpenAIChatService ChatService
@@ -11,220 +12,510 @@
 @inject NavigationManager NavigationManager
 @inject FileDownloadService FileDownloader
 
-<div class="chat-container">
-    <!-- Bootstrap 레이아웃 클래스를 사용한 버튼 정렬 -->
-    <div class="d-flex justify-content-between mt-3 mb-3 px-3">
-        <button class="btn btn-outline-secondary" @onclick="ResetConversation">
-            <span class="oi oi-reload me-1"></span> 새로운 대화 시작
-        </button>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout me-1"></span> 로그아웃
-        </button>
-    </div>
+<PageTitle>식탁보 라이트 Preview</PageTitle>
 
-    <div class="messages-container" id="messages">
-        @foreach (var message in _messages)
-        {
-            <div class="message @(message.IsUser ? "user-message" : "ai-message")">
-                <div class="message-content">@FormatMessage(message.Content)</div>
+<div class="chat-container">
+    <FluentCard class="chat-card">
+        <!-- 헤더 영역 -->
+        <div class="chat-header">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <div class="chat-title">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
+                    <span>TableClothLite Preview AI</span>
+                </div>
+                <FluentSpacer />
+                <div class="chat-actions">
+                    <FluentButton Appearance="Appearance.Lightweight" OnClick="ResetConversation"
+                                  IconStart="@(new Icons.Regular.Size16.New())" Title="새로운 대화 시작">
+                        새 대화
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Lightweight" OnClick="Logout"
+                                  IconStart="@(new Icons.Regular.Size16.ArrowStepOut())" Title="로그아웃">
+                        로그아웃
+                    </FluentButton>
+                </div>
+            </FluentStack>
+        </div>
+
+        <!-- 메시지 컨테이너 -->
+        <div class="messages-area">
+            <div class="messages-container" id="messages">
+                @if (!_messages.Any())
+                {
+                    <div class="welcome-message">
+                        <FluentIcon Value="@(new Icons.Regular.Size48.Bot())" />
+                        <h2>TableClothLite AI Preview</h2>
+                        <p>금융과 공공 부문에 관한 질문에 답변해 드립니다. 궁금한 점을 질문해 보세요.</p>
+                        <div class="disclaimer">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" Class="warning-icon" />
+                            <span>생성형 AI는 정보의 정확성을 보장하지 않습니다. 금융 결정은 반드시 전문가와 상담하세요.</span>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var message in _messages)
+                {
+                    <div class="message-row @(message.IsUser ? "message-row-user" : "message-row-ai")">
+                        @if (!message.IsUser)
+                        {
+                            <div class="avatar ai-avatar">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
+                            </div>
+                        }
+                        <FluentCard class="@(message.IsUser ? "user-message" : "ai-message")">
+                            <div class="message-content">@FormatMessage(message.Content)</div>
+                        </FluentCard>
+                        @if (message.IsUser)
+                        {
+                            <div class="avatar user-avatar">
+                                <FluentIcon Value="@(new Icons.Regular.Size20.Person())" />
+                            </div>
+                        }
+                    </div>
+                }
+                @if (_isStreaming)
+                {
+                    <div class="message-row message-row-ai">
+                        <div class="avatar ai-avatar">
+                            <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
+                        </div>
+                        <FluentCard class="ai-message">
+                            <div class="message-content">
+                                @FormatMessage(_currentStreamedMessage)
+                                <span class="loading-indicator">
+                                    @if (string.IsNullOrEmpty(_currentStreamedMessage))
+                                    {
+                                        <span>생각 중</span>
+                                    }
+                                    <FluentProgressRing Size="ProgressRingSize.Tiny" Visible="_isStreaming" />
+                                </span>
+                            </div>
+                        </FluentCard>
+                    </div>
+                }
             </div>
-        }
-        @if (_isStreaming)
-        {
-            <div class="message ai-message">
-                <div class="message-content">
-                    @FormatMessage(_currentStreamedMessage)
-                    <span class="loading-indicator">@(string.IsNullOrEmpty(_currentStreamedMessage) ? "생각 중" : string.Empty)<span class="dot-animation"></span></span>
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="input-area">
+            <FluentDivider />
+            <div class="input-container">
+                <textarea @oninput="OnInputChange"
+                          value="@_userInput"
+                          @onkeydown="HandleKeyDown"
+                          Placeholder="금융과 공공 부문에 관한 질문을 입력하세요. Shift + Enter로 줄바꿈. 개인 정보는 입력하지 마세요."
+                          Disabled="@_isStreaming"
+                          Rows="3"
+                          MaxLength="@_maxInputLength"
+                          id="chatTextArea"
+                          class="@(_isNearLimit ? "text-limit-warning" : string.Empty)">
+                </textarea>
+                <div class="input-actions">
+                    <span class="character-count @(_isNearLimit ? "text-danger" : "text-muted")">
+                        @(_userInput.Length) / @(_maxInputLength)
+                    </span>
+                    <FluentButton Appearance="Appearance.Accent"
+                                  OnClick="SendMessage"
+                                  Disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput))"
+                                  IconStart="@(new Icons.Regular.Size20.Send())">
+                        전송
+                    </FluentButton>
                 </div>
             </div>
-        }
-    </div>
-
-    <div class="input-container px-3">
-        <!-- 보내기 버튼을 텍스트 영역 위로 이동 -->
-        <div class="d-flex justify-content-between align-items-center mb-2 w-100">
-            <div class="character-counter @(_isNearLimit ? "text-danger" : "text-muted")">
-                <small>
-                    @(_userInput.Length) / @(_maxInputLength)
-                </small>
-            </div>
-            <button class="btn btn-primary send-button" @onclick="SendMessage" disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput))">
-                <span class="oi oi-share"></span> 전송
-            </button>
         </div>
-
-        <!-- 텍스트 영역 -->
-        <div class="position-relative w-100">
-            <textarea @oninput="OnInputChange"
-                      value="@_userInput"
-                      @onkeydown="HandleKeyDown"
-                      placeholder="금융과 공공 부문에 관하여 궁금한 것이 있으면 질문을 입력해주세요. 여러 줄 입력은 Shift + Enter키를 이용할 수 있습니다. 개인 정보는 절대 입력하지 마십시오."
-                      disabled="@_isStreaming"
-                      rows="3"
-                      maxlength="@_maxInputLength"
-                      class="form-control @(_isNearLimit ? "text-limit-warning" : string.Empty)"
-                      id="userInputTextarea"></textarea>
-        </div>
-    </div>
-
-    <!-- 간략화된 면책 조항 -->
-    <div class="disclaimer mt-3 p-2 text-center">
-        <p class="small text-muted mb-0">📢 개인 정보는 절대 입력하지 마십시오. 생성형 AI는 정보의 정확성을 보장하지 않습니다. 금융 결정은 반드시 전문가와 상담하세요.</p>
-    </div>
+    </FluentCard>
 </div>
 
-<!-- 애니메이션을 위한 스타일 추가 -->
-<style type="text/css" media="all">
-    /* 전체 화면 레이아웃 - 헤더 바를 고려 */
+<style type="text/css">
+    /* 전체 컨테이너 */
     .chat-container {
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 64px); /* 64px는 헤더 바의 높이 */
-        width: 100%;
-        box-sizing: border-box;
-        position: relative; /* absolute에서 relative로 변경 */
-        margin-top: -16px; /* 기본 padding을 상쇄 */
+        height: calc(100vh - 130px);
+        margin: -16px;
+        overflow: hidden;
     }
 
-    /* 메시지 컨테이너 마진 조정 */
-    .messages-container {
-        flex: 1;
-        overflow-y: auto;
-        padding: 15px;
-        margin: 0 0 20px 0; /* 상단 마진 제거 (버튼이 위로 이동) */
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        background-color: #fff;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    }
-
-    /* 입력 컨테이너 스타일링 */
-    .input-container {
+    .chat-card {
         display: flex;
         flex-direction: column;
-        margin-bottom: 10px;
+        flex: 1;
+        overflow: hidden;
+        box-shadow: none;
+        border-radius: 0;
+        border: none;
     }
 
-        .input-container textarea {
-            resize: none;
-            border-radius: 8px;
-            width: 100%;
+    /* 헤더 영역 */
+    .chat-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--neutral-stroke-rest);
+        background-color: var(--neutral-layer-1);
+        flex-shrink: 0;
+    }
+
+    .chat-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .chat-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* 메시지 영역 */
+    .messages-area {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        background-color: var(--neutral-layer-2);
+    }
+
+    .messages-container {
+        height: 100%;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* 웰컴 메시지 */
+    .welcome-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        height: 100%;
+        padding: 24px;
+        gap: 16px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+        .welcome-message h2 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
-    .send-button {
-        border-radius: 8px;
+        .welcome-message p {
+            color: var(--neutral-foreground-hint);
+            margin-bottom: 24px;
+        }
+
+    .disclaimer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        padding: 12px 16px;
+        border-radius: 4px;
+        background-color: var(--neutral-layer-3);
+        color: var(--neutral-foreground-rest);
+        max-width: 500px;
+        width: 100%;
     }
 
-    /* 글자 수 카운터 스타일 수정 */
-    .character-counter {
-        font-weight: bold;
+    .warning-icon {
+        color: var(--warning-foreground-rest);
     }
 
-    /* 메시지 스타일링 */
-    .message {
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        max-width: 85%;
+    /* 메시지 행 */
+    .message-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message-row-user {
+        flex-direction: row-reverse;
+    }
+
+    /* 아바타 */
+    .avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 4px;
+    }
+
+    .ai-avatar {
+        background-color: var(--accent-fill-rest);
+        color: var(--foreground-on-accent-rest);
+    }
+
+    .user-avatar {
+        background-color: var(--neutral-fill-rest);
+        color: var(--neutral-foreground-rest);
+    }
+
+    /* 메시지 풍선 */
+    .user-message, .ai-message {
+        position: relative;
+        border-radius: 16px;
+        max-width: 80%;
+        width: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .user-message {
-        background-color: #e3f2fd;
-        margin-left: auto;
-        text-align: right;
+        background-color: var(--accent-fill-rest);
+        color: var(--foreground-on-accent-rest);
+        border-top-right-radius: 4px;
+        margin-right: 8px;
     }
 
     .ai-message {
-        background-color: #f5f5f5;
-        margin-right: auto;
+        background-color: var(--neutral-layer-1);
+        color: var(--neutral-foreground-rest);
+        border-top-left-radius: 4px;
+        margin-left: 8px;
     }
 
-    /* 로딩 애니메이션 */
-    .loading-indicator {
-        display: inline-flex;
-        align-items: center;
-        color: #666;
-        margin-left: 5px;
-    }
-
-    .dot-animation::after {
-        content: "";
-        animation: dots 1.5s infinite;
-        display: inline-block;
-        width: 20px;
-        text-align: left;
-    }
-
-    @@keyframes dots {
-        0% {
-            content: ".";
-        }
-
-        33% {
-            content: "..";
-        }
-
-        66% {
-            content: "...";
-        }
-
-        100% {
-            content: ".";
-        }
-    }
-
-    /* 면책 조항 스타일 */
-    .disclaimer {
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        border-top: 1px solid #e9ecef;
-    }
-
-    /* 마크다운 스타일 추가 */
     .message-content {
+        padding: 12px 16px;
         overflow-wrap: break-word;
-        color: black;
     }
 
         .message-content pre {
-            background-color: #f5f5f5;
+            background-color: var(--neutral-layer-3);
             border-radius: 4px;
-            padding: 10px;
+            padding: 12px;
             overflow: auto;
+            max-width: 100%;
+            font-size: 14px;
         }
 
         .message-content code {
-            background-color: #f5f5f5;
+            background-color: var(--neutral-layer-3);
             border-radius: 3px;
             padding: 2px 4px;
             font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 90%;
         }
 
         .message-content table {
             border-collapse: collapse;
             margin: 10px 0;
+            max-width: 100%;
+            overflow-x: auto;
+            display: block;
         }
 
         .message-content th, .message-content td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--neutral-stroke-strong-rest);
             padding: 8px;
             text-align: left;
         }
 
         .message-content blockquote {
-            border-left: 4px solid #ddd;
+            border-left: 4px solid var(--neutral-stroke-rest);
             margin: 0;
             padding-left: 10px;
-            color: #666;
+            color: var(--neutral-foreground-hint);
         }
 
-    /* 버튼과 글자 수 카운터를 포함하는 컨테이너 스타일 */
+        .message-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+    /* 로딩 인디케이터 */
+    .loading-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 8px;
+        color: var(--neutral-foreground-hint);
+    }
+
+    /* 입력 영역 */
+    .input-area {
+        background-color: var(--neutral-layer-1);
+        padding: 16px;
+        flex-shrink: 0;
+    }
+
+    .input-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .input-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .character-count {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
     .text-limit-warning {
-        border-color: #ffc107;
+        border-color: var(--warning-stroke-rest) !important;
+    }
+
+    .text-danger {
+        color: var(--error-foreground-rest);
+    }
+
+    .text-muted {
+        color: var(--neutral-foreground-hint);
+    }
+
+    /* 반응형 디자인 */
+    @@media (max-width: 768px) {
+        .chat-container {
+            height: calc(100vh - 110px);
+        }
+
+        .user-message, .ai-message {
+            max-width: 85%;
+        }
+
+        .chat-actions {
+            gap: 4px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .chat-container {
+            height: calc(100vh - 100px);
+        }
+
+        .user-message, .ai-message {
+            max-width: 90%;
+        }
+
+        .chat-title span {
+            display: none;
+        }
+    }
+
+    @@media (min-width: 992px) {
+        .user-message, .ai-message {
+            max-width: 70%;
+        }
+
+        .messages-container {
+            padding: 24px;
+        }
     }
 </style>
 
+<script type="text/javascript">
+    // Chat.razor.js 파일 생성 또는 업데이트
+    window.adjustChatLayout = function() {
+    // 창 크기가 변경될 때 채팅 레이아웃 조절
+    function updateChatLayout() {
+    const viewportHeight = window.innerHeight;
+    const chatWrapper = document.querySelector('.chat-wrapper');
+
+    if (chatWrapper) {
+    // 뷰포트 높이에 따라 동적으로 높이 조정
+    // 헤더, 메시지 컨테이너, 여백 고려
+    const headerHeight = 64;
+    const messageContainerHeight = 60;
+    const margins = 16;
+
+    // 모바일 환경에서는 다른 값 적용
+    let adjustedHeight = viewportHeight - (headerHeight + messageContainerHeight + margins);
+
+    if (window.innerWidth <= 768) {
+    adjustedHeight = viewportHeight - (headerHeight + messageContainerHeight);
+    }
+
+    chatWrapper.style.height = `${adjustedHeight}px`;
+    }
+    }
+
+    // 초기 로드 시 실행
+    updateChatLayout();
+
+    // 창 크기 변경 시 실행
+    window.addEventListener('resize', updateChatLayout);
+    };
+
+    class Helpers {
+    static dotNetHelper;
+
+    static setDotNetHelper(value) {
+    Helpers.dotNetHelper = value;
+    }
+
+    static async openSandbox(url) {
+    await Helpers.dotNetHelper.invokeMethodAsync('OpenSandbox', url);
+    }
+    }
+
+    window.Helpers = Helpers;
+
+    window.scrollToBottom = function (elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+    element.scrollTop = element.scrollHeight;
+    }
+    };
+
+    window.downloadFileStream = async (fileName, contentType, dotNetStreamReference) => {
+    const stream = await dotNetStreamReference.stream();
+    const reader = stream.getReader();
+    const chunks = [];
+
+    // 데이터를 청크 단위로 읽기
+    while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    }
+
+    // Blob 생성
+    const blob = new Blob(chunks, { type: contentType });
+    const url = URL.createObjectURL(blob);
+
+    // 다운로드 처리
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // 메모리 정리
+    URL.revokeObjectURL(url);
+    };
+
+</script>
+
 @code {
+    // 기존 코드 유지
     private DotNetObjectReference<Chat>? dotNetHelper;
     private string _sessionId = Guid.NewGuid().ToString();
     private List<ChatMessage> _messages = [];
@@ -306,11 +597,12 @@
             if (_client == null)
                 throw new InvalidOperationException("Client is not initialized.");
 
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+
             await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId))
             {
                 _currentStreamedMessage += chunk;
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
             }
 
             _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
@@ -342,6 +634,8 @@
         if (e.Key == "Enter" && e.ShiftKey == false)
         {
             await SendMessage();
+            // 입력 필드에 다시 포커스 맞추기
+            await JSRuntime.InvokeVoidAsync("document.getElementById", "chatTextArea").AsTask();
         }
     }
 
@@ -365,9 +659,10 @@
         foreach (var eachAnchorElem in document.QuerySelectorAll("a"))
         {
             var currentHref = (eachAnchorElem.GetAttribute("href") ?? string.Empty).Trim();
-            eachAnchorElem.SetAttribute("href", "#");
+            eachAnchorElem.RemoveAttribute("href");
             eachAnchorElem.SetAttribute("onclick", $"window.Helpers.openSandbox('{currentHref}');");
-            eachAnchorElem.SetAttribute("style", "font-weight: bold;");
+            eachAnchorElem.SetAttribute("style", "font-weight: bold; cursor: pointer;");
+            eachAnchorElem.InnerHtml = $"<button>{WebUtility.HtmlEncode(currentHref)}</button>";
         }
 
         html = document.Body.InnerHtml;
@@ -394,8 +689,7 @@
     public async Task OpenSandboxAsync(string url)
     {
         var xmlDoc = new XmlDocument();
-        xmlDoc.LoadXml(
-                $@"
+        xmlDoc.LoadXml($@"
             <Configuration>
                 <VGpu>Disable</VGpu>
                 <LogonCommand>

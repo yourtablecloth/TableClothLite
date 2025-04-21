@@ -1,0 +1,20 @@
+﻿/* FluentUI 스타일 오버라이드 */
+::deep .fluent-text-area {
+    width: 100%;
+}
+
+::deep .fluent-text-input-wrapper {
+    width: 100%;
+}
+
+::deep textarea.fluent-text-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+    ::deep textarea.fluent-text-input:focus {
+        box-shadow: 0 0 0 2px var(--accent-fill-rest);
+    }

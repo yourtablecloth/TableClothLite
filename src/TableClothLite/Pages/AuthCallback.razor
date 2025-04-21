@@ -5,7 +5,9 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
-<h3>Authenticating...</h3>
+<PageTitle>식탁보 라이트 Preview</PageTitle>
+
+<h3>인증 처리 중입니다.</h3>
 
 @if (_error != null)
 {
@@ -26,7 +28,7 @@
         var code = query["code"];
         if (string.IsNullOrEmpty(code))
         {
-            _error = "Authentication failed: No code received";
+            _error = "인증 실패: 코드 전달이 되지 않았거나 인증이 도중에 취소되었습니다.";
             return;
         }
 
@@ -38,11 +40,11 @@
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "openRouterApiKey", apiKey);
 
             // Navigate to chat
-            NavigationManager.NavigateTo("/chat");
+            NavigationManager.NavigateTo("/Chat");
         }
         catch (Exception ex)
         {
-            _error = $"Authentication error: {ex.Message}";
+            _error = $"인증 오류: {ex.Message}";
         }
     }
 
