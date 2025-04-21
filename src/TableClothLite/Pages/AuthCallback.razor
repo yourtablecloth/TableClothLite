@@ -1,0 +1,53 @@
+﻿@page "/auth-callback"
+@using TableClothLite.Services
+@inject OpenRouterAuthService AuthService
+@inject OpenAIChatService ChatService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<h3>Authenticating...</h3>
+
+@if (_error != null)
+{
+    <div class="alert alert-danger">
+        @_error
+    </div>
+    <button class="btn btn-primary" @onclick="RetryAuthentication">다시 시도</button>
+}
+
+@code {
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var code = query["code"];
+        if (string.IsNullOrEmpty(code))
+        {
+            _error = "Authentication failed: No code received";
+            return;
+        }
+
+        try
+        {
+            var apiKey = await AuthService.ObtainApiKeyAsync(code);
+
+            // Store API key in local storage
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "openRouterApiKey", apiKey);
+
+            // Navigate to chat
+            NavigationManager.NavigateTo("/chat");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Authentication error: {ex.Message}";
+        }
+    }
+
+    private Task RetryAuthentication()
+    {
+        return AuthService.StartAuthFlowAsync();
+    }
+}

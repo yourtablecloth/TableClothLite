@@ -1,0 +1,417 @@
+﻿@implements IDisposable
+@page "/chat"
+@using System.Text
+@using AngleSharp.Html.Parser
+@using OpenAI
+@using System.Xml
+@using TableClothLite.Services
+@using Markdig
+@inject OpenAIChatService ChatService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject FileDownloadService FileDownloader
+
+<div class="chat-container">
+    <!-- Bootstrap 레이아웃 클래스를 사용한 버튼 정렬 -->
+    <div class="d-flex justify-content-between mt-3 mb-3 px-3">
+        <button class="btn btn-outline-secondary" @onclick="ResetConversation">
+            <span class="oi oi-reload me-1"></span> 새로운 대화 시작
+        </button>
+        <button class="btn btn-outline-danger" @onclick="Logout">
+            <span class="oi oi-account-logout me-1"></span> 로그아웃
+        </button>
+    </div>
+
+    <div class="messages-container" id="messages">
+        @foreach (var message in _messages)
+        {
+            <div class="message @(message.IsUser ? "user-message" : "ai-message")">
+                <div class="message-content">@FormatMessage(message.Content)</div>
+            </div>
+        }
+        @if (_isStreaming)
+        {
+            <div class="message ai-message">
+                <div class="message-content">
+                    @FormatMessage(_currentStreamedMessage)
+                    <span class="loading-indicator">@(string.IsNullOrEmpty(_currentStreamedMessage) ? "생각 중" : string.Empty)<span class="dot-animation"></span></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="input-container px-3">
+        <!-- 보내기 버튼을 텍스트 영역 위로 이동 -->
+        <div class="d-flex justify-content-between align-items-center mb-2 w-100">
+            <div class="character-counter @(_isNearLimit ? "text-danger" : "text-muted")">
+                <small>
+                    @(_userInput.Length) / @(_maxInputLength)
+                </small>
+            </div>
+            <button class="btn btn-primary send-button" @onclick="SendMessage" disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput))">
+                <span class="oi oi-share"></span> 전송
+            </button>
+        </div>
+
+        <!-- 텍스트 영역 -->
+        <div class="position-relative w-100">
+            <textarea @oninput="OnInputChange"
+                      value="@_userInput"
+                      @onkeydown="HandleKeyDown"
+                      placeholder="금융과 공공 부문에 관하여 궁금한 것이 있으면 질문을 입력해주세요. 여러 줄 입력은 Shift + Enter키를 이용할 수 있습니다. 개인 정보는 절대 입력하지 마십시오."
+                      disabled="@_isStreaming"
+                      rows="3"
+                      maxlength="@_maxInputLength"
+                      class="form-control @(_isNearLimit ? "text-limit-warning" : string.Empty)"
+                      id="userInputTextarea"></textarea>
+        </div>
+    </div>
+
+    <!-- 간략화된 면책 조항 -->
+    <div class="disclaimer mt-3 p-2 text-center">
+        <p class="small text-muted mb-0">📢 개인 정보는 절대 입력하지 마십시오. 생성형 AI는 정보의 정확성을 보장하지 않습니다. 금융 결정은 반드시 전문가와 상담하세요.</p>
+    </div>
+</div>
+
+<!-- 애니메이션을 위한 스타일 추가 -->
+<style type="text/css" media="all">
+    /* 전체 화면 레이아웃 - 헤더 바를 고려 */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 64px); /* 64px는 헤더 바의 높이 */
+        width: 100%;
+        box-sizing: border-box;
+        position: relative; /* absolute에서 relative로 변경 */
+        margin-top: -16px; /* 기본 padding을 상쇄 */
+    }
+
+    /* 메시지 컨테이너 마진 조정 */
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        margin: 0 0 20px 0; /* 상단 마진 제거 (버튼이 위로 이동) */
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    /* 입력 컨테이너 스타일링 */
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+    }
+
+        .input-container textarea {
+            resize: none;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+    .send-button {
+        border-radius: 8px;
+    }
+
+    /* 글자 수 카운터 스타일 수정 */
+    .character-counter {
+        font-weight: bold;
+    }
+
+    /* 메시지 스타일링 */
+    .message {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        max-width: 85%;
+    }
+
+    .user-message {
+        background-color: #e3f2fd;
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .ai-message {
+        background-color: #f5f5f5;
+        margin-right: auto;
+    }
+
+    /* 로딩 애니메이션 */
+    .loading-indicator {
+        display: inline-flex;
+        align-items: center;
+        color: #666;
+        margin-left: 5px;
+    }
+
+    .dot-animation::after {
+        content: "";
+        animation: dots 1.5s infinite;
+        display: inline-block;
+        width: 20px;
+        text-align: left;
+    }
+
+    @@keyframes dots {
+        0% {
+            content: ".";
+        }
+
+        33% {
+            content: "..";
+        }
+
+        66% {
+            content: "...";
+        }
+
+        100% {
+            content: ".";
+        }
+    }
+
+    /* 면책 조항 스타일 */
+    .disclaimer {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* 마크다운 스타일 추가 */
+    .message-content {
+        overflow-wrap: break-word;
+        color: black;
+    }
+
+        .message-content pre {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        .message-content code {
+            background-color: #f5f5f5;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        .message-content th, .message-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid #ddd;
+            margin: 0;
+            padding-left: 10px;
+            color: #666;
+        }
+
+    /* 버튼과 글자 수 카운터를 포함하는 컨테이너 스타일 */
+    .text-limit-warning {
+        border-color: #ffc107;
+    }
+</style>
+
+@code {
+    private DotNetObjectReference<Chat>? dotNetHelper;
+    private string _sessionId = Guid.NewGuid().ToString();
+    private List<ChatMessage> _messages = [];
+    private string _userInput = string.Empty;
+    private bool _isStreaming = false;
+    private string _currentStreamedMessage = string.Empty;
+    private OpenAIClient? _client;
+    private MarkdownPipeline? _markdownPipeline;
+    private HtmlParser _htmlParser = new HtmlParser();
+
+    // 글자 수 제한 관련 변수
+    private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
+    private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
+    private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
+
+    protected override void OnInitialized()
+    {
+        _markdownPipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .UseBootstrap()
+            .DisableHtml()
+            .Build();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if we have an API key stored
+        var apiKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "openRouterApiKey");
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
+        if (_client == null)
+            _client = ChatService.CreateOpenAIClient(apiKey);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
+        }
+
+        await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+    }
+
+    // 입력 내용이 변경될 때 호출되는 메서드
+    private void OnInputChange(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString() ?? string.Empty;
+
+        // 최대 길이를 초과하는 경우 잘라내기
+        if (newValue.Length > _maxInputLength)
+            newValue = newValue.Substring(0, _maxInputLength);
+
+        _userInput = newValue;
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
+            return;
+
+        var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
+        _messages.Add(userMessage);
+
+        var input = _userInput;
+        _userInput = string.Empty;
+        _isStreaming = true;
+        _currentStreamedMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            if (_client == null)
+                throw new InvalidOperationException("Client is not initialized.");
+
+            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId))
+            {
+                _currentStreamedMessage += chunk;
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+            }
+
+            _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage
+                {
+                    Content = $"오류가 발생했습니다: {ex.ToString()}",
+                    IsUser = false
+                });
+        }
+        finally
+        {
+            _isStreaming = false;
+            _currentStreamedMessage = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Logout()
+    {
+        await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && e.ShiftKey == false)
+        {
+            await SendMessage();
+        }
+    }
+
+    private MarkupString FormatMessage(string markdown)
+    {
+        var html = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(markdown))
+            return (MarkupString)html;
+
+        // 마크다운을 HTML로 변환
+        html = Markdown.ToHtml(markdown, _markdownPipeline);
+        var document = _htmlParser.ParseDocument(html);
+
+        if (document.Body == null)
+        {
+            Console.Error.WriteLine("Cannot parse fragment element.");
+            return (MarkupString)html;
+        }
+
+        foreach (var eachAnchorElem in document.QuerySelectorAll("a"))
+        {
+            var currentHref = (eachAnchorElem.GetAttribute("href") ?? string.Empty).Trim();
+            eachAnchorElem.SetAttribute("href", "#");
+            eachAnchorElem.SetAttribute("onclick", $"window.Helpers.openSandbox('{currentHref}');");
+            eachAnchorElem.SetAttribute("style", "font-weight: bold;");
+        }
+
+        html = document.Body.InnerHtml;
+
+        // 줄바꿈이 적용되지 않은 부분 처리 (마크다운에서 처리되지 않은 줄바꿈)
+        return (MarkupString)html;
+    }
+
+    private Task ResetConversation()
+    {
+        _messages.Clear();
+        ChatService.ClearSession(_sessionId);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private class ChatMessage
+    {
+        public string Content { get; set; } = string.Empty;
+        public bool IsUser { get; set; }
+    }
+
+    [JSInvokable("OpenSandbox")]
+    public async Task OpenSandboxAsync(string url)
+    {
+        var xmlDoc = new XmlDocument();
+        xmlDoc.LoadXml(
+                $@"
+            <Configuration>
+                <VGpu>Disable</VGpu>
+                <LogonCommand>
+                    <Command>explorer.exe {url}</Command>
+                </LogonCommand>
+            </Configuration>
+            ");
+        using var memStream = new MemoryStream();
+        xmlDoc.Save(memStream);
+        memStream.Seek(0L, SeekOrigin.Begin);
+
+        await this.FileDownloader.DownloadFileAsync(memStream, "sandbox.wsb");
+    }
+
+    public void Dispose()
+    {
+        dotNetHelper?.Dispose();
+    }
+}

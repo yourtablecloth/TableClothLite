@@ -50,15 +50,15 @@ public sealed class OpenRouterAuthService
     {
         var challenge = GeneratePkce();
         var callbackUrl = _navigationManager.BaseUri + "auth-callback";
-        var authUrl = string.Concat(
+        var authUrl = string.Join(
             "?",
             "https://openrouter.ai/auth",
-            (new Dictionary<string, string>
+            string.Join("&", (new Dictionary<string, string>
             {
                 { "callback_url", callbackUrl },
                 { "code_challenge", challenge.CodeChallenge },
                 { "code_challenge_method", "S256" }
-            }).Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}")
+            }).Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}"))
         );
 
         // Save the code verifier to session storage for later use

@@ -27,10 +27,13 @@ public partial class Home : ComponentBase, IAsyncDisposable
         if (firstRender)
             module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./Pages/Home.razor.js");
 
-        if (!IsServiceSectionRendered)
+        if (module != null)
         {
-            var initObserverResult = await module!.InvokeAsync<bool>("initObserver");
-            IsServiceSectionRendered = initObserverResult;
+            if (!IsServiceSectionRendered)
+            {
+                var initObserverResult = await module!.InvokeAsync<bool>("initObserver");
+                IsServiceSectionRendered = initObserverResult;
+            }
         }
 
         await base.OnAfterRenderAsync(firstRender);

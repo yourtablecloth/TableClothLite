@@ -9,6 +9,9 @@
         </a>
 
         <div class="external-site">
+            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenChatPage" Style="display: none;">
+				<FluentIcon Value="@(new Icons.Regular.Size24.Bot().WithColor("currentColor"))" />
+			</FluentButton>
             <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Settings().WithColor("currentColor"))" />
             </FluentButton>
