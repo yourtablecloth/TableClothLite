@@ -3,6 +3,7 @@ using OpenAI;
 using System.ClientModel.Primitives;
 using System.ClientModel;
 using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace TableClothLite.Services;
 
@@ -32,18 +33,22 @@ public sealed class OpenAIChatService
         return new OpenAIClient(credential, options);
     }
 
-    public void CreateNewSession(string sessionId)
+    public async Task CreateNewSessionAsync(string sessionId, CancellationToken cancellationToken = default)
     {
         if (!_conversationHistory.ContainsKey(sessionId))
-            _conversationHistory[sessionId] = [.. GetSystemMessages()];
+        {
+            var messages = await GetSystemMessagesAsync(cancellationToken).ConfigureAwait(false);
+            _conversationHistory[sessionId] = [.. messages];
+        }
     }
 
     public async IAsyncEnumerable<string> SendMessageStreamingAsync(
-        OpenAIClient client, string message, string sessionId)
+        OpenAIClient client, string message, string sessionId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         // 세션이 없으면 생성
         if (!_conversationHistory.ContainsKey(sessionId))
-            CreateNewSession(sessionId);
+            await CreateNewSessionAsync(sessionId, cancellationToken).ConfigureAwait(false);
 
         // 사용자 메시지 추가
         _conversationHistory[sessionId].Add(ChatMessage.CreateUserMessage(message));
@@ -55,7 +60,7 @@ public sealed class OpenAIChatService
 
         await foreach (var completionUpdate in chatClient.CompleteChatStreamingAsync(
             _conversationHistory[sessionId].ToArray(),
-            GetChatCompletionOptions()))
+            GetChatCompletionOptions(), cancellationToken).ConfigureAwait(false))
         {
             if (completionUpdate.ContentUpdate.Count < 1)
                 continue;
@@ -69,7 +74,7 @@ public sealed class OpenAIChatService
                 yield return textChunk;
 
                 // 렌더링이 너무 빨라 UI 업데이트가 놓치지 않도록 아주 짧은 딜레이 추가 (선택적)
-                await Task.Delay(10);
+                await Task.Delay(10).ConfigureAwait(false);
             }
         }
 
@@ -86,41 +91,22 @@ public sealed class OpenAIChatService
     }
 
     // 세션 초기화
-    public void ClearSession(string sessionId)
+    public async Task ClearSessionAsync(string sessionId, CancellationToken cancellationToken = default)
     {
         if (!_conversationHistory.ContainsKey(sessionId))
             return;
 
         _conversationHistory[sessionId].Clear();
-        _conversationHistory[sessionId].AddRange(GetSystemMessages());
+        var messages = await GetSystemMessagesAsync(cancellationToken).ConfigureAwait(false);
+        _conversationHistory[sessionId].AddRange(messages);
     }
 
-    private IEnumerable<ChatMessage> GetSystemMessages()
+    private async Task<IEnumerable<ChatMessage>> GetSystemMessagesAsync(
+        CancellationToken cancellationToken = default)
     {
-        // TODO: 시스템 프롬프트를 외부에서 가져오도록 변경
-        var systemPrompt =
-            $$"""
-            # Default Behavior
-
-            You are a professional with extensive knowledge of financial services and public affairs in the Republic of Korea.
-            When asked, proactively provide web page addresses that can lead users to the website of their bank, credit card company, insurance company, or government agency so they can find the information they want.
-            If the user enter information that you suspect is personal information, refuse to answer.
-            Please answer all responses in Korean only.
-
-            ## Sitemap of Major Financial Institutions and Public Institutions in Korea
-
-            When you need to guide users to online services of financial institutions and public institutions, you must provide the exact website address by referring to the information below. If you do not know the address, do not guess it yourself, but provide the website address of the institution instead.
-
-            ### KB국민은행 (https://www.kbstar.com)
-
-            개인 뱅킹 인증센터 - https://obank.kbstar.com/quics?page=C018872
-            개인 뱅킹 조회 - https://obank.kbstar.com/quics?page=C016511
-            개인 뱅킹 이체 - https://obank.kbstar.com/quics?page=C016524
-            개인 뱅킹 공과금 - https://obank.kbstar.com/quics?page=C016526
-            개인 뱅킹 금융상품 - https://obank.kbstar.com/quics?page=C030037
-            개인 뱅킹 외환 - https://obank.kbstar.com/quics?page=C102239
-            개인 뱅킹 관리 - https://obank.kbstar.com/quics?page=C016535
-            """;
+        var url = "https://raw.githubusercontent.com/yourtablecloth/TableClothLite/refs/heads/main/src/TableClothLite/wwwroot/assets/instruction.md";
+        var httpClient = _httpClientFactory.CreateClient();
+        var systemPrompt = await httpClient.GetStringAsync(url, cancellationToken).ConfigureAwait(false);
 
         return [
             ChatMessage.CreateSystemMessage(systemPrompt),

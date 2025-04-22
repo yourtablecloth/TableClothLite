@@ -176,12 +176,11 @@ public partial class Chat : IDisposable
         return (MarkupString)html;
     }
 
-    private Task ResetConversation()
+    private async Task ResetConversationAsync()
     {
         _messages.Clear();
-        ChatService.ClearSession(_sessionId);
+        await ChatService.ClearSessionAsync(_sessionId);
         StateHasChanged();
-        return Task.CompletedTask;
     }
 
     [JSInvokable("OpenSandbox")]
