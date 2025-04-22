@@ -43,7 +43,7 @@
 									<span>@eachService.DisplayName</span>
 									<br /><br />
 									<div style="text-align: right;">
-										<FluentButton style="cursor: pointer;" Appearance="Appearance.Neutral" @onclick="() => Model.GenerateSandboxDocumentAsync(eachService)">
+										<FluentButton style="cursor: pointer;" Appearance="Appearance.Neutral" @onclick="() => Model.GenerateSandboxDocumentAsync(string.Empty, eachService)">
 											<FluentEmoji Value="@(new Emojis.Symbols.Color.Default.PlayButton())" />
 										</FluentButton>
 									</div>

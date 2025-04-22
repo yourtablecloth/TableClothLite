@@ -31,10 +31,11 @@ public sealed partial class SandboxViewModel : ObservableObject
         => _catalogService.LoadCatalogDocumentAsync(Services);
 
     public async Task GenerateSandboxDocumentAsync(
+        string targetUrl,
         ServiceInfo serviceInfo,
         CancellationToken cancellationToken = default)
     {
-        var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(this, serviceInfo, cancellationToken).ConfigureAwait(false);
+        var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(this, targetUrl, serviceInfo, cancellationToken).ConfigureAwait(false);
         using var memStream = new MemoryStream();
         doc.Save(memStream);
         memStream.Position = 0L;

@@ -1,5 +1,6 @@
 param (
-    [string]$ServiceIds = ""
+    [string]$ServiceIds = "",
+    [string]$Url = ""
 )
 
 $InstallerUrl = "https://yourtablecloth.app/TableClothLite/assets/installer.zip"
@@ -34,5 +35,8 @@ $Arguments = ""
 if ($ServiceIds -ne "") {
     $Arguments = "--services=$ServiceIds"
 }
+if ($Url -ne "") {
+    $Arguments += " --url=$Url"
+})
 
 Start-Process -FilePath $InstallerExe -ArgumentList $Arguments

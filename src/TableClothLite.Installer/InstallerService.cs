@@ -41,6 +41,8 @@ public sealed class InstallerService : BackgroundService
                 .Split([',',], StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim());
 
+            var targetUrl = (_configuration["Url"] ?? string.Empty).Trim();
+
             var client = _httpClientFactory.CreateClient();
             var foundServices = new List<ServiceInfo>();
             var installTaskList = new List<ProcessStartInfo>();
@@ -123,11 +125,17 @@ public sealed class InstallerService : BackgroundService
                     stoppingToken).ConfigureAwait(false);
             }
 
-            foreach (var eachService in foundServices)
-            {
-                _logger.LogInformation("Opening web site '{url}'...", Path.GetFileName(eachService.Url));
+            var urls = new List<string>();
+            urls.AddRange(foundServices.Select(x => x.Url));
 
-                var startInfo = new ProcessStartInfo(eachService.Url)
+            if (!string.IsNullOrWhiteSpace(targetUrl))
+                urls.Add(targetUrl);
+
+            foreach (var eachUrl in urls)
+            {
+                _logger.LogInformation("Opening web site '{url}'...", Path.GetFileName(eachUrl));
+
+                var startInfo = new ProcessStartInfo(eachUrl)
                 {
                     UseShellExecute = true,
                 };

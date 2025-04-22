@@ -17,7 +17,8 @@ public sealed class SandboxComposerService
 
     public async Task<XmlDocument> CreateSandboxDocumentAsync(
         SandboxViewModel viewModel,
-        ServiceInfo serviceInfo,
+        string? targetUrl,
+        ServiceInfo? serviceInfo,
         CancellationToken cancellationToken = default)
     {
         var model = await _configService.LoadAsync(cancellationToken).ConfigureAwait(false);
@@ -54,7 +55,12 @@ public sealed class SandboxComposerService
             var commandLines = new List<string>();
             var url = "https://yourtablecloth.app/TableClothLite/assets/installer.txt";
             commandLines.Add($"[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072");
-            commandLines.Add($"Invoke-Command -ScriptBlock ([scriptblock]::Create([System.Text.Encoding]::UTF8.GetString((New-Object System.Net.WebClient).DownloadData('{url}')))) -ArgumentList @('{serviceInfo.ServiceId}')");
+
+            if (serviceInfo != null)
+                commandLines.Add($"Invoke-Command -ScriptBlock ([scriptblock]::Create([System.Text.Encoding]::UTF8.GetString((New-Object System.Net.WebClient).DownloadData('{url}')))) -ArgumentList @('{serviceInfo.ServiceId}', '{targetUrl}')");
+
+            if (!string.IsNullOrWhiteSpace(targetUrl))
+                commandLines.Add($"explorer.exe '{targetUrl}'");
 
             command.InnerText = string.Join(" ", [
                 @"C:\Windows\System32\cmd.exe",

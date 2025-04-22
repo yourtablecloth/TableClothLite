@@ -1,17 +1,20 @@
 ﻿using AngleSharp.Html.Parser;
 using Markdig;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using OpenAI;
 using System.Net;
-using System.Xml;
 using TableClothLite.Models;
+using TableClothLite.Shared.Models;
 
 namespace TableClothLite.Pages;
 
 public partial class Chat : IDisposable
 {
+    public IEnumerable<IGrouping<string, ServiceInfo>> ServiceGroup =
+        Enumerable.Empty<IGrouping<string, ServiceInfo>>();
+
     private DotNetObjectReference<Chat>? dotNetHelper;
     private string _sessionId = Guid.NewGuid().ToString();
     private List<ChatMessage> _messages = [];
@@ -34,6 +37,12 @@ public partial class Chat : IDisposable
             .UseBootstrap()
             .DisableHtml()
             .Build();
+
+        Model.LoadCatalogCommand.ExecuteAsync(this)
+            .ContinueWith(async (task) => {
+                ServiceGroup = Model.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
+                await InvokeAsync(StateHasChanged);
+            });
     }
 
     protected override async Task OnInitializedAsync()
@@ -178,20 +187,22 @@ public partial class Chat : IDisposable
     [JSInvokable("OpenSandbox")]
     public async Task OpenSandboxAsync(string url)
     {
-        var xmlDoc = new XmlDocument();
-        xmlDoc.LoadXml($@"
-            <Configuration>
-                <VGpu>Disable</VGpu>
-                <LogonCommand>
-                    <Command>explorer.exe {url}</Command>
-                </LogonCommand>
-            </Configuration>
-            ");
-        using var memStream = new MemoryStream();
-        xmlDoc.Save(memStream);
-        memStream.Seek(0L, SeekOrigin.Begin);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUri))
+            parsedUri = null;
 
-        await this.FileDownloader.DownloadFileAsync(memStream, "sandbox.wsb");
+        var serviceInfo = default(ServiceInfo);
+        if (parsedUri != null)
+            serviceInfo = Model.Services.FirstOrDefault(x => x.Url.StartsWith(parsedUri.AbsoluteUri));
+
+        var doc = await SandboxComposer.CreateSandboxDocumentAsync(
+            Model, parsedUri?.AbsoluteUri, serviceInfo);
+        using var memStream = new MemoryStream();
+        doc.Save(memStream);
+        memStream.Position = 0L;
+
+        await FileDownloader.DownloadFileAsync(
+            memStream, $"{serviceInfo?.ServiceId ?? "generated"}.wsb", "application/xml")
+            .ConfigureAwait(false);
     }
 
     public void Dispose()
