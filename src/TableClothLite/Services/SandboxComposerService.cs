@@ -59,9 +59,6 @@ public sealed class SandboxComposerService
             if (serviceInfo != null)
                 commandLines.Add($"Invoke-Command -ScriptBlock ([scriptblock]::Create([System.Text.Encoding]::UTF8.GetString((New-Object System.Net.WebClient).DownloadData('{url}')))) -ArgumentList @('{serviceInfo.ServiceId}', '{targetUrl}')");
 
-            if (!string.IsNullOrWhiteSpace(targetUrl))
-                commandLines.Add($"explorer.exe '{targetUrl}'");
-
             command.InnerText = string.Join(" ", [
                 @"C:\Windows\System32\cmd.exe",
                 "/c", "start",

@@ -190,9 +190,26 @@ public partial class Chat : IDisposable
         if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUri))
             parsedUri = null;
 
-        var serviceInfo = default(ServiceInfo);
+        var hostName = default(string);
         if (parsedUri != null)
-            serviceInfo = Model.Services.FirstOrDefault(x => x.Url.StartsWith(parsedUri.AbsoluteUri));
+            hostName = parsedUri.Host;
+
+        var serviceInfo = default(ServiceInfo);
+        if (!string.IsNullOrWhiteSpace(hostName))
+        {
+            serviceInfo = Model.Services.FirstOrDefault(x =>
+            {
+                if (!Uri.TryCreate(x.Url, UriKind.Absolute, out var serviceUri))
+                    return false;
+
+                // TODO: Public Suffix 기반으로 일치 여부를 판정할 필요가 있음
+                var rootHostName = serviceUri.Host.Replace("www.", string.Empty, StringComparison.OrdinalIgnoreCase);
+                if (!hostName.EndsWith(rootHostName, StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                return true;
+            });
+        }
 
         var doc = await SandboxComposer.CreateSandboxDocumentAsync(
             Model, parsedUri?.AbsoluteUri, serviceInfo);
