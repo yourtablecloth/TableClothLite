@@ -37,6 +37,6 @@ if ($ServiceIds -ne "") {
 }
 if ($Url -ne "") {
     $Arguments += " --url=$Url"
-})
+}
 
 Start-Process -FilePath $InstallerExe -ArgumentList $Arguments
