@@ -104,7 +104,7 @@ public sealed class OpenAIChatService
     private async Task<IEnumerable<ChatMessage>> GetSystemMessagesAsync(
         CancellationToken cancellationToken = default)
     {
-        var url = "https://raw.githubusercontent.com/yourtablecloth/TableClothLite/refs/heads/main/src/TableClothLite/wwwroot/assets/instruction.md";
+        var url = $"https://raw.githubusercontent.com/yourtablecloth/TableClothCatalog/refs/heads/main/docs/instruction.md?ts={DateTime.UtcNow.Ticks}";
         var httpClient = _httpClientFactory.CreateClient();
         var systemPrompt = await httpClient.GetStringAsync(url, cancellationToken).ConfigureAwait(false);
 
