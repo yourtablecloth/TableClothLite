@@ -24,28 +24,71 @@
             </p>
         </div>
 
-        @if (ServiceGroup.Any())
+        <!-- 검색 영역 -->
+        <div style="position: sticky; top: 0; background: var(--fill-color); z-index: 10; padding: 8px 0;">
+            <FluentSearch @bind-Value="SearchText" 
+                         Placeholder="서비스 이름이나 카테고리로 검색..."
+                         Style="width: 100%;"
+                         Autofocus="true">
+                <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
+                @if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    <FluentButton Appearance="Appearance.Stealth" 
+                                 OnClick="ClearSearch" 
+                                 Style="padding: 4px;"
+                                 Slot="end"
+                                 Title="검색어 지우기">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                    </FluentButton>
+                }
+            </FluentSearch>
+            
+            @if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                <div style="margin-top: 8px; font-size: 12px; color: var(--neutral-foreground-rest);">
+                    @{
+                        var totalFilteredServices = FilteredServiceGroup.SelectMany(g => g).Count();
+                    }
+                    "@SearchText" 검색 결과: @(totalFilteredServices)개 서비스
+                </div>
+            }
+        </div>
+
+        @if (FilteredServiceGroup.Any())
         {
-            @foreach (var eachGroup in ServiceGroup)
+            @foreach (var eachGroup in FilteredServiceGroup)
             {
                 <div>
                     <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 12px; display: block; color: var(--accent-foreground-rest);">
                         @Model.DisplayCategoryName(eachGroup.Key)
+                        <span style="font-size: 12px; font-weight: normal; color: var(--neutral-foreground-rest);">
+                            (@eachGroup.Count()개)
+                        </span>
                     </FluentLabel>
                     
                     <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
                         @foreach (var eachService in eachGroup)
                         {
                             <FluentGridItem xs="6" sm="4" md="3">
-                                <FluentCard Style="height: 140px; cursor: pointer; transition: all 0.2s ease;" 
+                                <FluentCard class="service-card" 
+                                           Style="height: 140px; cursor: pointer; transition: all 0.2s ease;" 
                                            @onclick="() => LaunchServiceAsync(eachService)"
                                            @onmouseenter="() => OnCardHover(true)"
                                            @onmouseleave="() => OnCardHover(false)">
                                     <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" VerticalGap="8">
                                         <FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" 
+                                                   class="service-card-icon"
                                                    Style="width: 32px; height: 32px;" />
                                         <FluentLabel Style="text-align: center; font-size: 13px; line-height: 1.2; font-weight: 500;">
-                                            @eachService.DisplayName
+                                            @if (!string.IsNullOrWhiteSpace(SearchText) && 
+                                                 eachService.DisplayName.ToLowerInvariant().Contains(SearchText.ToLowerInvariant()))
+                                            {
+                                                @(HighlightSearchText(eachService.DisplayName, SearchText))
+                                            }
+                                            else
+                                            {
+                                                @eachService.DisplayName
+                                            }
                                         </FluentLabel>
                                         <FluentIcon Value="@(new Icons.Regular.Size16.Play())" 
                                                    Style="color: var(--accent-foreground-rest); margin-top: 4px;" />
@@ -57,7 +100,24 @@
                 </div>
             }
         }
-        else
+        else if (ServiceGroup.Any() && !string.IsNullOrWhiteSpace(SearchText))
+        {
+            <!-- 검색 결과가 없을 때 -->
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 40px;">
+                <FluentIcon Value="@(new Icons.Regular.Size48.Search())" Style="color: var(--neutral-foreground-rest); margin-bottom: 16px;" />
+                <FluentLabel Typo="Typography.Subject" Style="color: var(--neutral-foreground-rest); text-align: center;">
+                    "@SearchText"에 대한 검색 결과가 없습니다
+                </FluentLabel>
+                <FluentLabel Style="color: var(--neutral-foreground-rest); text-align: center; margin-top: 8px; font-size: 14px;">
+                    다른 검색어를 시도해보세요
+                </FluentLabel>
+                <FluentButton Appearance="Appearance.Lightweight" OnClick="ClearSearch" Style="margin-top: 16px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Slot="start" />
+                    검색어 지우기
+                </FluentButton>
+            </FluentStack>
+        }
+        else if (!ServiceGroup.Any())
         {
             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 40px;">
                 <FluentProgressRing Style="width: 32px; height: 32px;" />
@@ -76,7 +136,7 @@
 </FluentDialogFooter>
 
 <style>
-    fluent-card:hover {
+    .service-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     }
@@ -85,7 +145,34 @@
         transition: transform 0.2s ease;
     }
     
-    fluent-card:hover .service-card-icon {
+    .service-card:hover .service-card-icon {
         transform: scale(1.1);
     }
+
+    .search-highlight {
+        background-color: var(--accent-fill-rest);
+        color: var(--accent-foreground-rest);
+        font-weight: 600;
+        padding: 2px 4px;
+        border-radius: 2px;
+    }
 </style>
+
+@code {
+    private MarkupString HighlightSearchText(string text, string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText) || string.IsNullOrWhiteSpace(text))
+            return new MarkupString(text);
+
+        var index = text.ToLowerInvariant().IndexOf(searchText.ToLowerInvariant());
+        if (index == -1)
+            return new MarkupString(text);
+
+        var before = text.Substring(0, index);
+        var match = text.Substring(index, searchText.Length);
+        var after = text.Substring(index + searchText.Length);
+
+        var highlightedText = $"{before}<span class=\"search-highlight\">{match}</span>{after}";
+        return new MarkupString(highlightedText);
+    }
+}

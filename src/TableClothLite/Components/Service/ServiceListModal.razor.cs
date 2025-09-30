@@ -13,12 +13,27 @@ public partial class ServiceListModal : ComponentBase, IDialogContentComponent
     public IEnumerable<IGrouping<string, ServiceInfo>> ServiceGroup { get; set; } = 
         Enumerable.Empty<IGrouping<string, ServiceInfo>>();
 
+    private IEnumerable<IGrouping<string, ServiceInfo>> FilteredServiceGroup { get; set; } = 
+        Enumerable.Empty<IGrouping<string, ServiceInfo>>();
+
+    private string _searchText = string.Empty;
+    private string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            _searchText = value;
+            FilterServices();
+        }
+    }
+
     protected override void OnInitialized()
     {
         // 서비스 카탈로그가 이미 로드되어 있는지 확인
         if (Model.Services.Any())
         {
             ServiceGroup = Model.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
+            FilteredServiceGroup = ServiceGroup;
         }
         else
         {
@@ -26,9 +41,42 @@ public partial class ServiceListModal : ComponentBase, IDialogContentComponent
             Model.LoadCatalogCommand.ExecuteAsync(this)
                 .ContinueWith(async (task) => {
                     ServiceGroup = Model.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
+                    FilteredServiceGroup = ServiceGroup;
                     await InvokeAsync(StateHasChanged);
                 });
         }
+    }
+
+    private void FilterServices()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            FilteredServiceGroup = ServiceGroup;
+        }
+        else
+        {
+            var searchTerms = SearchText.ToLowerInvariant();
+            
+            FilteredServiceGroup = ServiceGroup
+                .Select(group => new
+                {
+                    Key = group.Key,
+                    Services = group.Where(service =>
+                        service.DisplayName.ToLowerInvariant().Contains(searchTerms) ||
+                        service.ServiceId.ToLowerInvariant().Contains(searchTerms) ||
+                        Model.DisplayCategoryName(group.Key).ToLowerInvariant().Contains(searchTerms))
+                })
+                .Where(group => group.Services.Any())
+                .Select(group => group.Services.GroupBy(s => group.Key).First())
+                .ToList();
+        }
+        
+        StateHasChanged();
+    }
+
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
     }
 
     private async Task LaunchServiceAsync(ServiceInfo service)
