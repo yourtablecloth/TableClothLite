@@ -34,6 +34,10 @@ public partial class Chat : IDisposable
     private bool _hasApiKey = false;
     private bool _isCheckingApiKey = true;
 
+    // 사이드바 상태 관리 (초기값은 false, 화면 크기에 따라 동적 결정)
+    private bool _isSidebarOpen = false;
+    private bool _isInitialized = false;
+
     // 글자 수 제한 관련 변수
     private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
     private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
@@ -99,11 +103,57 @@ public partial class Chat : IDisposable
             dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
             
+            // 초기 화면 크기에 따른 사이드바 상태 설정
+            await InitializeSidebarState();
+            
             // 입력 필드 자동 리사이즈 스크립트 실행
             await JSRuntime.InvokeVoidAsync("initChatInput");
         }
 
         await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+    }
+
+    private async Task InitializeSidebarState()
+    {
+        try
+        {
+            var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+            
+            // 데스크톱(768px 초과)에서는 기본적으로 열린 상태
+            // 모바일(768px 이하)에서는 기본적으로 닫힌 상태
+            _isSidebarOpen = windowWidth > 768;
+            _isInitialized = true;
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"사이드바 초기 상태 설정 중 오류: {ex.Message}");
+            // 오류 발생 시 데스크톱 기본값으로 설정
+            _isSidebarOpen = true;
+            _isInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 (창 크기 변경 시)
+    [JSInvokable]
+    public async Task OnWindowResize(int width)
+    {
+        var isMobile = width <= 768;
+        
+        // 모바일에서 데스크톱으로 전환 시 사이드바 열기
+        if (!isMobile && !_isSidebarOpen)
+        {
+            _isSidebarOpen = true;
+            StateHasChanged();
+        }
+        // 데스크톱에서 모바일로 전환 시 사이드바 닫기 (단, 이미 열려있다면)
+        else if (isMobile && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandleLoginAsync()
@@ -152,6 +202,12 @@ public partial class Chat : IDisposable
             });
     }
 
+    private void ToggleSidebar()
+    {
+        _isSidebarOpen = !_isSidebarOpen;
+        StateHasChanged();
+    }
+
     // 예시 프롬프트 설정 메서드
     private async Task SetExamplePrompt(string prompt)
     {
@@ -162,6 +218,14 @@ public partial class Chat : IDisposable
         }
 
         _userInput = prompt;
+        
+        // 모바일에서 예시 선택 시 사이드바 닫기
+        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+        if (windowWidth <= 768 && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+        }
+        
         StateHasChanged();
     }
 
@@ -190,6 +254,13 @@ public partial class Chat : IDisposable
 
         if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
             return;
+
+        // 모바일에서 메시지 전송 시 사이드바 닫기
+        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+        if (windowWidth <= 768 && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+        }
 
         var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
         _messages.Add(userMessage);
@@ -292,6 +363,14 @@ public partial class Chat : IDisposable
         _messages.Clear();
         _sessionId = Guid.NewGuid().ToString();
         await ChatService.ClearSessionAsync(_sessionId);
+        
+        // 모바일에서 대화 리셋 시 사이드바 닫기
+        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+        if (windowWidth <= 768 && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+        }
+        
         StateHasChanged();
     }
 
