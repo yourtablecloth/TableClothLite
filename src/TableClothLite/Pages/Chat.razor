@@ -6,6 +6,7 @@
 @using System.Xml
 @using System.Net
 @using TableClothLite.Services
+@using TableClothLite.Components.FluentUI
 @using Markdig
 
 @inject OpenAIChatService ChatService
@@ -14,6 +15,8 @@
 @inject FileDownloadService FileDownloader
 @inject SandboxComposerService SandboxComposer
 @inject SandboxViewModel Model
+@inject IDialogService DialogService
+@inject OpenRouterAuthService AuthService
 
 <PageTitle>TableClothLite AI</PageTitle>
 
@@ -22,8 +25,8 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <div class="app-title">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Bot())" />
-                <span>TableClothLite AI</span>
+                <img src="/favicon.png" alt="식탁보 라이트" class="app-icon">
+                <span>식탁보 라이트 AI Chat</span>
             </div>
         </div>
         <div class="sidebar-content">
@@ -71,6 +74,24 @@
 
     <!-- 메인 채팅 영역 -->
     <div class="chat-main">
+        <!-- 상단 액션 버튼들 -->
+        <div class="chat-header">
+            <div class="header-actions">
+                <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenServicesModalAsync" Title="서비스 목록">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Apps().WithColor("currentColor"))" />
+                </FluentButton>
+                <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog" Title="설정">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Settings().WithColor("currentColor"))" />
+                </FluentButton>
+                <FluentAnchor Appearance="Appearance.Stealth" Href="https://github.com/yourtablecloth/TableClothLite" Target="_blank" Title="GitHub">
+                    <FluentIcon Value="@(new TableClothLite.Components.FluentUI.CustomIcon.Github())" />
+                </FluentAnchor>
+                <FluentAnchor Appearance="Appearance.Stealth" Href="https://yourtablecloth.app/" target="_blank" Title="식탁보 홈페이지">
+                    <FluentIcon Value="@(new Icons.Regular.Size24.Home().WithColor("currentColor"))" />
+                </FluentAnchor>
+            </div>
+        </div>
+
         <!-- 메시지 컨테이너 -->
         <div class="messages-container" id="messages">
             @if (!_messages.Any())
@@ -257,26 +278,32 @@
 
     /* 사이드바 */
     .sidebar {
-        width: 260px;
+        width: 280px;
         background: var(--sidebar-bg);
         border-right: 1px solid var(--chat-border);
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
+        height: 100vh;
     }
 
     .sidebar-header {
-        padding: 16px;
+        padding: 20px 16px;
         border-bottom: 1px solid var(--chat-border);
     }
 
     .app-title {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         font-size: 16px;
         font-weight: 600;
         color: var(--text-primary);
+    }
+
+    .app-icon {
+        width: 24px;
+        height: 24px;
     }
 
     .sidebar-content {
@@ -347,6 +374,41 @@
         display: flex;
         flex-direction: column;
         min-width: 0;
+        height: 100vh;
+    }
+
+    /* 상단 헤더 */
+    .chat-header {
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--chat-border);
+        background: var(--chat-bg);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .header-actions .fluent-button,
+    .header-actions .fluent-anchor {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+
+    .header-actions .fluent-button:hover,
+    .header-actions .fluent-anchor:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
     }
 
     .messages-container {
@@ -693,7 +755,7 @@
     /* 반응형 디자인 */
     @@media (max-width: 768px) {
         .sidebar {
-            display: none;
+            width: 240px;
         }
         
         .messages-list {
@@ -711,9 +773,23 @@
         .example-prompts {
             grid-template-columns: 1fr;
         }
+
+        .chat-header {
+            padding: 8px 12px;
+        }
+
+        .header-actions .fluent-button,
+        .header-actions .fluent-anchor {
+            width: 36px;
+            height: 36px;
+        }
     }
 
     @@media (max-width: 480px) {
+        .sidebar {
+            width: 200px;
+        }
+
         .input-wrapper {
             padding: 6px;
         }

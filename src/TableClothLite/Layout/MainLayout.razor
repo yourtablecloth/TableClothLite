@@ -6,39 +6,9 @@
 @inject IJSRuntime JSRuntime
 
 <div class="page">
-    <header class="header">
-        <a class="title" href="/">
-            <img src="/favicon.png" alt="식탁보 라이트">
-            <span>식탁보 라이트 AI Chat</span>
-        </a>
-
-        <div class="external-site">
-            <FluentAnchor Appearance="Appearance.Stealth" Href="/" Title="AI 채팅">
-				<FluentIcon Value="@(new Icons.Regular.Size24.Bot().WithColor("currentColor"))" />
-            </FluentAnchor>
-            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenServicesModalAsync" Title="서비스 목록">
-				<FluentIcon Value="@(new Icons.Regular.Size24.Apps().WithColor("currentColor"))" />
-			</FluentButton>
-            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog" Title="설정">
-                <FluentIcon Value="@(new Icons.Regular.Size24.Settings().WithColor("currentColor"))" />
-            </FluentButton>
-            <FluentAnchor Appearance="Appearance.Stealth" Href="https://github.com/yourtablecloth/TableClothLite" Target="_blank" Title="GitHub">
-                <FluentIcon Value="@(new Github())" />
-            </FluentAnchor>
-            <FluentAnchor Class="text-anchor" Appearance="Appearance.Lightweight" Href="https://yourtablecloth.app/" target="_blank"
-                IconEnd="@(new Icons.Regular.Size12.Open().WithColor("currentColor"))">식탁보 홈페이지</FluentAnchor>
-        </div>
-    </header>
-
     <main>
-        <article class="content px-4">
+        <article class="content">
             @Body
-
-            <p>&nbsp;</p>
-
-            <div>
-                &copy; 2025 rkttu.com, All rights reserved.
-            </div>
         </article>
     </main>
 </div>
@@ -48,3 +18,16 @@
 <FluentTooltipProvider />
 <FluentMessageBarProvider />
 <FluentMenuProvider />
+
+<style>
+    .page {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .content {
+        height: 100vh;
+        padding: 0;
+        margin: 0;
+    }
+</style>

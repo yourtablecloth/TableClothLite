@@ -9,15 +9,14 @@ using TableClothLite.Models;
 using TableClothLite.Shared.Models;
 using Microsoft.FluentUI.AspNetCore.Components;
 using TableClothLite.Components.Chat;
+using TableClothLite.Components.Setting;
+using TableClothLite.Components.Service;
 using TableClothLite.Services;
 
 namespace TableClothLite.Pages;
 
 public partial class Chat : IDisposable
 {
-    [Inject] public IDialogService DialogService { get; set; } = default!;
-    [Inject] public OpenRouterAuthService AuthService { get; set; } = default!;
-
     public IEnumerable<IGrouping<string, ServiceInfo>> ServiceGroup =
         Enumerable.Empty<IGrouping<string, ServiceInfo>>();
 
@@ -124,6 +123,33 @@ public partial class Chat : IDisposable
         {
             await AuthService.StartAuthFlowAsync();
         }
+    }
+
+    private async Task OpenSettingDialog()
+    {
+        await DialogService.ShowDialogAsync<Setting>(
+            new DialogParameters()
+            {
+                Title = "설정",
+                PreventScroll = true,
+                PrimaryAction = "저장",
+                SecondaryAction = "취소",
+                Width = "500px"
+            });
+    }
+
+    private async Task OpenServicesModalAsync()
+    {
+        await DialogService.ShowDialogAsync<ServiceListModal>(
+            new DialogParameters()
+            {
+                Title = "서비스 목록",
+                PreventScroll = true,
+                PrimaryAction = null,
+                SecondaryAction = null,
+                Width = "800px",
+                Height = "600px"
+            });
     }
 
     // 예시 프롬프트 설정 메서드
