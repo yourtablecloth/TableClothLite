@@ -7,11 +7,17 @@ using OpenAI;
 using System.Net;
 using TableClothLite.Models;
 using TableClothLite.Shared.Models;
+using Microsoft.FluentUI.AspNetCore.Components;
+using TableClothLite.Components.Chat;
+using TableClothLite.Services;
 
 namespace TableClothLite.Pages;
 
 public partial class Chat : IDisposable
 {
+    [Inject] public IDialogService DialogService { get; set; } = default!;
+    [Inject] public OpenRouterAuthService AuthService { get; set; } = default!;
+
     public IEnumerable<IGrouping<string, ServiceInfo>> ServiceGroup =
         Enumerable.Empty<IGrouping<string, ServiceInfo>>();
 
@@ -52,12 +58,30 @@ public partial class Chat : IDisposable
 
         if (string.IsNullOrEmpty(apiKey))
         {
-            NavigationManager.NavigateTo("/");
+            // API 키가 없을 경우 안내 대화 상자 표시
+            await ShowOpenRouterGuideAsync();
             return;
         }
 
         if (_client == null)
             _client = ChatService.CreateOpenAIClient(apiKey);
+    }
+
+    private async Task ShowOpenRouterGuideAsync()
+    {
+        var result = await DialogService.ShowDialogAsync<OpenRouterGuide>(
+            new DialogParameters()
+            {
+                Title = "OpenRouter 계정 필요",
+                PreventScroll = true,
+                PrimaryAction = "계속하기",
+                SecondaryAction = "취소",
+                Width = "450px"
+            });
+
+        // 사용자가 계속하기를 선택한 경우에만 인증 플로우 시작
+        if (await result.GetReturnValueAsync<bool>() == true)
+            await AuthService.StartAuthFlowAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -131,7 +155,8 @@ public partial class Chat : IDisposable
     protected async Task Logout()
     {
         await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
-        NavigationManager.NavigateTo("/");
+        // 로그아웃 후 새로고침하여 OpenRouter 가이드를 다시 표시
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -201,7 +226,7 @@ public partial class Chat : IDisposable
                 if (!Uri.TryCreate(x.Url, UriKind.Absolute, out var serviceUri))
                     return false;
 
-                // TODO: Public Suffix 기반으로 일치 여부를 판정할 필요가 있음
+                // TODO: Public Suffix 기반으로 일치 여부를 판별할 필요가 있음
                 var rootHostName = serviceUri.Host.Replace("www.", string.Empty, StringComparison.OrdinalIgnoreCase);
                 if (!hostName.EndsWith(rootHostName, StringComparison.OrdinalIgnoreCase))
                     return false;

@@ -1,4 +1,4 @@
-﻿@page "/Chat"
+﻿@page "/"
 
 @using System.Text
 @using AngleSharp.Html.Parser
@@ -15,7 +15,7 @@
 @inject SandboxComposerService SandboxComposer
 @inject SandboxViewModel Model
 
-<PageTitle>식탁보 라이트 Preview</PageTitle>
+<PageTitle>식탁보 라이트 AI Chat</PageTitle>
 
 <div class="chat-container">
     <FluentCard class="chat-card">
@@ -24,7 +24,7 @@
             <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
                 <div class="chat-title">
                     <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
-                    <span>TableClothLite Preview AI</span>
+                    <span>TableClothLite AI Chat</span>
                 </div>
                 <FluentSpacer />
                 <div class="chat-actions">
@@ -47,7 +47,7 @@
                 {
                     <div class="welcome-message">
                         <FluentIcon Value="@(new Icons.Regular.Size48.Bot())" />
-                        <h2>TableClothLite AI Preview</h2>
+                        <h2>TableClothLite AI Chat</h2>
                         <p>금융과 공공 부문에 관한 질문에 답변해 드립니다. 궁금한 점을 질문해 보세요.</p>
                         <div class="disclaimer">
                             <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" Class="warning-icon" />
@@ -106,10 +106,10 @@
                 <textarea @oninput="OnInputChange"
                           value="@_userInput"
                           @onkeydown="HandleKeyDown"
-                          Placeholder="금융과 공공 부문에 관한 질문을 입력하세요. Shift + Enter로 줄바꿈. 개인 정보는 입력하지 마세요."
-                          Disabled="@_isStreaming"
-                          Rows="3"
-                          MaxLength="@_maxInputLength"
+                          placeholder="금융과 공공 부문에 관한 질문을 입력하세요. Shift + Enter로 줄바꿈. 개인 정보는 입력하지 마세요."
+                          disabled="@_isStreaming"
+                          rows="3"
+                          maxlength="@_maxInputLength"
                           id="chatTextArea"
                           class="@(_isNearLimit ? "text-limit-warning" : string.Empty)">
                 </textarea>
@@ -129,6 +129,7 @@
     </FluentCard>
 </div>
 
+<!-- 기존 스타일은 그대로 유지 -->
 <style type="text/css">
     /* 전체 컨테이너 */
     .chat-container {
@@ -239,18 +240,14 @@
     }
 
     @@keyframes fadeIn {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .message-row-user {
@@ -398,48 +395,40 @@
 
     /* 반응형 디자인 */
     @@media (max-width: 768px) {
-        .chat-container
+        .chat-container {
+            height: calc(100vh - 110px);
+        }
 
-    {
-        height: calc(100vh - 110px);
-    }
+        .user-message, .ai-message {
+            max-width: 85%;
+        }
 
-    .user-message, .ai-message {
-        max-width: 85%;
-    }
-
-    .chat-actions {
-        gap: 4px;
-    }
-
+        .chat-actions {
+            gap: 4px;
+        }
     }
 
     @@media (max-width: 576px) {
-        .chat-container
+        .chat-container {
+            height: calc(100vh - 100px);
+        }
 
-    {
-        height: calc(100vh - 100px);
-    }
+        .user-message, .ai-message {
+            max-width: 90%;
+        }
 
-    .user-message, .ai-message {
-        max-width: 90%;
-    }
-
-    .chat-title span {
-        display: none;
-    }
-
+        .chat-title span {
+            display: none;
+        }
     }
 
     @@media (min-width: 992px) {
-        .user-message, .ai-message
-    {
-        max-width: 70%;
-    }
+        .user-message, .ai-message {
+            max-width: 70%;
+        }
 
-    .messages-container {
-        padding: 24px;
-    }
-
+        .messages-container {
+            padding: 24px;
+        }
     }
 </style>

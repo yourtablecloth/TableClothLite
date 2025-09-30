@@ -9,20 +9,20 @@
     <header class="header">
         <a class="title" href="/">
             <img src="/favicon.png" alt="식탁보 라이트">
-            <span>식탁보 라이트 Preview</span>
+            <span>식탁보 라이트 AI Chat</span>
         </a>
 
         <div class="external-site">
-            <FluentAnchor Appearance="Appearance.Stealth" Href="/">
-				<FluentIcon Value="@(new Icons.Regular.Size24.Home().WithColor("currentColor"))" />
-            </FluentAnchor>
-            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenChatPage">
+            <FluentAnchor Appearance="Appearance.Stealth" Href="/" Title="AI 채팅">
 				<FluentIcon Value="@(new Icons.Regular.Size24.Bot().WithColor("currentColor"))" />
+            </FluentAnchor>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenServicesPage" Title="서비스 목록">
+				<FluentIcon Value="@(new Icons.Regular.Size24.Apps().WithColor("currentColor"))" />
 			</FluentButton>
-            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog">
+            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog" Title="설정">
                 <FluentIcon Value="@(new Icons.Regular.Size24.Settings().WithColor("currentColor"))" />
             </FluentButton>
-            <FluentAnchor Appearance="Appearance.Stealth" Href="https://github.com/yourtablecloth/TableClothLite" Target="_blank">
+            <FluentAnchor Appearance="Appearance.Stealth" Href="https://github.com/yourtablecloth/TableClothLite" Target="_blank" Title="GitHub">
                 <FluentIcon Value="@(new Github())" />
             </FluentAnchor>
             <FluentAnchor Class="text-anchor" Appearance="Appearance.Lightweight" Href="https://yourtablecloth.app/" target="_blank"
