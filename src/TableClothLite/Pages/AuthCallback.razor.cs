@@ -27,7 +27,7 @@ public partial class AuthCallback
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "openRouterApiKey", apiKey);
 
             // Navigate to chat
-            NavigationManager.NavigateTo("/Chat");
+            NavigationManager.NavigateTo("/");
         }
         catch (Exception ex)
         {
