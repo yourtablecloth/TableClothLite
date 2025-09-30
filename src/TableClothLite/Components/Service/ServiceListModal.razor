@@ -1,33 +1,33 @@
-@inject SandboxViewModel Model
+ï»¿@inject SandboxViewModel Model
 @inject IJSRuntime JSRuntime
 
 <FluentDialogHeader ShowDismiss="true">
     <FluentStack VerticalAlignment="VerticalAlignment.Center">
         <FluentIcon Value="@(new Icons.Regular.Size24.Apps())" />
         <FluentLabel Typo="Typography.PaneHeader">
-            ½ÄÅ¹º¸ ¶óÀÌÆ® ¼­ºñ½º ¸ñ·Ï
+            ì‹íƒë³´ ë¼ì´íŠ¸ ì„œë¹„ìŠ¤ ëª©ë¡
         </FluentLabel>
     </FluentStack>
 </FluentDialogHeader>
 
-<FluentDialogBody Style="max-height: 70vh; overflow-y: auto;">
-    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+<FluentDialogBody Style="max-height: 70vh; overflow-y: auto; overflow-x: hidden;">
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16" Style="overflow-x: hidden;">
         <div style="padding-bottom: 16px; border-bottom: 1px solid var(--neutral-stroke-divider-rest);">
             <p style="margin: 0; color: var(--neutral-foreground-rest); font-size: 14px;">
-                ¼³Ä¡ÇÏÁö ¾Ê°í »ç¿ëÇÏ´Â ½ÄÅ¹º¸¸¦ °æÇèÇØº¸¼¼¿ä. Windows Sandbox¸¸ ¼³Ä¡µÇ¾îÀÖÀ¸¸é ÀÎÅÍ³İ ¹ğÅ· È¯°æÀ» °ğ¹Ù·Î °İ¸®µÈ °æ·® °¡»ó PC¿¡¼­ ºĞ¸®ÇØ¼­ ½ÇÇàÇÒ ¼ö ÀÖ½À´Ï´Ù.
+                ì„¤ì¹˜í•˜ì§€ ì•Šê³  ì‚¬ìš©í•˜ëŠ” ì‹íƒë³´ë¥¼ ê²½í—˜í•´ë³´ì„¸ìš”. Windows Sandboxë§Œ ì„¤ì¹˜ë˜ì–´ìˆìœ¼ë©´ ì¸í„°ë„· ë±…í‚¹ í™˜ê²½ì„ ê³§ë°”ë¡œ ê²©ë¦¬ëœ ê²½ëŸ‰ ê°€ìƒ PCì—ì„œ ë¶„ë¦¬í•´ì„œ ì‹¤í–‰í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
             </p>
             <p style="margin: 8px 0 0 0; color: var(--accent-foreground-rest); font-size: 13px; font-weight: 600;">
-                ?? Windows Sandbox°¡ ¹İµå½Ã ¼³Ä¡µÇ¾î ÀÖ¾î¾ß ÇÕ´Ï´Ù. 
+                âš ï¸ Windows Sandboxê°€ ë°˜ë“œì‹œ ì„¤ì¹˜ë˜ì–´ ìˆì–´ì•¼ í•©ë‹ˆë‹¤. 
                 <FluentAnchor Href="https://yourtablecloth.app/howto_install_sandbox" Target="_blank" Appearance="Appearance.Lightweight">
-                    ¼³Ä¡ ¹æ¹ı º¸±â
+                    ì„¤ì¹˜ ë°©ë²• ë³´ê¸°
                 </FluentAnchor>
             </p>
         </div>
 
-        <!-- °Ë»ö ¿µ¿ª -->
+        <!-- ê²€ìƒ‰ ì˜ì—­ -->
         <div style="position: sticky; top: 0; background: var(--fill-color); z-index: 10; padding: 8px 0;">
             <FluentSearch @bind-Value="SearchText" 
-                         Placeholder="¼­ºñ½º ÀÌ¸§ÀÌ³ª Ä«Å×°í¸®·Î °Ë»ö..."
+                          Placeholder="ì„œë¹„ìŠ¤ ì´ë¦„ ë° ì¹´í…Œê³ ë¦¬ ì…ë ¥"
                          Style="width: 100%;"
                          Autofocus="true">
                 <FluentIcon Value="@(new Icons.Regular.Size16.Search())" Slot="start" />
@@ -37,7 +37,7 @@
                                  OnClick="ClearSearch" 
                                  Style="padding: 4px;"
                                  Slot="end"
-                                 Title="°Ë»ö¾î Áö¿ì±â">
+                                 Title="ê²€ìƒ‰ì–´ ì§€ìš°ê¸°">
                         <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
                     </FluentButton>
                 }
@@ -49,7 +49,7 @@
                     @{
                         var totalFilteredServices = FilteredServiceGroup.SelectMany(g => g).Count();
                     }
-                    "@SearchText" °Ë»ö °á°ú: @(totalFilteredServices)°³ ¼­ºñ½º
+                    "@SearchText" ê²€ìƒ‰ ê²°ê³¼: @(totalFilteredServices)ê°œ ì„œë¹„ìŠ¤
                 </div>
             }
         </div>
@@ -58,28 +58,28 @@
         {
             @foreach (var eachGroup in FilteredServiceGroup)
             {
-                <div>
+                <div class="service-category">
                     <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 12px; display: block; color: var(--accent-foreground-rest);">
                         @Model.DisplayCategoryName(eachGroup.Key)
                         <span style="font-size: 12px; font-weight: normal; color: var(--neutral-foreground-rest);">
-                            (@eachGroup.Count()°³)
+                            (@eachGroup.Count()ê°œ)
                         </span>
                     </FluentLabel>
                     
-                    <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
+                    <div class="service-grid">
                         @foreach (var eachService in eachGroup)
                         {
-                            <FluentGridItem xs="6" sm="4" md="3">
+                            <div class="service-grid-item">
                                 <FluentCard class="service-card" 
-                                           Style="height: 140px; cursor: pointer; transition: all 0.2s ease;" 
                                            @onclick="() => LaunchServiceAsync(eachService)"
                                            @onmouseenter="() => OnCardHover(true)"
                                            @onmouseleave="() => OnCardHover(false)">
-                                    <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" VerticalGap="8">
-                                        <FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" 
-                                                   class="service-card-icon"
-                                                   Style="width: 32px; height: 32px;" />
-                                        <FluentLabel Style="text-align: center; font-size: 13px; line-height: 1.2; font-weight: 500;">
+                                    <div class="service-card-content">
+                                        <div class="service-icon">
+                                            <FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" 
+                                                       class="service-card-icon" />
+                                        </div>
+                                        <div class="service-name">
                                             @if (!string.IsNullOrWhiteSpace(SearchText) && 
                                                  eachService.DisplayName.ToLowerInvariant().Contains(SearchText.ToLowerInvariant()))
                                             {
@@ -89,31 +89,32 @@
                                             {
                                                 @eachService.DisplayName
                                             }
-                                        </FluentLabel>
-                                        <FluentIcon Value="@(new Icons.Regular.Size16.Play())" 
-                                                   Style="color: var(--accent-foreground-rest); margin-top: 4px;" />
-                                    </FluentStack>
+                                        </div>
+                                        <div class="service-play-icon">
+                                            <FluentIcon Value="@(new Icons.Regular.Size16.Play())" />
+                                        </div>
+                                    </div>
                                 </FluentCard>
-                            </FluentGridItem>
+                            </div>
                         }
-                    </FluentGrid>
+                    </div>
                 </div>
             }
         }
         else if (ServiceGroup.Any() && !string.IsNullOrWhiteSpace(SearchText))
         {
-            <!-- °Ë»ö °á°ú°¡ ¾øÀ» ¶§ -->
+            <!-- ê²€ìƒ‰ ê²°ê³¼ê°€ ì—†ì„ ë•Œ -->
             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 40px;">
                 <FluentIcon Value="@(new Icons.Regular.Size48.Search())" Style="color: var(--neutral-foreground-rest); margin-bottom: 16px;" />
                 <FluentLabel Typo="Typography.Subject" Style="color: var(--neutral-foreground-rest); text-align: center;">
-                    "@SearchText"¿¡ ´ëÇÑ °Ë»ö °á°ú°¡ ¾ø½À´Ï´Ù
+                    "@SearchText"ì— ëŒ€í•œ ê²€ìƒ‰ ê²°ê³¼ê°€ ì—†ìŠµë‹ˆë‹¤
                 </FluentLabel>
                 <FluentLabel Style="color: var(--neutral-foreground-rest); text-align: center; margin-top: 8px; font-size: 14px;">
-                    ´Ù¸¥ °Ë»ö¾î¸¦ ½ÃµµÇØº¸¼¼¿ä
+                    ë‹¤ë¥¸ ê²€ìƒ‰ì–´ë¥¼ ì‹œë„í•´ë³´ì„¸ìš”
                 </FluentLabel>
                 <FluentButton Appearance="Appearance.Lightweight" OnClick="ClearSearch" Style="margin-top: 16px;">
                     <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" Slot="start" />
-                    °Ë»ö¾î Áö¿ì±â
+                    ê²€ìƒ‰ì–´ ì§€ìš°ê¸°
                 </FluentButton>
             </FluentStack>
         }
@@ -122,7 +123,7 @@
             <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 40px;">
                 <FluentProgressRing Style="width: 32px; height: 32px;" />
                 <FluentLabel Style="margin-top: 16px; color: var(--neutral-foreground-rest);">
-                    ¼­ºñ½º ¸ñ·ÏÀ» ºÒ·¯¿À´Â Áß...
+                    ì„œë¹„ìŠ¤ ëª©ë¡ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘...
                 </FluentLabel>
             </FluentStack>
         }
@@ -131,22 +132,111 @@
 
 <FluentDialogFooter>
     <FluentButton Appearance="Appearance.Accent" OnClick="@CloseAsync">
-        ´İ±â
+        ë‹«ê¸°
     </FluentButton>
 </FluentDialogFooter>
 
 <style>
+    .service-category {
+        width: 100%;
+        margin-bottom: 24px;
+    }
+
+    .service-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    .service-grid-item {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .service-card {
+        height: 140px;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        box-sizing: border-box;
+        border-radius: 8px;
+        background: var(--neutral-fill-rest);
+        border: 1px solid var(--neutral-stroke-rest);
+    }
+
     .service-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        border-color: var(--accent-stroke-control-default);
     }
-    
+
+    .service-card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        min-width: 0;
+    }
+
+    .service-icon {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .service-card-icon {
+        width: 32px !important;
+        height: 32px !important;
         transition: transform 0.2s ease;
     }
-    
+
     .service-card:hover .service-card-icon {
         transform: scale(1.1);
+    }
+
+    .service-name {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        line-height: 1.2;
+        font-weight: 500;
+        color: var(--neutral-foreground-rest);
+        text-align: center;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        min-width: 0;
+        padding: 0 4px;
+    }
+
+    .service-play-icon {
+        flex-shrink: 0;
+        color: var(--accent-foreground-rest);
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+    }
+
+    .service-card:hover .service-play-icon {
+        opacity: 1;
     }
 
     .search-highlight {
@@ -155,6 +245,60 @@
         font-weight: 600;
         padding: 2px 4px;
         border-radius: 2px;
+    }
+
+    /* ë°˜ì‘í˜• ë””ìì¸ */
+    @@media (max-width: 768px) {
+        .service-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .service-card {
+            height: 120px;
+            padding: 12px;
+        }
+        
+        .service-name {
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .service-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .service-card {
+            height: 100px;
+            padding: 8px;
+        }
+        
+        .service-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .service-card-icon {
+            width: 24px !important;
+            height: 24px !important;
+        }
+        
+        .service-name {
+            font-size: 11px;
+        }
+    }
+
+    /* ì˜¤ë²„í”Œë¡œìš° ë°©ì§€ */
+    fluent-dialog-body {
+        overflow-x: hidden !important;
+    }
+
+    fluent-stack {
+        overflow-x: hidden;
+        width: 100%;
+        box-sizing: border-box;
     }
 </style>
 
