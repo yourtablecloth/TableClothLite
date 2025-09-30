@@ -16,7 +16,7 @@
             <FluentAnchor Appearance="Appearance.Stealth" Href="/" Title="AI 채팅">
 				<FluentIcon Value="@(new Icons.Regular.Size24.Bot().WithColor("currentColor"))" />
             </FluentAnchor>
-            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenServicesPage" Title="서비스 목록">
+            <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenServicesModalAsync" Title="서비스 목록">
 				<FluentIcon Value="@(new Icons.Regular.Size24.Apps().WithColor("currentColor"))" />
 			</FluentButton>
             <FluentButton Appearance="Appearance.Stealth" OnClick="@OpenSettingDialog" Title="설정">

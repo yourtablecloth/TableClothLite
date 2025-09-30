@@ -1,0 +1,91 @@
+@inject SandboxViewModel Model
+@inject IJSRuntime JSRuntime
+
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.Apps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            식탁보 라이트 서비스 목록
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+<FluentDialogBody Style="max-height: 70vh; overflow-y: auto;">
+    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+        <div style="padding-bottom: 16px; border-bottom: 1px solid var(--neutral-stroke-divider-rest);">
+            <p style="margin: 0; color: var(--neutral-foreground-rest); font-size: 14px;">
+                설치하지 않고 사용하는 식탁보를 경험해보세요. Windows Sandbox만 설치되어있으면 인터넷 뱅킹 환경을 곧바로 격리된 경량 가상 PC에서 분리해서 실행할 수 있습니다.
+            </p>
+            <p style="margin: 8px 0 0 0; color: var(--accent-foreground-rest); font-size: 13px; font-weight: 600;">
+                ?? Windows Sandbox가 반드시 설치되어 있어야 합니다. 
+                <FluentAnchor Href="https://yourtablecloth.app/howto_install_sandbox" Target="_blank" Appearance="Appearance.Lightweight">
+                    설치 방법 보기
+                </FluentAnchor>
+            </p>
+        </div>
+
+        @if (ServiceGroup.Any())
+        {
+            @foreach (var eachGroup in ServiceGroup)
+            {
+                <div>
+                    <FluentLabel Typo="Typography.Subject" Style="margin-bottom: 12px; display: block; color: var(--accent-foreground-rest);">
+                        @Model.DisplayCategoryName(eachGroup.Key)
+                    </FluentLabel>
+                    
+                    <FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
+                        @foreach (var eachService in eachGroup)
+                        {
+                            <FluentGridItem xs="6" sm="4" md="3">
+                                <FluentCard Style="height: 140px; cursor: pointer; transition: all 0.2s ease;" 
+                                           @onclick="() => LaunchServiceAsync(eachService)"
+                                           @onmouseenter="() => OnCardHover(true)"
+                                           @onmouseleave="() => OnCardHover(false)">
+                                    <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" VerticalGap="8">
+                                        <FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" 
+                                                   Style="width: 32px; height: 32px;" />
+                                        <FluentLabel Style="text-align: center; font-size: 13px; line-height: 1.2; font-weight: 500;">
+                                            @eachService.DisplayName
+                                        </FluentLabel>
+                                        <FluentIcon Value="@(new Icons.Regular.Size16.Play())" 
+                                                   Style="color: var(--accent-foreground-rest); margin-top: 4px;" />
+                                    </FluentStack>
+                                </FluentCard>
+                            </FluentGridItem>
+                        }
+                    </FluentGrid>
+                </div>
+            }
+        }
+        else
+        {
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center" Style="padding: 40px;">
+                <FluentProgressRing Style="width: 32px; height: 32px;" />
+                <FluentLabel Style="margin-top: 16px; color: var(--neutral-foreground-rest);">
+                    서비스 목록을 불러오는 중...
+                </FluentLabel>
+            </FluentStack>
+        }
+    </FluentStack>
+</FluentDialogBody>
+
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@CloseAsync">
+        닫기
+    </FluentButton>
+</FluentDialogFooter>
+
+<style>
+    fluent-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .service-card-icon {
+        transition: transform 0.2s ease;
+    }
+    
+    fluent-card:hover .service-card-icon {
+        transform: scale(1.1);
+    }
+</style>
