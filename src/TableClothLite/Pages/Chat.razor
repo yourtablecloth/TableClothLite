@@ -15,85 +15,156 @@
 @inject SandboxComposerService SandboxComposer
 @inject SandboxViewModel Model
 
-<PageTitle>식탁보 라이트 AI Chat</PageTitle>
+<PageTitle>TableClothLite AI</PageTitle>
 
-<div class="chat-container">
-    <FluentCard class="chat-card">
-        <!-- 헤더 영역 -->
-        <div class="chat-header">
-            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-                <div class="chat-title">
-                    <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
-                    <span>TableClothLite AI Chat</span>
-                </div>
-                <FluentSpacer />
-                <div class="chat-actions">
-                    <FluentButton Appearance="Appearance.Lightweight" OnClick="ResetConversationAsync"
-                                  IconStart="@(new Icons.Regular.Size16.New())" Title="새로운 대화 시작">
-                        새 대화
-                    </FluentButton>
-                    <FluentButton Appearance="Appearance.Lightweight" OnClick="Logout"
-                                  IconStart="@(new Icons.Regular.Size16.ArrowStepOut())" Title="로그아웃">
-                        로그아웃
-                    </FluentButton>
-                </div>
-            </FluentStack>
+<div class="chat-app">
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="app-title">
+                <FluentIcon Value="@(new Icons.Regular.Size24.Bot())" />
+                <span>TableClothLite AI</span>
+            </div>
         </div>
+        <div class="sidebar-content">
+            @if (_hasApiKey)
+            {
+                <FluentButton Appearance="Appearance.Neutral" 
+                             OnClick="ResetConversationAsync"
+                             class="new-chat-btn">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Add())" />
+                    새로운 채팅
+                </FluentButton>
+            }
+            else
+            {
+                <div class="login-notice">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Info())" />
+                    <span>채팅을 시작하려면 로그인이 필요합니다</span>
+                </div>
+            }
+        </div>
+        <div class="sidebar-footer">
+            @if (_isCheckingApiKey)
+            {
+                <FluentButton Appearance="Appearance.Stealth" Disabled="true" class="auth-btn">
+                    <FluentProgressRing Size="ProgressRingSize.Tiny" />
+                    확인 중...
+                </FluentButton>
+            }
+            else if (_hasApiKey)
+            {
+                <FluentButton Appearance="Appearance.Stealth" OnClick="Logout" class="auth-btn logout-btn">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.ArrowStepOut())" />
+                    로그아웃
+                </FluentButton>
+            }
+            else
+            {
+                <FluentButton Appearance="Appearance.Accent" OnClick="HandleLoginAsync" class="auth-btn login-btn">
+                    <FluentIcon Value="@(new Icons.Regular.Size16.Person())" />
+                    로그인
+                </FluentButton>
+            }
+        </div>
+    </div>
 
+    <!-- 메인 채팅 영역 -->
+    <div class="chat-main">
         <!-- 메시지 컨테이너 -->
-        <div class="messages-area">
-            <div class="messages-container" id="messages">
-                @if (!_messages.Any())
-                {
-                    <div class="welcome-message">
-                        <FluentIcon Value="@(new Icons.Regular.Size48.Bot())" />
-                        <h2>TableClothLite AI Chat</h2>
-                        <p>금융과 공공 부문에 관한 질문에 답변해 드립니다. 궁금한 점을 질문해 보세요.</p>
+        <div class="messages-container" id="messages">
+            @if (!_messages.Any())
+            {
+                <div class="welcome-screen">
+                    <div class="welcome-content">
+                        <div class="logo-container">
+                            <FluentIcon Value="@(new Icons.Regular.Size48.Bot())" />
+                        </div>
+                        <h1>TableClothLite AI에 오신 것을 환영합니다</h1>
+                        <p class="welcome-subtitle">금융과 공공 부문에 관한 질문에 답변해 드립니다</p>
+                        
+                        @if (_hasApiKey)
+                        {
+                            <div class="example-prompts">
+                                <div class="example-prompt" @onclick='() => SetExamplePrompt("인터넷 뱅킹 보안에 대해 알려주세요")'>
+                                    <span>💳 인터넷 뱅킹 보안에 대해 알려주세요</span>
+                                </div>
+                                <div class="example-prompt" @onclick='() => SetExamplePrompt("공공기관 사이트 이용 시 주의사항은?")'>
+                                    <span>🏛️ 공공기관 사이트 이용 시 주의사항은?</span>
+                                </div>
+                                <div class="example-prompt" @onclick='() => SetExamplePrompt("Windows Sandbox의 장점은?")'>
+                                    <span>🛡️ Windows Sandbox의 장점은?</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="login-required-notice">
+                                <FluentIcon Value="@(new Icons.Regular.Size24.LockClosed())" />
+                                <h3>로그인이 필요합니다</h3>
+                                <p>AI 채팅 기능을 사용하려면 OpenRouter 계정으로 로그인해주세요.</p>
+                                <FluentButton Appearance="Appearance.Accent" OnClick="HandleLoginAsync" class="login-cta-btn">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Person())" />
+                                    로그인하기
+                                </FluentButton>
+                            </div>
+                        }
+                        
                         <div class="disclaimer">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Warning())" Class="warning-icon" />
-                            <span>생성형 AI는 정보의 정확성을 보장하지 않습니다. 금융 결정은 반드시 전문가와 상담하세요.</span>
+                            <FluentIcon Value="@(new Icons.Regular.Size16.Warning())" />
+                            <span>AI가 생성한 정보는 부정확할 수 있습니다. 중요한 결정은 전문가와 상담하세요.</span>
                         </div>
                     </div>
-                }
+                </div>
+            }
 
+            <div class="messages-list">
                 @foreach (var message in _messages)
                 {
-                    <div class="message-row @(message.IsUser ? "message-row-user" : "message-row-ai")">
-                        @if (!message.IsUser)
-                        {
-                            <div class="avatar ai-avatar">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
+                    <div class="message-group @(message.IsUser ? "user-group" : "assistant-group")">
+                        <div class="message-avatar">
+                            @if (message.IsUser)
+                            {
+                                <div class="user-avatar">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Person())" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="assistant-avatar">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.Bot())" />
+                                </div>
+                            }
+                        </div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                @FormatMessage(message.Content)
                             </div>
-                        }
-                        <FluentCard class="@(message.IsUser ? "user-message" : "ai-message")">
-                            <div class="message-content">@FormatMessage(message.Content)</div>
-                        </FluentCard>
-                        @if (message.IsUser)
-                        {
-                            <div class="avatar user-avatar">
-                                <FluentIcon Value="@(new Icons.Regular.Size20.Person())" />
-                            </div>
-                        }
+                        </div>
                     </div>
                 }
+                
                 @if (_isStreaming)
                 {
-                    <div class="message-row message-row-ai">
-                        <div class="avatar ai-avatar">
-                            <FluentIcon Value="@(new Icons.Regular.Size20.Bot())" />
-                        </div>
-                        <FluentCard class="ai-message">
-                            <div class="message-content">
-                                @FormatMessage(_currentStreamedMessage)
-                                <span class="loading-indicator">
-                                    @if (string.IsNullOrEmpty(_currentStreamedMessage))
-                                    {
-                                        <span>생각 중</span>
-                                    }
-                                    <FluentProgressRing Size="ProgressRingSize.Tiny" Visible="_isStreaming" />
-                                </span>
+                    <div class="message-group assistant-group">
+                        <div class="message-avatar">
+                            <div class="assistant-avatar">
+                                <FluentIcon Value="@(new Icons.Regular.Size16.Bot())" />
                             </div>
-                        </FluentCard>
+                        </div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                @FormatMessage(_currentStreamedMessage)
+                                @if (string.IsNullOrEmpty(_currentStreamedMessage))
+                                {
+                                    <div class="typing-indicator">
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 }
             </div>
@@ -101,334 +172,555 @@
 
         <!-- 입력 영역 -->
         <div class="input-area">
-            <FluentDivider />
             <div class="input-container">
-                <textarea @oninput="OnInputChange"
-                          value="@_userInput"
-                          @onkeydown="HandleKeyDown"
-                          placeholder="금융과 공공 부문에 관한 질문을 입력하세요. Shift + Enter로 줄바꿈. 개인 정보는 입력하지 마세요."
-                          disabled="@_isStreaming"
-                          rows="3"
-                          maxlength="@_maxInputLength"
-                          id="chatTextArea"
-                          class="@(_isNearLimit ? "text-limit-warning" : string.Empty)">
-                </textarea>
-                <div class="input-actions">
-                    <span class="character-count @(_isNearLimit ? "text-danger" : "text-muted")">
-                        @(_userInput.Length) / @(_maxInputLength)
-                    </span>
-                    <FluentButton Appearance="Appearance.Accent"
-                                  OnClick="SendMessage"
-                                  Disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput))"
-                                  IconStart="@(new Icons.Regular.Size20.Send())">
-                        전송
+                @if (!_hasApiKey)
+                {
+                    <div class="input-disabled-overlay">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.LockClosed())" />
+                        <span>로그인 후 채팅을 시작할 수 있습니다</span>
+                        <FluentButton Appearance="Appearance.Accent" OnClick="HandleLoginAsync" Size="ButtonSize.Small">
+                            로그인
+                        </FluentButton>
+                    </div>
+                }
+                <div class="input-wrapper @(!_hasApiKey ? "disabled" : "")">
+                    <textarea @oninput="OnInputChange"
+                             value="@_userInput"
+                             @onkeydown="HandleKeyDown"
+                             placeholder="@(_hasApiKey ? "메시지를 입력하세요..." : "로그인 후 사용할 수 있습니다")"
+                             disabled="@(_isStreaming || !_hasApiKey)"
+                             rows="1"
+                             maxlength="@_maxInputLength"
+                             id="chatTextArea"
+                             class="chat-input"></textarea>
+                    <FluentButton Appearance="Appearance.Neutral"
+                                 OnClick="SendMessage"
+                                 Disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput) || !_hasApiKey)"
+                                 class="send-button">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.Send())" />
                     </FluentButton>
                 </div>
+                @if (_hasApiKey)
+                {
+                    <div class="input-footer">
+                        <span class="character-count @(_isNearLimit ? "warning" : "")">
+                            @(_userInput.Length)/@(_maxInputLength)
+                        </span>
+                    </div>
+                }
             </div>
         </div>
-    </FluentCard>
+    </div>
 </div>
 
-<!-- 기존 스타일은 그대로 유지 -->
-<style type="text/css">
-    /* 전체 컨테이너 */
-    .chat-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 130px);
-        margin: -16px;
-        overflow: hidden;
+<style>
+    :root {
+        --chat-bg: #ffffff;
+        --chat-border: #e5e7eb;
+        --sidebar-bg: #f9fafb;
+        --message-user-bg: #f3f4f6;
+        --message-assistant-bg: transparent;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --accent-color: #2563eb;
+        --hover-bg: #f3f4f6;
+        --border-radius: 12px;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --error-color: #dc2626;
     }
 
-    .chat-card {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
-        box-shadow: none;
-        border-radius: 0;
-        border: none;
+    [data-theme="dark"] {
+        --chat-bg: #1f2937;
+        --chat-border: #374151;
+        --sidebar-bg: #111827;
+        --message-user-bg: #374151;
+        --message-assistant-bg: transparent;
+        --text-primary: #f9fafb;
+        --text-secondary: #9ca3af;
+        --accent-color: #3b82f6;
+        --hover-bg: #374151;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
     }
 
-    /* 헤더 영역 */
-    .chat-header {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--neutral-stroke-rest);
-        background-color: var(--neutral-layer-1);
+    .chat-app {
+        display: flex;
+        height: 100vh;
+        background: var(--chat-bg);
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* 사이드바 */
+    .sidebar {
+        width: 260px;
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--chat-border);
+        display: flex;
+        flex-direction: column;
         flex-shrink: 0;
     }
 
-    .chat-title {
+    .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid var(--chat-border);
+    }
+
+    .app-title {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-weight: 600;
         font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
     }
 
-    .chat-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    /* 메시지 영역 */
-    .messages-area {
+    .sidebar-content {
         flex: 1;
-        overflow: hidden;
-        position: relative;
-        background-color: var(--neutral-layer-2);
-    }
-
-    .messages-container {
-        height: 100%;
-        overflow-y: auto;
         padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
     }
 
-    /* 웰컴 메시지 */
-    .welcome-message {
+    .new-chat-btn {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1px solid var(--chat-border);
+    }
+
+    .login-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px;
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+
+    .sidebar-footer {
+        padding: 16px;
+        border-top: 1px solid var(--chat-border);
+    }
+
+    .auth-btn {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+        height: 40px;
+        border-radius: 8px;
+    }
+
+    .login-btn {
+        background: var(--accent-color);
+        color: white;
+        border: none;
+    }
+
+    .login-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .logout-btn {
+        color: var(--text-secondary);
+    }
+
+    .logout-btn:hover {
+        color: var(--error-color);
+        background: var(--hover-bg);
+    }
+
+    /* 메인 채팅 영역 */
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 웰컴 화면 */
+    .welcome-screen {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .welcome-content {
+        max-width: 600px;
+        text-align: center;
+    }
+
+    .logo-container {
+        margin-bottom: 24px;
+        color: var(--accent-color);
+    }
+
+    .welcome-content h1 {
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .welcome-subtitle {
+        font-size: 16px;
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+    }
+
+    .example-prompts {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+
+    .example-prompt {
+        padding: 16px;
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+    }
+
+    .example-prompt:hover {
+        background: var(--message-user-bg);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .login-required-notice {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        text-align: center;
-        height: 100%;
-        padding: 24px;
         gap: 16px;
-        max-width: 600px;
-        margin: 0 auto;
+        padding: 32px;
+        background: var(--hover-bg);
+        border: 2px dashed var(--chat-border);
+        border-radius: var(--border-radius);
+        margin-bottom: 32px;
     }
 
-        .welcome-message h2 {
-            margin-top: 16px;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
+    .login-required-notice h3 {
+        margin: 0;
+        font-size: 18px;
+        color: var(--text-primary);
+    }
 
-        .welcome-message p {
-            color: var(--neutral-foreground-hint);
-            margin-bottom: 24px;
-        }
+    .login-required-notice p {
+        margin: 0;
+        color: var(--text-secondary);
+        text-align: center;
+    }
+
+    .login-cta-btn {
+        margin-top: 8px;
+    }
 
     .disclaimer {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        padding: 12px 16px;
-        border-radius: 4px;
-        background-color: var(--neutral-layer-3);
-        color: var(--neutral-foreground-rest);
-        max-width: 500px;
-        width: 100%;
-    }
-
-    .warning-icon {
-        color: var(--warning-foreground-rest);
-    }
-
-    /* 메시지 행 */
-    .message-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        width: 100%;
-        animation: fadeIn 0.3s ease-in-out;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .message-row-user {
-        flex-direction: row-reverse;
-    }
-
-    /* 아바타 */
-    .avatar {
-        display: flex;
-        align-items: center;
         justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    /* 메시지 목록 */
+    .messages-list {
+        padding: 24px;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .message-group {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .message-avatar {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+    }
+
+    .user-avatar, .assistant-avatar {
         width: 32px;
         height: 32px;
         border-radius: 50%;
-        flex-shrink: 0;
-        margin-top: 4px;
-    }
-
-    .ai-avatar {
-        background-color: var(--accent-fill-rest);
-        color: var(--foreground-on-accent-rest);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
     }
 
     .user-avatar {
-        background-color: var(--neutral-fill-rest);
-        color: var(--neutral-foreground-rest);
+        background: var(--accent-color);
+        color: white;
     }
 
-    /* 메시지 풍선 */
-    .user-message, .ai-message {
-        position: relative;
-        border-radius: 16px;
-        max-width: 80%;
-        width: auto;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .user-message {
-        background-color: var(--accent-fill-rest);
-        color: var(--foreground-on-accent-rest);
-        border-top-right-radius: 4px;
-        margin-right: 8px;
-    }
-
-    .ai-message {
-        background-color: var(--neutral-layer-1);
-        color: var(--neutral-foreground-rest);
-        border-top-left-radius: 4px;
-        margin-left: 8px;
+    .assistant-avatar {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--chat-border);
     }
 
     .message-content {
-        padding: 12px 16px;
-        overflow-wrap: break-word;
+        flex: 1;
+        min-width: 0;
     }
 
-        .message-content pre {
-            background-color: var(--neutral-layer-3);
-            border-radius: 4px;
-            padding: 12px;
-            overflow: auto;
-            max-width: 100%;
-            font-size: 14px;
-        }
+    .message-text {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-primary);
+    }
 
-        .message-content code {
-            background-color: var(--neutral-layer-3);
-            border-radius: 3px;
-            padding: 2px 4px;
-            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-            font-size: 90%;
-        }
+    .user-group .message-text {
+        background: var(--message-user-bg);
+        padding: 12px 16px;
+        border-radius: var(--border-radius);
+        border-top-left-radius: 4px;
+    }
 
-        .message-content table {
-            border-collapse: collapse;
-            margin: 10px 0;
-            max-width: 100%;
-            overflow-x: auto;
-            display: block;
-        }
+    /* 타이핑 인디케이터 */
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 12px 0;
+    }
 
-        .message-content th, .message-content td {
-            border: 1px solid var(--neutral-stroke-strong-rest);
-            padding: 8px;
-            text-align: left;
-        }
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-secondary);
+        animation: typing 1.4s infinite ease-in-out;
+    }
 
-        .message-content blockquote {
-            border-left: 4px solid var(--neutral-stroke-rest);
-            margin: 0;
-            padding-left: 10px;
-            color: var(--neutral-foreground-hint);
-        }
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
 
-        .message-content img {
-            max-width: 100%;
-            height: auto;
-        }
-
-    /* 로딩 인디케이터 */
-    .loading-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-left: 8px;
-        color: var(--neutral-foreground-hint);
+    @@keyframes typing {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
     }
 
     /* 입력 영역 */
     .input-area {
-        background-color: var(--neutral-layer-1);
-        padding: 16px;
-        flex-shrink: 0;
+        border-top: 1px solid var(--chat-border);
+        padding: 16px 24px;
+        background: var(--chat-bg);
+        position: relative;
     }
 
     .input-container {
+        max-width: 800px;
+        margin: 0 auto;
         position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
     }
 
-    .input-actions {
+    .input-disabled-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(2px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        z-index: 10;
+        border-radius: var(--border-radius);
+        color: var(--text-secondary);
+        font-size: 14px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    [data-theme="dark"] .input-disabled-overlay {
+        background: rgba(31, 41, 55, 0.95);
+    }
+
+    .input-wrapper {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        padding: 8px;
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: var(--border-radius);
+        transition: border-color 0.2s ease;
+    }
+
+    .input-wrapper:focus-within {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+    }
+
+    .input-wrapper.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        resize: none;
+        outline: none;
+        font-size: 15px;
+        line-height: 1.4;
+        color: var(--text-primary);
+        min-height: 24px;
+        max-height: 120px;
+        font-family: inherit;
+    }
+
+    .chat-input::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .send-button {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        padding: 0;
         display: flex;
         align-items: center;
+        justify-content: center;
+        background: var(--accent-color);
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .send-button:hover:not(:disabled) {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    .send-button:disabled {
+        background: var(--text-secondary);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .input-footer {
+        display: flex;
         justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        padding: 0 4px;
     }
 
     .character-count {
         font-size: 12px;
-        font-weight: 500;
+        color: var(--text-secondary);
     }
 
-    .text-limit-warning {
-        border-color: var(--warning-stroke-rest) !important;
+    .character-count.warning {
+        color: var(--error-color);
     }
 
-    .text-danger {
-        color: var(--error-foreground-rest);
+    /* 메시지 콘텐츠 스타일 */
+    .message-text pre {
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: 8px;
+        padding: 12px;
+        overflow: auto;
+        font-size: 14px;
+        margin: 8px 0;
     }
 
-    .text-muted {
-        color: var(--neutral-foreground-hint);
+    .message-text code {
+        background: var(--hover-bg);
+        border: 1px solid var(--chat-border);
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-size: 14px;
+    }
+
+    .message-text table {
+        border-collapse: collapse;
+        margin: 12px 0;
+        width: 100%;
+    }
+
+    .message-text th, .message-text td {
+        border: 1px solid var(--chat-border);
+        padding: 8px 12px;
+        text-align: left;
+    }
+
+    .message-text th {
+        background: var(--hover-bg);
+        font-weight: 600;
     }
 
     /* 반응형 디자인 */
     @@media (max-width: 768px) {
-        .chat-container {
-            height: calc(100vh - 110px);
-        }
-
-        .user-message, .ai-message {
-            max-width: 85%;
-        }
-
-        .chat-actions {
-            gap: 4px;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .chat-container {
-            height: calc(100vh - 100px);
-        }
-
-        .user-message, .ai-message {
-            max-width: 90%;
-        }
-
-        .chat-title span {
+        .sidebar {
             display: none;
         }
+        
+        .messages-list {
+            padding: 16px;
+        }
+        
+        .input-area {
+            padding: 12px 16px;
+        }
+        
+        .welcome-content h1 {
+            font-size: 24px;
+        }
+        
+        .example-prompts {
+            grid-template-columns: 1fr;
+        }
     }
 
-    @@media (min-width: 992px) {
-        .user-message, .ai-message {
-            max-width: 70%;
+    @@media (max-width: 480px) {
+        .input-wrapper {
+            padding: 6px;
         }
-
-        .messages-container {
-            padding: 24px;
+        
+        .send-button {
+            width: 32px;
+            height: 32px;
         }
     }
 </style>

@@ -30,6 +30,10 @@ public partial class Chat : IDisposable
     private OpenAIClient? _client;
     private MarkdownPipeline? _markdownPipeline;
     private HtmlParser _htmlParser = new HtmlParser();
+    
+    // API 키 상태 관리
+    private bool _hasApiKey = false;
+    private bool _isCheckingApiKey = true;
 
     // 글자 수 제한 관련 변수
     private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
@@ -53,21 +57,57 @@ public partial class Chat : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if we have an API key stored
-        var apiKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "openRouterApiKey");
-
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            // API 키가 없을 경우 안내 대화 상자 표시
-            await ShowOpenRouterGuideAsync();
-            return;
-        }
-
-        if (_client == null)
-            _client = ChatService.CreateOpenAIClient(apiKey);
+        await CheckApiKeyStatus();
     }
 
-    private async Task ShowOpenRouterGuideAsync()
+    private async Task CheckApiKeyStatus()
+    {
+        _isCheckingApiKey = true;
+        StateHasChanged();
+
+        try
+        {
+            // Check if we have an API key stored
+            var apiKey = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "openRouterApiKey");
+            _hasApiKey = !string.IsNullOrEmpty(apiKey);
+
+            if (_hasApiKey)
+            {
+                if (_client == null)
+                    _client = ChatService.CreateOpenAIClient(apiKey);
+            }
+            else
+            {
+                _client = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"API 키 상태 확인 중 오류: {ex.Message}");
+            _hasApiKey = false;
+        }
+        finally
+        {
+            _isCheckingApiKey = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
+            
+            // 입력 필드 자동 리사이즈 스크립트 실행
+            await JSRuntime.InvokeVoidAsync("initChatInput");
+        }
+
+        await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+    }
+
+    private async Task HandleLoginAsync()
     {
         var result = await DialogService.ShowDialogAsync<OpenRouterGuide>(
             new DialogParameters()
@@ -81,22 +121,26 @@ public partial class Chat : IDisposable
 
         // 사용자가 계속하기를 선택한 경우에만 인증 플로우 시작
         if (await result.GetReturnValueAsync<bool>() == true)
+        {
             await AuthService.StartAuthFlowAsync();
+        }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // 예시 프롬프트 설정 메서드
+    private async Task SetExamplePrompt(string prompt)
     {
-        if (firstRender)
+        if (!_hasApiKey)
         {
-            dotNetHelper = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
+            await HandleLoginAsync();
+            return;
         }
 
-        await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+        _userInput = prompt;
+        StateHasChanged();
     }
 
     // 입력 내용이 변경될 때 호출되는 메서드
-    private void OnInputChange(ChangeEventArgs e)
+    private async Task OnInputChange(ChangeEventArgs e)
     {
         var newValue = e.Value?.ToString() ?? string.Empty;
 
@@ -105,10 +149,19 @@ public partial class Chat : IDisposable
             newValue = newValue.Substring(0, _maxInputLength);
 
         _userInput = newValue;
+        
+        // 텍스트 영역 자동 리사이즈
+        await JSRuntime.InvokeVoidAsync("autoResizeTextarea", "chatTextArea");
     }
 
     private async Task SendMessage()
     {
+        if (!_hasApiKey)
+        {
+            await HandleLoginAsync();
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
             return;
 
@@ -132,6 +185,7 @@ public partial class Chat : IDisposable
             {
                 _currentStreamedMessage += chunk;
                 StateHasChanged();
+                await Task.Delay(10); // 자연스러운 타이핑 효과
             }
 
             _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
@@ -140,7 +194,7 @@ public partial class Chat : IDisposable
         {
             _messages.Add(new ChatMessage
             {
-                Content = $"오류가 발생했습니다: {ex.ToString()}",
+                Content = $"죄송합니다. 오류가 발생했습니다: {ex.Message}",
                 IsUser = false
             });
         }
@@ -155,8 +209,17 @@ public partial class Chat : IDisposable
     protected async Task Logout()
     {
         await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
-        // 로그아웃 후 새로고침하여 OpenRouter 가이드를 다시 표시
-        NavigationManager.NavigateTo("/", forceLoad: true);
+        
+        // 상태 업데이트
+        _hasApiKey = false;
+        _client = null;
+        _messages.Clear();
+        _userInput = string.Empty;
+        _isStreaming = false;
+        _currentStreamedMessage = string.Empty;
+        _sessionId = Guid.NewGuid().ToString();
+        
+        StateHasChanged();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -164,8 +227,6 @@ public partial class Chat : IDisposable
         if (e.Key == "Enter" && e.ShiftKey == false)
         {
             await SendMessage();
-            // 입력 필드에 다시 포커스 맞추기
-            await JSRuntime.InvokeVoidAsync("document.getElementById", "chatTextArea").AsTask();
         }
     }
 
@@ -191,21 +252,28 @@ public partial class Chat : IDisposable
             var currentHref = (eachAnchorElem.GetAttribute("href") ?? string.Empty).Trim();
             eachAnchorElem.RemoveAttribute("href");
             eachAnchorElem.SetAttribute("onclick", $"window.Helpers.openSandbox('{currentHref}');");
-            eachAnchorElem.SetAttribute("style", "font-weight: bold; cursor: pointer;");
-            eachAnchorElem.InnerHtml = $"<button>{WebUtility.HtmlEncode(currentHref)}</button>";
+            eachAnchorElem.SetAttribute("style", "font-weight: bold; cursor: pointer; color: #2563eb; text-decoration: underline;");
+            eachAnchorElem.InnerHtml = WebUtility.HtmlEncode(currentHref);
         }
 
         html = document.Body.InnerHtml;
 
-        // 줄바꿈이 적용되지 않은 부분 처리 (마크다운에서 처리되지 않은 줄바꿈)
         return (MarkupString)html;
     }
 
     private async Task ResetConversationAsync()
     {
         _messages.Clear();
+        _sessionId = Guid.NewGuid().ToString();
         await ChatService.ClearSessionAsync(_sessionId);
         StateHasChanged();
+    }
+
+    // 페이지 포커스 시 API 키 상태 재확인
+    [JSInvokable]
+    public async Task OnPageFocus()
+    {
+        await CheckApiKeyStatus();
     }
 
     [JSInvokable("OpenSandbox")]
