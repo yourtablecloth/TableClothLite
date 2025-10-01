@@ -164,6 +164,15 @@ function handleMobileKeyboard() {
     });
 }
 
+// 창 크기 가져오기 함수 추가
+window.getWindowWidth = function() {
+    return window.innerWidth;
+};
+
+window.getWindowHeight = function() {
+    return window.innerHeight;
+};
+
 // 채팅 입력 초기화 함수
 window.initChatInput = function () {
     const textarea = document.getElementById('chatTextArea');

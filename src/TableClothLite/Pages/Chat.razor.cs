@@ -7,10 +7,6 @@ using OpenAI;
 using System.Net;
 using TableClothLite.Models;
 using TableClothLite.Shared.Models;
-using Microsoft.FluentUI.AspNetCore.Components;
-using TableClothLite.Components.Chat;
-using TableClothLite.Components.Setting;
-using TableClothLite.Components.Service;
 using TableClothLite.Services;
 
 namespace TableClothLite.Pages;
@@ -43,8 +39,19 @@ public partial class Chat : IDisposable
     private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
     private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
 
+    // 필요한 서비스들 inject
+    [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
+
     protected override void OnInitialized()
     {
+        // 호환성을 위한 /Chat 경로 리다이렉트 처리
+        var uri = new Uri(NavigationManager.Uri);
+        if (uri.AbsolutePath.Equals("/Chat", StringComparison.OrdinalIgnoreCase))
+        {
+            NavigationManager.NavigateTo("/", replace: true);
+            return;
+        }
+
         _markdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
             .UseBootstrap()
@@ -117,7 +124,7 @@ public partial class Chat : IDisposable
     {
         try
         {
-            var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+            var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
             
             // 데스크톱(768px 초과)에서는 기본적으로 열린 상태
             // 모바일(768px 이하)에서는 기본적으로 닫힌 상태
@@ -138,7 +145,7 @@ public partial class Chat : IDisposable
 
     // JavaScript에서 호출할 수 있는 메서드 (창 크기 변경 시)
     [JSInvokable]
-    public async Task OnWindowResize(int width)
+    public Task OnWindowResize(int width)
     {
         var isMobile = width <= 768;
         
@@ -154,52 +161,26 @@ public partial class Chat : IDisposable
             _isSidebarOpen = false;
             StateHasChanged();
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task HandleLoginAsync()
     {
-        var result = await DialogService.ShowDialogAsync<OpenRouterGuide>(
-            new DialogParameters()
-            {
-                Title = "OpenRouter 계정 필요",
-                PreventScroll = true,
-                PrimaryAction = "계속하기",
-                SecondaryAction = "취소",
-                Width = "450px"
-            });
-
-        // 사용자가 계속하기를 선택한 경우에만 인증 플로우 시작
-        if (await result.GetReturnValueAsync<bool>() == true)
-        {
-            await AuthService.StartAuthFlowAsync();
-        }
+        // 직접 인증 플로우 시작
+        await AuthService.StartAuthFlowAsync();
     }
 
     private async Task OpenSettingDialog()
     {
-        await DialogService.ShowDialogAsync<Setting>(
-            new DialogParameters()
-            {
-                Title = "설정",
-                PreventScroll = true,
-                PrimaryAction = "저장",
-                SecondaryAction = "취소",
-                Width = "500px"
-            });
+        // 설정 기능은 준비 중
+        await JSRuntime.InvokeVoidAsync("alert", "설정 기능은 준비 중입니다.");
     }
 
     private async Task OpenServicesModalAsync()
     {
-        await DialogService.ShowDialogAsync<ServiceListModal>(
-            new DialogParameters()
-            {
-                Title = "서비스 목록",
-                PreventScroll = true,
-                PrimaryAction = null,
-                SecondaryAction = null,
-                Width = "800px",
-                Height = "600px"
-            });
+        // 서비스 목록 기능은 준비 중
+        await JSRuntime.InvokeVoidAsync("alert", "서비스 목록 기능은 준비 중입니다.");
     }
 
     private void ToggleSidebar()
@@ -218,15 +199,10 @@ public partial class Chat : IDisposable
         }
 
         _userInput = prompt;
-        
-        // 모바일에서 예시 선택 시 사이드바 닫기
-        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
-        if (windowWidth <= 768 && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-        }
-        
         StateHasChanged();
+        
+        // 바로 메시지 전송
+        await SendMessage();
     }
 
     // 입력 내용이 변경될 때 호출되는 메서드
@@ -256,7 +232,7 @@ public partial class Chat : IDisposable
             return;
 
         // 모바일에서 메시지 전송 시 사이드바 닫기
-        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+        var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
         if (windowWidth <= 768 && _isSidebarOpen)
         {
             _isSidebarOpen = false;
@@ -365,7 +341,7 @@ public partial class Chat : IDisposable
         await ChatService.ClearSessionAsync(_sessionId);
         
         // 모바일에서 대화 리셋 시 사이드바 닫기
-        var windowWidth = await JSRuntime.InvokeAsync<int>("window.innerWidth");
+        var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
         if (windowWidth <= 768 && _isSidebarOpen)
         {
             _isSidebarOpen = false;
