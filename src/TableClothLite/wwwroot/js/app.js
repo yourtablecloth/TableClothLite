@@ -619,3 +619,110 @@ window.showInstallPrompt = function() {
         });
     }
 };
+
+// OS 감지 함수
+window.detectOS = function() {
+    const userAgent = navigator.userAgent;
+    const platform = navigator.platform;
+    
+    const osInfo = {
+        isWindows: false,
+        isMac: false,
+        isLinux: false,
+        isAndroid: false,
+        isIOS: false,
+        userAgent: userAgent,
+        platform: platform
+    };
+    
+    // Windows 감지
+    if (/Windows/i.test(userAgent) || /Win/i.test(platform)) {
+        osInfo.isWindows = true;
+    }
+    // macOS 감지
+    else if (/Mac/i.test(userAgent) || /Mac/i.test(platform)) {
+        osInfo.isMac = true;
+    }
+    // iOS 감지
+    else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        osInfo.isIOS = true;
+    }
+    // Android 감지
+    else if (/Android/i.test(userAgent)) {
+        osInfo.isAndroid = true;
+    }
+    // Linux 감지
+    else if (/Linux/i.test(userAgent) || /Linux/i.test(platform)) {
+        osInfo.isLinux = true;
+    }
+    
+    console.log('OS Detection Result:', osInfo);
+    return osInfo;
+};
+
+// Windows Sandbox 지원 여부 확인
+window.checkWindowsSandboxSupport = function() {
+    const osInfo = window.detectOS();
+    
+    if (!osInfo.isWindows) {
+        return {
+            supported: false,
+            reason: 'Windows 운영체제가 아닙니다.'
+        };
+    }
+    
+    // User Agent에서 Windows 버전 확인 시도
+    const userAgent = navigator.userAgent;
+    
+    // Windows 10 이상인지 확인 (간단한 휴리스틱)
+    if (/Windows NT 10\.0/i.test(userAgent) || /Windows NT 11\./i.test(userAgent)) {
+        return {
+            supported: true,
+            reason: 'Windows 10/11에서 지원 가능합니다.'
+        };
+    }
+    
+    // Windows 11은 여전히 NT 10.0으로 표시될 수 있음
+    if (/Windows NT/i.test(userAgent)) {
+        return {
+            supported: true,
+            reason: 'Windows Sandbox 지원 여부를 확인해주세요.',
+            uncertain: true
+        };
+    }
+    
+    return {
+        supported: false,
+        reason: 'Windows 10 이상이 필요합니다.'
+    };
+};
+
+// Windows 기능 페이지 열기
+window.openWindowsFeatures = function() {
+    try {
+        // Windows 설정의 선택적 기능 페이지 열기 시도
+        window.open('ms-settings:optionalfeatures', '_blank');
+        return true;
+    } catch (error) {
+        console.log('Windows 설정을 자동으로 열 수 없습니다:', error);
+        return false;
+    }
+};
+
+// 스크롤 정보 가져오기 함수
+window.getScrollInfo = function(selector) {
+    const element = document.querySelector(selector);
+    if (!element) {
+        return {
+            scrollTop: 0,
+            scrollHeight: 0,
+            clientHeight: 0
+        };
+    }
+    
+    return {
+        scrollTop: element.scrollTop,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight
+    };
+};

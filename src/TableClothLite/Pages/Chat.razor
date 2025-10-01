@@ -6,7 +6,10 @@
 @using OpenAI
 @using System.Xml
 @using System.Net
+@using TableClothLite.Components.Catalog
+@using TableClothLite.Components.Settings
 @using TableClothLite.Services
+@using TableClothLite.Components.Guide
 @using Markdig
 
 @inject OpenAIChatService ChatService
@@ -89,13 +92,13 @@
             </div>
             <div class="header-actions">
                 <button @onclick="OpenServicesModalAsync" class="action-btn" title="서비스 목록" type="button">
-                    ⚙️
+                    📋
                 </button>
                 <button @onclick="OpenSettingDialog" class="action-btn" title="설정" type="button">
                     ⚙️
                 </button>
                 <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="action-btn" title="GitHub">
-                    🔗
+                    💻
                 </a>
                 <a href="https://yourtablecloth.app/" target="_blank" class="action-btn" title="식탁보 홈페이지">
                     🏠
@@ -833,3 +836,22 @@
         }
     }
 </style>
+
+@* Windows Sandbox 가이드 모달 *@
+@if (_showSandboxGuide)
+{
+    <SandboxGuideModal IsWindowsOS="@_isWindowsOS"
+                       OnClose="CloseSandboxGuide" />
+}
+
+@* 서비스 목록 모달 *@
+@if (_showServicesModal)
+{
+    <ServiceCatalogModal OnClose="CloseServicesModal" />
+}
+
+@* 설정 모달 *@
+@if (_showSettingsModal)
+{
+    <SettingsModal OnClose="CloseSettingsModal" />
+}

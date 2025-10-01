@@ -1,0 +1,455 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+
+<div class="sandbox-guide-modal" @onclick="HandleBackdropClick">
+    <div class="modal-content" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <h3>@Title</h3>
+            <button class="close-btn" @onclick="Close" type="button">✕</button>
+        </div>
+        
+        <div class="modal-body">
+            @if (IsWindowsOS)
+            {
+                <div class="guide-content">
+                    <div class="icon-section">
+                        <span class="windows-icon">🪟</span>
+                        <h4>Windows Sandbox 설치 안내</h4>
+                    </div>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>Windows 기능 켜기/끄기 열기</h5>
+                                <p><kbd>Win + R</kbd>을 누르고 <code>optionalfeatures</code>를 입력하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>Windows Sandbox 활성화</h5>
+                                <p>"Windows Sandbox" 항목을 찾아 체크박스를 선택하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>컴퓨터 재시작</h5>
+                                <p>기능 설치 후 컴퓨터를 재시작하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h5>WSB 파일 실행</h5>
+                                <p>다운로드받은 .wsb 파일을 더블클릭하여 Windows Sandbox에서 실행하세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h5>⚠️ 시스템 요구사항</h5>
+                        <ul>
+                            <li>Windows 10 Pro/Enterprise/Education (빌드 18305 이상)</li>
+                            <li>Windows 11 (모든 에디션)</li>
+                            <li>가상화 지원 CPU</li>
+                            <li>BIOS에서 가상화 기능 활성화</li>
+                            <li>최소 4GB RAM (8GB 권장)</li>
+                        </ul>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="guide-content">
+                    <div class="icon-section">
+                        <span class="other-os-icon">🖥️</span>
+                        <h4>Windows Sandbox 사용 안내</h4>
+                    </div>
+                    
+                    <div class="info-box">
+                        <p><strong>Windows Sandbox는 Windows 전용 기능입니다.</strong></p>
+                        <p>현재 운영체제에서는 직접 실행할 수 없지만, 다운로드받은 WSB 파일을 Windows PC에서 사용할 수 있습니다.</p>
+                    </div>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>Windows PC 준비</h5>
+                                <p>Windows 10 Pro/Enterprise/Education 또는 Windows 11이 설치된 PC를 준비하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>WSB 파일 전송</h5>
+                                <p>다운로드받은 .wsb 파일을 USB, 클라우드 등을 통해 Windows PC로 전송하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>Windows Sandbox 설치</h5>
+                                <p>Windows PC에서 "Windows 기능 켜기/끄기"를 통해 Windows Sandbox를 활성화하세요.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h5>WSB 파일 실행</h5>
+                                <p>Windows PC에서 .wsb 파일을 더블클릭하여 안전한 샌드박스 환경에서 실행하세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <div class="modal-footer">
+            <div class="dont-show-again">
+                <label>
+                    <input type="checkbox" @bind="DontShowAgain" />
+                    <span>다시 보지 않기</span>
+                </label>
+            </div>
+            
+            <div class="footer-buttons">
+                <button class="btn btn-secondary" @onclick="Close" type="button">
+                    닫기
+                </button>
+                @if (IsWindowsOS)
+                {
+                    <button class="btn btn-primary" @onclick="OpenWindowsFeatures" type="button">
+                        Windows 기능 열기
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sandbox-guide-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .icon-section {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .windows-icon, .other-os-icon {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .icon-section h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .info-box {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    .info-box p {
+        margin: 0;
+        color: #1565c0;
+    }
+
+    .info-box strong {
+        font-weight: 600;
+    }
+
+    .steps {
+        margin: 24px 0;
+    }
+
+    .step {
+        display: flex;
+        margin-bottom: 20px;
+        align-items: flex-start;
+    }
+
+    .step-number {
+        background: #007bff;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+        margin-right: 16px;
+        margin-top: 2px;
+    }
+
+    .step-content h5 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .step-content p {
+        margin: 0;
+        color: #6c757d;
+        line-height: 1.5;
+    }
+
+    .step-content code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.9em;
+        color: #e83e8c;
+    }
+
+    .step-content kbd {
+        background: #343a40;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 0.9em;
+    }
+
+    .requirements {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 20px;
+    }
+
+    .requirements h5 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #856404;
+    }
+
+    .requirements ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #856404;
+    }
+
+    .requirements li {
+        margin-bottom: 4px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px 24px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dont-show-again label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .dont-show-again input[type="checkbox"] {
+        margin-right: 8px;
+    }
+
+    .footer-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        border-color: #545b62;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+        border-color: #004085;
+    }
+
+    @@media (max-width: 768px) {
+        .sandbox-guide-modal {
+            padding: 10px;
+        }
+
+        .modal-content {
+            max-height: 95vh;
+        }
+
+        .modal-header, .modal-body, .modal-footer {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .modal-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .footer-buttons {
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Windows Sandbox 안내";
+    [Parameter] public bool IsWindowsOS { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool DontShowAgain { get; set; } = false;
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private async Task Close()
+    {
+        if (DontShowAgain)
+        {
+            var storageKey = IsWindowsOS ? "dont-show-windows-sandbox-guide" : "dont-show-other-os-guide";
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", storageKey, "true");
+        }
+        
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await Close();
+    }
+
+    private async Task OpenWindowsFeatures()
+    {
+        try
+        {
+            var success = await JSRuntime.InvokeAsync<bool>("openWindowsFeatures");
+            
+            if (!success)
+            {
+                // Fallback 안내
+                await JSRuntime.InvokeVoidAsync("alert", 
+                    "Windows 기능을 자동으로 열 수 없습니다.\n\n" +
+                    "수동으로 열려면:\n" +
+                    "1. Win + R을 누르세요\n" +
+                    "2. 'optionalfeatures'를 입력하고 Enter를 누르세요\n" +
+                    "3. 또는 '설정 > 앱 > 선택적 기능'으로 이동하세요");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Windows 기능 열기 중 오류: {ex.Message}");
+            
+            // 오류 발생 시 안내 메시지
+            await JSRuntime.InvokeVoidAsync("alert", 
+                "Windows 기능 페이지 열기에 실패했습니다.\n\n" +
+                "수동으로 열어주세요:\n" +
+                "• Win + R → 'optionalfeatures' 입력\n" +
+                "• 또는 설정 → 앱 → 선택적 기능");
+        }
+        
+        await Close();
+    }
+}

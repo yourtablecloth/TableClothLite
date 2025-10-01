@@ -2,38 +2,46 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
 using TableClothLite.Components.Chat;
-using TableClothLite.Components.Setting;
-using TableClothLite.Components.Service;
+using TableClothLite.Components.Settings;
+using TableClothLite.Components.Catalog;
 
 namespace TableClothLite.Layout;
 
 public partial class MainLayout : LayoutComponentBase
 {
+    private bool _showServiceModal = false;
+    private bool _showSettingsModal = false;
+
     public void OpenServicesPage()
     {
         NavigationManager.NavigateTo("/services");
     }
 
-    public async Task OpenServicesModalAsync()
+    public Task OpenServicesModalAsync()
     {
-        await DialogService.ShowDialogAsync<ServiceListModal>(
-            new DialogParameters()
-            {
-                Title = "서비스 목록",
-                PreventScroll = true,
-                Width = "800px",
-                Height = "600px"
-            }
-        );
+        _showServiceModal = true;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 
-    public async Task OpenSettingDialog()
+    public Task OpenSettingDialog()
     {
-        await DialogService.ShowDialogAsync<Setting>(
-            new DialogParameters()
-            {
-                PreventScroll = true
-            }
-        );
+        _showSettingsModal = true;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task CloseServiceModal()
+    {
+        _showServiceModal = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task CloseSettingsModal()
+    {
+        _showSettingsModal = false;
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 }

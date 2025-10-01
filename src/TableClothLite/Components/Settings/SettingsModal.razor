@@ -1,0 +1,557 @@
+﻿@using Microsoft.AspNetCore.Components
+@using TableClothLite.Services
+@using TableClothLite.ViewModels
+
+<div class="settings-modal" @onclick="HandleBackdropClick">
+    <div class="modal-content" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <h3>⚙️ 설정</h3>
+            <button class="close-btn" @onclick="Close" type="button">✕</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="settings-info">
+                <p><strong>Windows Sandbox 설정</strong></p>
+                <p>WSB 파일 생성 시 적용될 설정을 관리합니다.</p>
+            </div>
+            
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">네트워크 사용</div>
+                        <div class="setting-description">인터넷 연결을 허용합니다</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">오디오 녹음 사용</div>
+                        <div class="setting-description">마이크 사용을 허용합니다</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="SettingsModel.EnableAudioInput" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">비디오 녹화 사용</div>
+                        <div class="setting-description">카메라 사용을 허용합니다</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="SettingsModel.EnableVideoInput" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">프린터 공유 사용</div>
+                        <div class="setting-description">호스트 PC의 프린터를 공유합니다</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="SettingsModel.EnablePrinterRedirection" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-name">복사/붙여넣기 사용</div>
+                        <div class="setting-description">클립보드 공유를 허용합니다</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="SettingsModel.EnableClipboardRedirection" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-note">
+                <div class="note-icon">💡</div>
+                <div class="note-text">
+                    설정은 다음에 생성되는 WSB 파일부터 적용됩니다.
+                    보안을 위해 필요한 기능만 활성화하는 것을 권장합니다.
+                </div>
+            </div>
+            
+            @if (_isLoading)
+            {
+                <div class="loading-indicator">
+                    <span class="loading-spinner">⏳</span>
+                    <span class="loading-text">설정을 저장하는 중...</span>
+                </div>
+            }
+            
+            @if (!string.IsNullOrEmpty(_statusMessage))
+            {
+                <div class="status-message @(_isError ? "error" : "success")">
+                    <span class="status-icon">@(_isError ? "❌" : "✅")</span>
+                    <span class="status-text">@_statusMessage</span>
+                </div>
+            }
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="ResetToDefaults" type="button" disabled="@_isLoading">
+                기본값으로 복원
+            </button>
+            <button class="btn btn-primary" @onclick="SaveAndClose" type="button" disabled="@_isLoading">
+                @(_isLoading ? "저장 중..." : "저장")
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .settings-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6c757d;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+
+    .modal-body {
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .settings-info {
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+
+    .settings-info p {
+        margin: 0 0 8px 0;
+        color: #2c3e50;
+    }
+
+    .settings-info p:last-child {
+        margin-bottom: 0;
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .settings-list {
+        margin-bottom: 24px;
+    }
+
+    .setting-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+
+    .setting-info {
+        flex: 1;
+        margin-right: 16px;
+    }
+
+    .setting-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 4px;
+    }
+
+    .setting-description {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #007bff;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #007bff;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    .settings-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .note-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .note-text {
+        font-size: 14px;
+        color: #856404;
+        line-height: 1.5;
+    }
+
+    .loading-indicator {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .loading-spinner {
+        font-size: 16px;
+    }
+
+    .loading-text {
+        font-size: 14px;
+        color: #1565c0;
+    }
+
+    .status-message {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .status-message.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+
+    .status-message.error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .status-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .status-text {
+        font-size: 14px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px 24px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        border: 1px solid;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+        background: #5a6268;
+        border-color: #545b62;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #0056b3;
+        border-color: #004085;
+    }
+
+    /* 반응형 디자인 */
+    .settings-modal {
+        /* 모바일 대응 기본 스타일은 이미 적용됨 */
+    }
+
+    /* 모바일 스타일 */
+    .settings-modal.mobile .modal-content {
+        max-height: 95vh;
+    }
+
+    .settings-modal.mobile .modal-header,
+    .settings-modal.mobile .modal-body,
+    .settings-modal.mobile .modal-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .settings-modal.mobile .setting-item {
+        padding: 16px 0;
+    }
+
+    .settings-modal.mobile .setting-name {
+        font-size: 14px;
+    }
+
+    .settings-modal.mobile .setting-description {
+        font-size: 12px;
+    }
+
+    .settings-modal.mobile .modal-footer {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .settings-modal.mobile .btn {
+        width: 100%;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Inject] private SandboxSettingsViewModel SettingsModel { get; set; } = default!;
+    [Inject] private ConfigService ConfigService { get; set; } = default!;
+
+    // UI 상태 관리
+    private bool _isLoading = false;
+    private string _statusMessage = string.Empty;
+    private bool _isError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentSettings();
+    }
+
+    private async Task LoadCurrentSettings()
+    {
+        try
+        {
+            // ConfigService를 통해 실제 설정 로드
+            var config = await ConfigService.LoadAsync();
+            SettingsModel.ImportFromSandboxConfig(config);
+            
+            Console.WriteLine("설정을 성공적으로 로드했습니다.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"설정 로드 중 오류: {ex.Message}");
+            // 로드 실패 시 기본값 사용
+            ResetToDefaults();
+        }
+    }
+
+    private async Task SaveAndClose()
+    {
+        await SaveSettings();
+        
+        if (!_isError)
+        {
+            // 성공적으로 저장된 경우에만 모달 닫기
+            await Task.Delay(1000); // 성공 메시지를 잠깐 보여주기
+            await Close();
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        _isLoading = true;
+        _statusMessage = string.Empty;
+        _isError = false;
+        StateHasChanged();
+
+        try
+        {
+            // SettingsModel에서 SandboxConfig로 변환
+            var config = SettingsModel.ExportToSandboxConfig();
+            
+            // ConfigService를 통해 실제 저장
+            await ConfigService.SaveAsync(config);
+            
+            _statusMessage = "설정이 성공적으로 저장되었습니다.";
+            _isError = false;
+            
+            Console.WriteLine("설정이 성공적으로 저장되었습니다.");
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"설정 저장 중 오류가 발생했습니다: {ex.Message}";
+            _isError = true;
+            
+            Console.WriteLine($"설정 저장 중 오류: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetToDefaults()
+    {
+        try
+        {
+            // SandboxSettingsViewModel의 기본값으로 리셋
+            SettingsModel.EnableNetworking = true;
+            SettingsModel.EnableAudioInput = true;  // 기존 Setting.razor와 동일
+            SettingsModel.EnableVideoInput = true;   // 기존 Setting.razor와 동일
+            SettingsModel.EnablePrinterRedirection = true;
+            SettingsModel.EnableClipboardRedirection = true;
+            
+            _statusMessage = "설정이 기본값으로 복원되었습니다.";
+            _isError = false;
+            
+            StateHasChanged();
+            
+            // 메시지를 잠깐 보여준 후 자동으로 사라지게 함
+            Task.Delay(3000).ContinueWith(_ => 
+            {
+                _statusMessage = string.Empty;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"기본값 복원 중 오류가 발생했습니다: {ex.Message}";
+            _isError = true;
+            StateHasChanged();
+            
+            Console.WriteLine($"기본값 복원 중 오류: {ex.Message}");
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        // 저장 중이 아닐 때만 백드롭 클릭으로 닫기 허용
+        if (!_isLoading)
+        {
+            await Close();
+        }
+    }
+}

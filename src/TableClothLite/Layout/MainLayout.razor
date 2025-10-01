@@ -1,5 +1,8 @@
 ﻿@inherits LayoutComponentBase
 
+@using TableClothLite.Components.Catalog
+@using TableClothLite.Components.Settings
+
 @inject IDialogService DialogService
 @inject OpenRouterAuthService AuthService
 @inject NavigationManager NavigationManager
@@ -12,6 +15,16 @@
         </article>
     </main>
 </div>
+
+@if (_showServiceModal)
+{
+    <ServiceCatalogModal OnClose="CloseServiceModal" />
+}
+
+@if (_showSettingsModal)
+{
+    <SettingsModal OnClose="CloseSettingsModal" />
+}
 
 <FluentToastProvider />
 <FluentDialogProvider />

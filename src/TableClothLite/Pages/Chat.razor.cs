@@ -42,6 +42,16 @@ public partial class Chat : IDisposable
     // 필요한 서비스들 inject
     [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
 
+    // Windows Sandbox 가이드 모달 상태 관리
+    private bool _showSandboxGuide = false;
+    private bool _isWindowsOS = true;
+
+    // 서비스 목록 모달 상태 관리
+    private bool _showServicesModal = false;
+    
+    // 설정 모달 상태 관리
+    private bool _showSettingsModal = false;
+
     protected override void OnInitialized()
     {
         // 호환성을 위한 /Chat 경로 리다이렉트 처리
@@ -288,14 +298,16 @@ public partial class Chat : IDisposable
 
     private async Task OpenSettingDialog()
     {
-        // 설정 기능은 준비 중
-        await JSRuntime.InvokeVoidAsync("alert", "설정 기능은 준비 중입니다.");
+        _showSettingsModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
     }
 
     private async Task OpenServicesModalAsync()
     {
-        // 서비스 목록 기능은 준비 중
-        await JSRuntime.InvokeVoidAsync("alert", "서비스 목록 기능은 준비 중입니다.");
+        _showServicesModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
     }
 
     private void ToggleSidebar()
@@ -475,6 +487,21 @@ public partial class Chat : IDisposable
     [JSInvokable("OpenSandbox")]
     public async Task OpenSandboxAsync(string url)
     {
+        // OS 감지
+        _isWindowsOS = await DetectWindowsOSAsync();
+        
+        // 사용자가 "다시 보지 않기" 설정했는지 확인
+        var storageKey = _isWindowsOS ? "dont-show-windows-sandbox-guide" : "dont-show-other-os-guide";
+        var dontShowGuide = await JSRuntime.InvokeAsync<string>("localStorage.getItem", storageKey);
+        
+        // 가이드를 보여야 하는 경우 모달 표시
+        if (string.IsNullOrEmpty(dontShowGuide))
+        {
+            _showSandboxGuide = true;
+            StateHasChanged();
+        }
+
+        // WSB 파일 생성 및 다운로드 (기존 로직)
         if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUri))
             parsedUri = null;
 
@@ -508,6 +535,72 @@ public partial class Chat : IDisposable
         await FileDownloader.DownloadFileAsync(
             memStream, $"{serviceInfo?.ServiceId ?? "generated"}.wsb", "application/xml")
             .ConfigureAwait(false);
+    }
+
+    // OS 감지 메서드 개선
+    private async Task<bool> DetectWindowsOSAsync()
+    {
+        try
+        {
+            var osInfo = await JSRuntime.InvokeAsync<OSInfo>("detectOS");
+            
+            Console.WriteLine($"OS 감지 결과 - IsWindows: {osInfo.IsWindows}, UserAgent: {osInfo.UserAgent}");
+            
+            return osInfo.IsWindows;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"OS 감지 중 오류: {ex.Message}");
+            // Fallback: 기존 방식으로 감지
+            try
+            {
+                var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
+                var platform = await JSRuntime.InvokeAsync<string>("eval", "navigator.platform");
+                
+                var isWindows = userAgent.Contains("Windows", StringComparison.OrdinalIgnoreCase) ||
+                               platform.Contains("Win", StringComparison.OrdinalIgnoreCase);
+                
+                return isWindows;
+            }
+            catch
+            {
+                // 최종 Fallback: Windows라고 가정
+                return true;
+            }
+        }
+    }
+
+    // OS 정보 클래스
+    public class OSInfo
+    {
+        public bool IsWindows { get; set; }
+        public bool IsMac { get; set; }
+        public bool IsLinux { get; set; }
+        public bool IsAndroid { get; set; }
+        public bool IsIOS { get; set; }
+        public string UserAgent { get; set; } = string.Empty;
+        public string Platform { get; set; } = string.Empty;
+    }
+
+    // 모달 닫기 메서드
+    private void CloseSandboxGuide()
+    {
+        _showSandboxGuide = false;
+        StateHasChanged();
+    }
+
+    // 서비스 목록 모달 닫기
+    private void CloseServicesModal()
+    {
+        _showServicesModal = false;
+        StateHasChanged();
+    }
+
+    // 설정 모달 닫기
+    private void CloseSettingsModal()
+    {
+        _showSettingsModal = false;
+        StateHasChanged();
     }
 
     public void Dispose()
