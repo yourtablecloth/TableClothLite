@@ -110,6 +110,9 @@ public partial class Chat : IDisposable
             dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
             
+            // 캐시 무효화 및 버전 체크
+            await CheckAppVersionAsync();
+            
             // 초기 화면 크기에 따른 사이드바 상태 설정
             await InitializeSidebarState();
             
@@ -118,6 +121,118 @@ public partial class Chat : IDisposable
         }
 
         await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+    }
+
+    // 앱 버전 체크 및 캐시 관리
+    private async Task CheckAppVersionAsync()
+    {
+        try
+        {
+            const string APP_VERSION = "2024.1.0"; // GitHub Actions에서 자동 업데이트
+            
+            // version.json에서 서버 버전 확인
+            var serverVersionInfo = await GetServerVersionAsync();
+            
+            // 로컬 스토리지에서 저장된 버전 확인
+            var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
+            
+            if (string.IsNullOrEmpty(storedVersion))
+            {
+                // 처음 방문 - 현재 버전 저장
+                var versionToStore = serverVersionInfo?.Version ?? APP_VERSION;
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
+            }
+            else if (serverVersionInfo != null && storedVersion != serverVersionInfo.Version)
+            {
+                // 버전이 다름 - 캐시 클리어 필요
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", serverVersionInfo.Version);
+                
+                // 사용자에게 알림 (선택사항)
+                var shouldRefresh = await JSRuntime.InvokeAsync<bool>("confirm", 
+                    $"새 버전 {serverVersionInfo.Version}이 감지되었습니다. 최신 기능을 사용하려면 새로고침이 필요합니다. 새로고침하시겠습니까?");
+                
+                if (shouldRefresh)
+                {
+                    await JSRuntime.InvokeVoidAsync("window.forceRefresh");
+                }
+            }
+            
+            // 백그라운드에서 주기적 버전 체크 시작
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromMinutes(10)); // 10분 후 시작
+                while (true)
+                {
+                    try
+                    {
+                        await InvokeAsync(async () =>
+                        {
+                            await JSRuntime.InvokeVoidAsync("checkForUpdates");
+                        });
+                        await Task.Delay(TimeSpan.FromMinutes(30)); // 30분마다 체크
+                    }
+                    catch
+                    {
+                        await Task.Delay(TimeSpan.FromMinutes(60)); // 오류 시 1시간 후 재시도
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"버전 체크 중 오류: {ex.Message}");
+        }
+    }
+
+    // 서버에서 버전 정보 가져오기
+    private async Task<VersionInfo?> GetServerVersionAsync()
+    {
+        try
+        {
+            var cacheBuster = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var response = await JSRuntime.InvokeAsync<string>("fetch", $"/version.json?t={cacheBuster}")
+                .AsTask()
+                .ContinueWith(async task =>
+                {
+                    try
+                    {
+                        return await JSRuntime.InvokeAsync<string>("response.json");
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                });
+
+            var result = await response;
+            if (!string.IsNullOrEmpty(result))
+            {
+                // 간단한 JSON 파싱 (System.Text.Json 사용)
+                using var doc = System.Text.Json.JsonDocument.Parse(result);
+                var root = doc.RootElement;
+                
+                return new VersionInfo
+                {
+                    Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
+                    Timestamp = root.TryGetProperty("timestamp", out var timestampProp) ? timestampProp.GetString() : null,
+                    Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"서버 버전 정보 가져오기 실패: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    // 버전 정보 클래스
+    private class VersionInfo
+    {
+        public string? Version { get; set; }
+        public string? Timestamp { get; set; }
+        public string? Commit { get; set; }
     }
 
     private async Task InitializeSidebarState()

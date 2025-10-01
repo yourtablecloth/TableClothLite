@@ -164,7 +164,192 @@ function handleMobileKeyboard() {
     });
 }
 
-// 창 크기 가져오기 함수 추가
+// 스마트 새로고침 함수 - 선택적 캐시 클리어
+window.forceRefresh = function() {
+    console.log('스마트 새로고침 시작...');
+    
+    // Service Worker에게 즉시 활성화 요청
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                if (registration.waiting) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+                registration.update();
+            }
+        });
+    }
+    
+    // 앱 버전 정보만 클리어 (사용자 데이터는 보존)
+    const preserveKeys = ['openRouterApiKey', 'tablecloth-settings'];
+    const preservedData = {};
+    
+    preserveKeys.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value) preservedData[key] = value;
+    });
+    
+    // 앱 관련 캐시만 클리어
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('app-') || key.startsWith('hash_') || key === 'tablecloth-version') {
+            localStorage.removeItem(key);
+        }
+    });
+    
+    // 보존된 데이터 복원
+    Object.keys(preservedData).forEach(key => {
+        localStorage.setItem(key, preservedData[key]);
+    });
+    
+    // 부드러운 새로고침
+    const timestamp = new Date().getTime();
+    window.location.href = window.location.pathname + '?refresh=' + timestamp;
+};
+
+// 효율적인 업데이트 확인
+window.checkForUpdates = async function() {
+    try {
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/version.json?t=${timestamp}`, { 
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const serverInfo = await response.json();
+            const storedVersion = localStorage.getItem('app-version');
+            
+            if (storedVersion && serverInfo.version && storedVersion !== serverInfo.version) {
+                console.log('새 버전 감지:', {
+                    current: storedVersion,
+                    server: serverInfo.version,
+                    commit: serverInfo.commit?.substring(0, 7)
+                });
+                
+                showSmartUpdateNotification(serverInfo);
+                return true;
+            }
+            
+            if (serverInfo.version) {
+                localStorage.setItem('app-version', serverInfo.version);
+            }
+        }
+        return false;
+    } catch (error) {
+        console.log('업데이트 확인 실패:', error);
+        return false;
+    }
+};
+
+// 스마트 업데이트 알림
+function showSmartUpdateNotification(serverInfo) {
+    const currentVersion = localStorage.getItem('app-version');
+    const newVersion = serverInfo.version;
+    
+    // 더 상세하고 친화적인 메시지
+    const message = 
+        `🎉 새 버전이 있습니다!\n\n` +
+        `현재: ${currentVersion}\n` +
+        `최신: ${newVersion}\n\n` +
+        `✨ 새로운 기능과 개선사항이 포함되어 있습니다.\n` +
+        `📱 변경된 파일만 다운로드하여 빠르게 업데이트됩니다.\n` +
+        `💾 설정과 데이터는 안전하게 보존됩니다.\n\n` +
+        `지금 업데이트하시겠습니까?`;
+        
+    if (confirm(message)) {
+        window.forceRefresh();
+    } else {
+        // 나중에 알림 (1시간 후)
+        setTimeout(() => {
+            if (confirm('새 버전 업데이트를 건너뛰셨습니다.\n더 나은 경험을 위해 업데이트를 권장합니다.\n\n지금 업데이트하시겠습니까?')) {
+                window.forceRefresh();
+            }
+        }, 60 * 60 * 1000);
+    }
+}
+
+// 리소스 캐시 상태 확인
+window.getCacheStatus = function() {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const messageChannel = new MessageChannel();
+        
+        messageChannel.port1.onmessage = function(event) {
+            if (event.data.type === 'CACHE_STATUS') {
+                console.log('캐시 상태:', {
+                    cachedFiles: event.data.cachedFiles,
+                    version: event.data.version
+                });
+            }
+        };
+        
+        navigator.serviceWorker.controller.postMessage(
+            { type: 'CHECK_CACHE_STATUS' }, 
+            [messageChannel.port2]
+        );
+    }
+};
+
+// 선택적 캐시 버스터 - 개발 환경에서만 사용
+window.addCacheBuster = function(url) {
+    // 프로덕션에서는 서비스 워커가 처리하므로 캐시 버스터 불필요
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const timestamp = new Date().getTime();
+        const buildVersion = '2024.1.0'; // GitHub Actions에서 자동 업데이트
+        const separator = url.includes('?') ? '&' : '?';
+        return url + separator + 'v=' + buildVersion + '&t=' + timestamp;
+    }
+    return url;
+};
+
+// Service Worker 메시지 리스너
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data.type === 'SW_UPDATED_QUIETLY') {
+            console.log('Service Worker 업데이트됨:', event.data);
+            
+            // 5분 후 부드러운 알림
+            setTimeout(() => {
+                const message = 
+                    `🔄 백그라운드 업데이트 완료\n\n` +
+                    `앱이 조용히 업데이트되었습니다.\n` +
+                    `최신 기능을 사용하려면 새로고침을 권장합니다.\n\n` +
+                    `지금 새로고침하시겠습니까?`;
+                    
+                if (confirm(message)) {
+                    window.location.reload();
+                }
+            }, 5 * 60 * 1000);
+        }
+    });
+}
+
+// DOM 로드 후 최적화된 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    // 캐시 상태 로깅 (개발용)
+    if (window.location.hostname === 'localhost') {
+        setTimeout(() => window.getCacheStatus(), 2000);
+    }
+    
+    // 초기 버전 체크 (페이지 로드 후 10초)
+    setTimeout(() => {
+        window.checkForUpdates();
+    }, 10000);
+});
+
+// 페이지 가시성 변경 시 효율적인 업데이트 체크
+let lastVisibilityCheck = Date.now();
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && Date.now() - lastVisibilityCheck > 600000) { // 10분 이상 경과
+        lastVisibilityCheck = Date.now();
+        console.log('페이지 활성화 - 업데이트 확인 중...');
+        window.checkForUpdates();
+    }
+});
+
+// 창 크기 가져오기 함수
 window.getWindowWidth = function() {
     return window.innerWidth;
 };
@@ -172,6 +357,41 @@ window.getWindowWidth = function() {
 window.getWindowHeight = function() {
     return window.innerHeight;
 };
+
+// 네트워크 상태 모니터링
+if ('connection' in navigator) {
+    navigator.connection.addEventListener('change', function() {
+        if (navigator.connection.effectiveType === '4g') {
+            // 빠른 네트워크에서는 적극적으로 업데이트 체크
+            setTimeout(() => window.checkForUpdates(), 1000);
+        }
+    });
+}
+
+// 개발용 디버그 함수들
+if (window.location.hostname === 'localhost') {
+    window.debugCache = {
+        clearAll: () => {
+            localStorage.clear();
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            console.log('모든 캐시 클리어됨');
+        },
+        forceUpdate: () => window.forceRefresh(),
+        checkVersion: () => window.checkForUpdates(),
+        cacheStatus: () => window.getCacheStatus()
+    };
+    
+    console.log('개발 모드 - 사용 가능한 디버그 함수:', Object.keys(window.debugCache));
+}
 
 // 채팅 입력 초기화 함수
 window.initChatInput = function () {
