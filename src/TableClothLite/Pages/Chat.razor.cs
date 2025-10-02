@@ -55,6 +55,9 @@ public partial class Chat : IDisposable
     // 설정 모달 상태 관리
     private bool _showSettingsModal = false;
 
+    // 대화 액션 드롭다운 상태 관리
+    private bool _showConversationActionsDropdown = false;
+
     protected override void OnInitialized()
     {
         // 호환성을 위한 /Chat 경로 리다이렉트 처리
@@ -126,6 +129,9 @@ public partial class Chat : IDisposable
             // beforeunload 이벤트 핸들러 등록
             await JSRuntime.InvokeVoidAsync("setupBeforeUnloadHandler", dotNetHelper);
             
+            // 드롭다운 외부 클릭 핸들러 설정
+            await JSRuntime.InvokeVoidAsync("setupDropdownClickOutside", dotNetHelper);
+            
             // 캐시 무효화 및 버전 체크
             await CheckAppVersionAsync();
             
@@ -144,6 +150,348 @@ public partial class Chat : IDisposable
     public bool HasUnsavedContent()
     {
         return _hasUnsavedContent;
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 - 드롭다운 숨기기
+    [JSInvokable]
+    public Task HideConversationActionsDropdown()
+    {
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    // 대화 내용 인쇄 메서드
+    private async Task PrintConversationAsync()
+    {
+        if (!_messages.Any())
+        {
+            await JSRuntime.InvokeAsync<bool>("alert", "인쇄할 대화 내용이 없습니다.");
+            return;
+        }
+
+        // 사용자에게 인쇄 방식 선택 옵션 제공
+        var showPreview = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "인쇄 미리보기를 보시겠습니까?\n\n확인: 미리보기 창에서 인쇄\n취소: 바로 인쇄 다이얼로그 열기");
+
+        // 인쇄용 HTML 생성
+        var printHtml = GeneratePrintHtml();
+        
+        if (showPreview)
+        {
+            // 미리보기 창으로 열기
+            await JSRuntime.InvokeVoidAsync("showPrintPreview", printHtml);
+        }
+        else
+        {
+            // 바로 인쇄 다이얼로그 열기
+            await JSRuntime.InvokeVoidAsync("printConversation", printHtml);
+        }
+    }
+
+    // 인쇄용 HTML 생성
+    private string GeneratePrintHtml()
+    {
+        var html = new System.Text.StringBuilder();
+        
+        // HTML 헤더
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html lang='ko'>");
+        html.AppendLine("<head>");
+        html.AppendLine("<meta charset='UTF-8'>");
+        html.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        html.AppendLine("<title>TableClothLite AI 대화 기록</title>");
+        html.AppendLine("<style>");
+        html.AppendLine(GetPrintStyles());
+        html.AppendLine("</style>");
+        html.AppendLine("</head>");
+        html.AppendLine("<body>");
+        
+        // 헤더 정보
+        html.AppendLine("<div class='print-header'>");
+        html.AppendLine("<h1>TableClothLite AI 대화 기록</h1>");
+        html.AppendLine($"<p class='print-date'>생성일: {DateTime.Now:yyyy년 MM월 dd일 HH:mm}</p>");
+        html.AppendLine($"<p class='print-info'>총 {_messages.Count}개의 메시지</p>");
+        html.AppendLine("</div>");
+        
+        // 대화 내용
+        html.AppendLine("<div class='conversation'>");
+        
+        for (int i = 0; i < _messages.Count; i++)
+        {
+            var message = _messages[i];
+            var messageClass = message.IsUser ? "user-message" : "assistant-message";
+            var sender = message.IsUser ? "사용자" : "TableClothLite AI";
+            
+            html.AppendLine($"<div class='message {messageClass}'>");
+            html.AppendLine($"<div class='message-header'>");
+            html.AppendLine($"<span class='sender'>{sender}</span>");
+            html.AppendLine($"<span class='message-number'>#{i + 1}</span>");
+            html.AppendLine("</div>");
+            html.AppendLine($"<div class='message-content'>");
+            
+            // 마크다운을 HTML로 변환하되 인쇄용으로 정리
+            var content = ConvertMarkdownForPrint(message.Content);
+            html.AppendLine(content);
+            
+            html.AppendLine("</div>");
+            html.AppendLine("</div>");
+        }
+        
+        html.AppendLine("</div>");
+        
+        // 푸터
+        html.AppendLine("<div class='print-footer'>");
+        html.AppendLine("<p>TableClothLite AI - 금융과 공공 부문 AI 어시스턴트</p>");
+        html.AppendLine("<p>https://yourtablecloth.app</p>");
+        html.AppendLine("</div>");
+        
+        html.AppendLine("</body>");
+        html.AppendLine("</html>");
+        
+        return html.ToString();
+    }
+
+    // 인쇄용 CSS 스타일
+    private string GetPrintStyles()
+    {
+        return @"
+            @media screen {
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background: #f9f9f9;
+                }
+            }
+            
+            @media print {
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    line-height: 1.5;
+                    color: #000;
+                    margin: 0;
+                    padding: 15mm;
+                    background: white;
+                }
+                
+                .print-header {
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 10px;
+                    margin-bottom: 20px;
+                }
+                
+                .message {
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                
+                .print-footer {
+                    position: fixed;
+                    bottom: 10mm;
+                    left: 15mm;
+                    right: 15mm;
+                    border-top: 1px solid #ccc;
+                    padding-top: 5px;
+                    font-size: 0.8em;
+                    text-align: center;
+                    color: #666;
+                }
+            }
+            
+            .print-header h1 {
+                margin: 0 0 10px 0;
+                font-size: 24px;
+                color: #2563eb;
+            }
+            
+            .print-date, .print-info {
+                margin: 5px 0;
+                color: #666;
+                font-size: 14px;
+            }
+            
+            .conversation {
+                margin: 20px 0;
+            }
+            
+            .message {
+                margin-bottom: 20px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            
+            .message-header {
+                background: #f3f4f6;
+                padding: 8px 12px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 12px;
+                color: #6b7280;
+            }
+            
+            .user-message .message-header {
+                background: #eff6ff;
+            }
+            
+            .assistant-message .message-header {
+                background: #f9fafb;
+            }
+            
+            .sender {
+                font-weight: 600;
+                color: #374151;
+            }
+            
+            .user-message .sender {
+                color: #2563eb;
+            }
+            
+            .assistant-message .sender {
+                color: #059669;
+            }
+            
+            .message-number {
+                font-size: 11px;
+                color: #9ca3af;
+            }
+            
+            .message-content {
+                padding: 12px;
+                background: white;
+            }
+            
+            .message-content h1, .message-content h2, .message-content h3,
+            .message-content h4, .message-content h5, .message-content h6 {
+                margin-top: 0;
+                margin-bottom: 10px;
+                color: #374151;
+            }
+            
+            .message-content p {
+                margin: 0 0 10px 0;
+            }
+            
+            .message-content ul, .message-content ol {
+                margin: 0 0 10px 20px;
+                padding-left: 0;
+            }
+            
+            .message-content li {
+                margin-bottom: 5px;
+            }
+            
+            .message-content pre {
+                background: #f3f4f6;
+                padding: 10px;
+                border-radius: 4px;
+                overflow-x: auto;
+                font-size: 12px;
+                margin: 10px 0;
+            }
+            
+            .message-content code {
+                background: #f3f4f6;
+                padding: 2px 4px;
+                border-radius: 3px;
+                font-size: 13px;
+            }
+            
+            .message-content blockquote {
+                border-left: 3px solid #d1d5db;
+                margin: 10px 0;
+                padding: 5px 0 5px 15px;
+                color: #6b7280;
+                font-style: italic;
+            }
+            
+            .message-content table {
+                border-collapse: collapse;
+                width: 100%;
+                margin: 10px 0;
+                font-size: 13px;
+            }
+            
+            .message-content th, .message-content td {
+                border: 1px solid #d1d5db;
+                padding: 6px 8px;
+                text-align: left;
+            }
+            
+            .message-content th {
+                background: #f9fafb;
+                font-weight: 600;
+            }
+            
+            .print-footer p {
+                margin: 2px 0;
+            }
+            
+            @page {
+                margin: 15mm;
+                size: A4;
+            }
+        ";
+    }
+
+    // 마크다운을 인쇄용 HTML로 변환
+    private string ConvertMarkdownForPrint(string markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return string.Empty;
+
+        try
+        {
+            // 마크다운을 HTML로 변환
+            var html = Markdown.ToHtml(markdown, _markdownPipeline);
+            var document = _htmlParser.ParseDocument(html);
+
+            if (document.Body == null)
+                return WebUtility.HtmlEncode(markdown);
+
+            // 인쇄용으로 링크 처리 (href 제거하고 텍스트로 표시)
+            foreach (var anchor in document.QuerySelectorAll("a"))
+            {
+                var href = anchor.GetAttribute("href") ?? string.Empty;
+                if (!string.IsNullOrEmpty(href))
+                {
+                    anchor.RemoveAttribute("href");
+                    anchor.RemoveAttribute("onclick");
+                    anchor.SetAttribute("style", "color: #2563eb; text-decoration: underline;");
+                    
+                    // 링크 URL을 텍스트 뒤에 괄호로 추가
+                    if (anchor.TextContent != href)
+                    {
+                        anchor.InnerHtml = $"{anchor.InnerHtml} ({WebUtility.HtmlEncode(href)})";
+                    }
+                }
+            }
+
+            // 이미지 처리 (alt 텍스트로 대체)
+            foreach (var img in document.QuerySelectorAll("img"))
+            {
+                var alt = img.GetAttribute("alt") ?? "이미지";
+                var src = img.GetAttribute("src") ?? "";
+                
+                var replacement = document.CreateElement("span");
+                replacement.SetAttribute("style", "background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-style: italic;");
+                replacement.TextContent = $"[이미지: {alt}]";
+                
+                img.ParentElement?.ReplaceChild(replacement, img);
+            }
+
+            return document.Body.InnerHtml;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"마크다운 변환 중 오류: {ex.Message}");
+            return WebUtility.HtmlEncode(markdown);
+        }
     }
 
     // 앱 버전 체크 및 캐시 관리
@@ -486,6 +834,65 @@ public partial class Chat : IDisposable
         return (MarkupString)html;
     }
 
+    // 대화 액션 드롭다운 토글
+    private void ToggleConversationActionsDropdown()
+    {
+        _showConversationActionsDropdown = !_showConversationActionsDropdown;
+        StateHasChanged();
+    }
+
+    // 드롭다운에서 인쇄 후 숨기기
+    private async Task PrintAndHideDropdown()
+    {
+        await PrintConversationAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // 드롭다운에서 내보내기 후 숨기기
+    private async Task ExportAndHideDropdown()
+    {
+        await ExportConversationAsTextAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // 드롭다운에서 공유 후 숨기기
+    private async Task ShareAndHideDropdown()
+    {
+        await ShareConversationAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // 대화 내용을 텍스트 파일로 내보내기
+    private async Task ExportConversationAsTextAsync()
+    {
+        if (!_messages.Any())
+        {
+            await JSRuntime.InvokeAsync<bool>("alert", "내보낼 대화 내용이 없습니다.");
+            return;
+        }
+        
+        var conversationData = new
+        {
+            exportDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            messages = _messages.Select(m => new
+            {
+                content = m.Content,
+                isUser = m.IsUser
+            }).ToArray()
+        };
+        
+        var jsonData = System.Text.Json.JsonSerializer.Serialize(conversationData);
+        var success = await JSRuntime.InvokeAsync<bool>("exportConversationAsText", jsonData);
+        
+        if (!success)
+        {
+            await JSRuntime.InvokeAsync<bool>("alert", "텍스트 파일 내보내기에 실패했습니다.");
+        }
+    }
+
     private async Task ResetConversationAsync()
     {
         // 저장되지 않은 대화 내용이 있다면 확인 다이얼로그 표시
@@ -514,109 +921,88 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 페이지 포커스 시 API 키 상태 재확인
-    [JSInvokable]
-    public async Task OnPageFocus()
+    // 대화 내용 공유 (개선된 버전)
+    private async Task ShareConversationAsync()
     {
-        await CheckApiKeyStatus();
-    }
-
-    [JSInvokable("OpenSandbox")]
-    public async Task OpenSandboxAsync(string url)
-    {
-        // OS 감지
-        _isWindowsOS = await DetectWindowsOSAsync();
-        
-        // 사용자가 "다시 보지 않기" 설정했는지 확인
-        var storageKey = _isWindowsOS ? "dont-show-windows-sandbox-guide" : "dont-show-other-os-guide";
-        var dontShowGuide = await JSRuntime.InvokeAsync<string>("localStorage.getItem", storageKey);
-        
-        // 가이드를 보여야 하는 경우 모달 표시
-        if (string.IsNullOrEmpty(dontShowGuide))
+        if (!_messages.Any())
         {
-            _showSandboxGuide = true;
-            StateHasChanged();
+            await JSRuntime.InvokeAsync<bool>("alert", "공유할 대화 내용이 없습니다.");
+            return;
         }
 
-        // WSB 파일 생성 및 다운로드 (기존 로직)
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var parsedUri))
-            parsedUri = null;
-
-        var hostName = default(string);
-        if (parsedUri != null)
-            hostName = parsedUri.Host;
-
-        var serviceInfo = default(ServiceInfo);
-        if (!string.IsNullOrWhiteSpace(hostName))
-        {
-            serviceInfo = Model.Services.FirstOrDefault(x =>
-            {
-                if (!Uri.TryCreate(x.Url, UriKind.Absolute, out var serviceUri))
-                    return false;
-
-                // TODO: Public Suffix 기반으로 일치 여부를 판별할 필요가 있음
-                var rootHostName = serviceUri.Host.Replace("www.", string.Empty, StringComparison.OrdinalIgnoreCase);
-                if (!hostName.EndsWith(rootHostName, StringComparison.OrdinalIgnoreCase))
-                    return false;
-
-                return true;
-            });
-        }
-
-        var doc = await SandboxComposer.CreateSandboxDocumentAsync(
-            Model, parsedUri?.AbsoluteUri, serviceInfo);
-        using var memStream = new MemoryStream();
-        doc.Save(memStream);
-        memStream.Position = 0L;
-
-        await FileDownloader.DownloadFileAsync(
-            memStream, $"{serviceInfo?.ServiceId ?? "generated"}.wsb", "application/xml")
-            .ConfigureAwait(false);
-    }
-
-    // OS 감지 메서드 개선
-    private async Task<bool> DetectWindowsOSAsync()
-    {
         try
         {
-            var osInfo = await JSRuntime.InvokeAsync<OSInfo>("detectOS");
+            var shareText = GenerateShareText();
             
-            Console.WriteLine($"OS 감지 결과 - IsWindows: {osInfo.IsWindows}, UserAgent: {osInfo.UserAgent}");
+            var shareData = new
+            {
+                title = "TableClothLite AI 대화 기록",
+                text = shareText
+            };
             
-            return osInfo.IsWindows;
+            // JavaScript의 shareContent 함수 호출
+            var result = await JSRuntime.InvokeAsync<ShareResult>("shareContent", shareData);
+            
+            if (result.Success)
+            {
+                switch (result.Method)
+                {
+                    case "webshare":
+                        // Web Share API로 성공적으로 공유됨 - 별도 알림 불필요
+                        break;
+                    case "clipboard":
+                        await JSRuntime.InvokeAsync<bool>(
+                            "alert", 
+                            "대화 내용이 클립보드에 복사되었습니다.\n다른 앱에서 붙여넣기하여 공유할 수 있습니다.");
+                        break;
+                }
+            }
+            else
+            {
+                // 모든 방법 실패
+                await JSRuntime.InvokeAsync<bool>(
+                    "alert", 
+                    "공유 기능을 사용할 수 없습니다.\n대신 텍스트 파일로 내보내기를 사용해보세요.");
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"OS 감지 중 오류: {ex.Message}");
-            // Fallback: 기존 방식으로 감지
-            try
-            {
-                var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
-                var platform = await JSRuntime.InvokeAsync<string>("eval", "navigator.platform");
-                
-                var isWindows = userAgent.Contains("Windows", StringComparison.OrdinalIgnoreCase) ||
-                               platform.Contains("Win", StringComparison.OrdinalIgnoreCase);
-                
-                return isWindows;
-            }
-            catch
-            {
-                // 최종 Fallback: Windows라고 가정
-                return true;
-            }
+            Console.WriteLine($"대화 공유 중 오류: {ex.Message}");
+            await JSRuntime.InvokeAsync<bool>("alert", "대화 공유에 실패했습니다.");
         }
     }
-
-    // OS 정보 클래스
-    public class OSInfo
+    
+    // JavaScript에서 반환할 공유 결과 클래스
+    private class ShareResult
     {
-        public bool IsWindows { get; set; }
-        public bool IsMac { get; set; }
-        public bool IsLinux { get; set; }
-        public bool IsAndroid { get; set; }
-        public bool IsIOS { get; set; }
-        public string UserAgent { get; set; } = string.Empty;
-        public string Platform { get; set; } = string.Empty;
+        public bool Success { get; set; }
+        public string Method { get; set; } = string.Empty;
+        public string? Error { get; set; }
+    }
+
+    // 공유용 텍스트 생성
+    private string GenerateShareText()
+    {
+        var text = new System.Text.StringBuilder();
+        text.AppendLine("TableClothLite AI 대화 기록");
+        text.AppendLine($"생성일: {DateTime.Now:yyyy년 MM월 dd일 HH:mm}");
+        text.AppendLine(new string('=', 40));
+        text.AppendLine();
+        
+        for (int i = 0; i < _messages.Count; i++)
+        {
+            var message = _messages[i];
+            var sender = message.IsUser ? "사용자" : "AI";
+            
+            text.AppendLine($"[{i + 1}] {sender}:");
+            text.AppendLine(message.Content.Trim());
+            text.AppendLine();
+        }
+        
+        text.AppendLine(new string('=', 40));
+        text.AppendLine("TableClothLite AI - https://yourtablecloth.app");
+        
+        return text.ToString();
     }
 
     // 모달 닫기 메서드

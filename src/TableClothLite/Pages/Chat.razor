@@ -91,6 +91,39 @@
                 </div>
             </div>
             <div class="header-actions">
+                @if (_messages.Any())
+                {
+                    <!-- 데스크톱: 개별 버튼들 -->
+                    <div class="conversation-actions desktop-actions">
+                        <button @onclick="PrintConversationAsync" class="action-btn" title="대화 내용 인쇄" type="button">
+                            🖨️
+                        </button>
+                        <button @onclick="ExportConversationAsTextAsync" class="action-btn" title="텍스트 파일로 내보내기" type="button">
+                            📄
+                        </button>
+                        <button @onclick="ShareConversationAsync" class="action-btn" title="대화 내용 공유" type="button">
+                            📤
+                        </button>
+                    </div>
+                    
+                    <!-- 모바일: 드롭다운 메뉴 -->
+                    <div class="conversation-actions mobile-actions">
+                        <button @onclick="ToggleConversationActionsDropdown" class="action-btn" title="대화 액션" type="button">
+                            ⋯
+                        </button>
+                        <div class="conversation-actions-dropdown @(_showConversationActionsDropdown ? "show" : "")">
+                            <button @onclick="PrintAndHideDropdown" class="dropdown-item" type="button">
+                                🖨️ 인쇄하기
+                            </button>
+                            <button @onclick="ExportAndHideDropdown" class="dropdown-item" type="button">
+                                📄 텍스트로 내보내기
+                            </button>
+                            <button @onclick="ShareAndHideDropdown" class="dropdown-item" type="button">
+                                📤 공유하기
+                            </button>
+                        </div>
+                    </div>
+                }
                 <button @onclick="OpenServicesModalAsync" class="action-btn" title="서비스 목록" type="button">
                     📋
                 </button>
@@ -472,6 +505,12 @@
     .header-actions {
         display: flex;
         gap: 8px;
+        position: relative;
+    }
+
+    .conversation-actions {
+        display: flex;
+        gap: 4px;
     }
 
     .action-btn {
@@ -492,6 +531,60 @@
     .action-btn:hover {
         background: var(--hover-bg);
         border-color: var(--chat-border);
+    }
+
+    /* 모바일에서의 대화 액션 드롭다운 */
+    @@media (max-width: 768px) {
+        .conversation-actions {
+            position: relative;
+        }
+        
+        .conversation-actions-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: var(--chat-bg);
+            border: 1px solid var(--chat-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 180px;
+            display: none;
+        }
+        
+        .conversation-actions-dropdown.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        
+        .dropdown-item:hover {
+            background: var(--hover-bg);
+        }
+        
+        .dropdown-item:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .dropdown-item:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .dropdown-item:only-child {
+            border-radius: 8px;
+        }
     }
 
     .messages-container {
@@ -780,6 +873,14 @@
             display: block;
         }
 
+        .desktop-actions {
+            display: none;
+        }
+        
+        .mobile-actions {
+            display: block;
+        }
+
         .sidebar {
             position: fixed;
             top: 0;
@@ -813,6 +914,16 @@
 
         .example-prompts {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (min-width: 769px) {
+        .desktop-actions {
+            display: flex;
+        }
+        
+        .mobile-actions {
+            display: none;
         }
     }
 

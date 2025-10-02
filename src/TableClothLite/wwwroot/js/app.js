@@ -404,7 +404,7 @@ if ('serviceWorker' in navigator) {
             setTimeout(() => {
                 const message = 
                     `🔄 백그라운드 업데이트 완료\n\n` +
-                    `앱이 조용히 업데이트되었습니다.\n` +
+                    `앱이 조용히 업데이트 되었습니다.\n` +
                     `최신 기능을 사용하려면 새로고침을 권장합니다.\n\n` +
                     `지금 새로고침하시겠습니까?`;
                     
@@ -672,21 +672,57 @@ window.downloadFileStream = async (fileName, contentType, dotNetStreamReference)
     URL.revokeObjectURL(url);
 };
 
-// 복사 기능
+// 복사 기능 (개선된 버전)
 window.copyToClipboard = async function (text) {
     if (typeof text !== 'string') text = String(text ?? '');
 
+    // 방법 1: 최신 Clipboard API 시도
     try {
-        if (navigator.clipboard?.writeText && window.isSecureContext) {
+        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
             return true;
         }
-    } catch (_) { /* fallthrough */ }
+    } catch (error) {
+        console.warn('Clipboard API 실패:', error);
+    }
 
+    // 방법 2: execCommand 방식 시도 (구형 브라우저 지원)
     try {
-        window.prompt('다음 내용을 선택한 후 Ctrl 또는 Cmd+C 키를 눌러 복사해주세요.', text);
-        return false;
-    } catch (_) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        
+        // 화면에 보이지 않도록 설정
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        textArea.style.tabIndex = '-1';
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            return true;
+        }
+    } catch (error) {
+        console.warn('execCommand 복사 실패:', error);
+    }
+
+    // 방법 3: 사용자에게 수동 복사 요청 (최후의 수단)
+    try {
+        const userResponse = window.prompt(
+            '자동 복사가 지원되지 않습니다.\n아래 내용을 수동으로 선택하여 복사해주세요.\n\n복사하려면 Ctrl+A (전체선택) 후 Ctrl+C (복사)를 눌러주세요.',
+            text
+        );
+        // 사용자가 취소하지 않았다면 성공으로 간주
+        return userResponse !== null;
+    } catch (error) {
+        console.error('수동 복사 요청 실패:', error);
         return false;
     }
 };
@@ -796,4 +832,182 @@ window.getScrollInfo = function(selector) {
         scrollHeight: element.scrollHeight,
         clientHeight: element.clientHeight
     };
+};
+
+// 대화 내용 인쇄 함수
+window.printConversation = function(htmlContent) {
+    // 새 창에서 인쇄 페이지 생성
+    const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!printWindow) {
+        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
+        return;
+    }
+    
+    // HTML 내용 작성
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // 이미지 및 스타일 로드 대기
+    printWindow.onload = function() {
+        setTimeout(function() {
+            // 인쇄 다이얼로그 표시
+            printWindow.print();
+            
+            // 인쇄 후 창 닫기 (사용자가 인쇄를 취소하거나 완료한 후)
+            printWindow.onafterprint = function() {
+                printWindow.close();
+            };
+            
+            // 일정 시간 후 자동으로 닫기 (인쇄 다이얼로그가 닫힌 경우를 대비)
+            setTimeout(function() {
+                if (!printWindow.closed) {
+                    printWindow.close();
+                }
+            }, 1000);
+        }, 500);
+    };
+};
+
+// 드롭다운 메뉴 외부 클릭 시 닫기 기능
+window.setupDropdownClickOutside = function(dotNetHelper) {
+    document.addEventListener('click', function(event) {
+        const dropdown = document.querySelector('.conversation-actions-dropdown');
+        const toggleButton = document.querySelector('.mobile-actions .action-btn');
+        
+        if (dropdown && dropdown.classList.contains('show')) {
+            // 드롭다운이나 토글 버튼을 클릭한 게 아닌 경우
+            if (!dropdown.contains(event.target) && !toggleButton.contains(event.target)) {
+                if (dotNetHelper) {
+                    try {
+                        dotNetHelper.invokeMethodAsync('HideConversationActionsDropdown');
+                    } catch (error) {
+                        console.warn('드롭다운 닫기 중 오류:', error);
+                    }
+                }
+            }
+        }
+    });
+};
+
+// 인쇄 미리보기 함수 (선택사항)
+window.showPrintPreview = function(htmlContent) {
+    const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!previewWindow) {
+        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
+        return;
+    }
+    
+    // 미리보기용 HTML 생성 (인쇄 버튼 포함)
+    const previewHtml = htmlContent.replace(
+        '</body>',
+        `
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+            <button onclick="window.print()" style="
+                padding: 10px 20px;
+                background: #2563eb;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            ">🖨️ 인쇄하기</button>
+            <button onclick="window.close()" style="
+                padding: 10px 20px;
+                background: #6b7280;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-left: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            ">✕ 닫기</button>
+        </div>
+        </body>`
+    );
+    
+    previewWindow.document.write(previewHtml);
+    previewWindow.document.close();
+    
+    // 인쇄 후 창 닫기 처리
+    previewWindow.onafterprint = function() {
+        previewWindow.close();
+    };
+};
+
+// Web Share API 지원 여부 확인
+window.isWebShareSupported = function() {
+    return typeof navigator.share !== 'undefined' && navigator.share !== null;
+};
+
+// Web Share API를 사용한 공유
+window.shareContent = async function(shareData) {
+    try {
+        if (window.isWebShareSupported()) {
+            await navigator.share(shareData);
+            return { success: true, method: 'webshare' };
+        } else {
+            // Web Share API를 지원하지 않는 경우 클립보드에 복사
+            const copied = await window.copyToClipboard(shareData.text);
+            if (copied) {
+                return { success: true, method: 'clipboard' };
+            } else {
+                return { success: false, method: 'none' };
+            }
+        }
+    } catch (error) {
+        console.error('공유 중 오류:', error);
+        
+        // Web Share API 실패 시 클립보드로 fallback
+        try {
+            const copied = await window.copyToClipboard(shareData.text);
+            if (copied) {
+                return { success: true, method: 'clipboard' };
+            } else {
+                return { success: false, method: 'fallback', error: error.message };
+            }
+        } catch (clipboardError) {
+            return { success: false, method: 'none', error: clipboardError.message };
+        }
+    }
+};
+
+// 대화 내용을 텍스트 파일로 저장하는 함수
+window.exportConversationAsText = function(conversationData) {
+    try {
+        const data = JSON.parse(conversationData);
+        let textContent = `TableClothLite AI 대화 기록\n`;
+        textContent += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
+        textContent += `총 ${data.messages.length}개의 메시지\n`;
+        textContent += `${'='.repeat(50)}\n\n`;
+        
+        data.messages.forEach((message, index) => {
+            const sender = message.isUser ? '사용자' : 'TableClothLite AI';
+            textContent += `[${index + 1}] ${sender}\n`;
+            textContent += `${'-'.repeat(20)}\n`;
+            textContent += `${message.content}\n\n`;
+        });
+        
+        textContent += `${'='.repeat(50)}\n`;
+        textContent += `TableClothLite AI - https://yourtablecloth.app`;
+        
+        // 텍스트 파일 다운로드
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TableClothLite_대화기록_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        return true;
+    } catch (error) {
+        console.error('텍스트 파일 내보내기 오류:', error);
+        return false;
+    }
 };
