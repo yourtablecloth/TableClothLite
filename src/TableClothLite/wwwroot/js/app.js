@@ -581,18 +581,20 @@ window.downloadFileStream = async (fileName, contentType, dotNetStreamReference)
 
 // 복사 기능
 window.copyToClipboard = async function (text) {
+    if (typeof text !== 'string') text = String(text ?? '');
+
     try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch (err) {
-        // 대체 방법
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return success;
+        if (navigator.clipboard?.writeText && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (_) { /* fallthrough */ }
+
+    try {
+        window.prompt('다음 내용을 선택한 후 Ctrl 또는 Cmd+C 키를 눌러 복사해주세요.', text);
+        return false;
+    } catch (_) {
+        return false;
     }
 };
 
@@ -621,41 +623,17 @@ window.showInstallPrompt = function() {
 };
 
 // OS 감지 함수
-window.detectOS = function() {
+window.detectOS = function () {
     const userAgent = navigator.userAgent;
-    const platform = navigator.platform;
-    
     const osInfo = {
-        isWindows: false,
-        isMac: false,
-        isLinux: false,
-        isAndroid: false,
-        isIOS: false,
-        userAgent: userAgent,
-        platform: platform
+        isWindows: /Windows/i.test(userAgent),
+        isMac: /Mac/i.test(userAgent) && !/iPhone|iPad|iPod/i.test(userAgent),
+        isLinux: /Linux/i.test(userAgent) && !/Android/i.test(userAgent),
+        isAndroid: /Android/i.test(userAgent),
+        isIOS: /iPhone|iPad|iPod/i.test(userAgent),
+        userAgent: userAgent
     };
-    
-    // Windows 감지
-    if (/Windows/i.test(userAgent) || /Win/i.test(platform)) {
-        osInfo.isWindows = true;
-    }
-    // macOS 감지
-    else if (/Mac/i.test(userAgent) || /Mac/i.test(platform)) {
-        osInfo.isMac = true;
-    }
-    // iOS 감지
-    else if (/iPhone|iPad|iPod/i.test(userAgent)) {
-        osInfo.isIOS = true;
-    }
-    // Android 감지
-    else if (/Android/i.test(userAgent)) {
-        osInfo.isAndroid = true;
-    }
-    // Linux 감지
-    else if (/Linux/i.test(userAgent) || /Linux/i.test(platform)) {
-        osInfo.isLinux = true;
-    }
-    
+
     console.log('OS Detection Result:', osInfo);
     return osInfo;
 };
