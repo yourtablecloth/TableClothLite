@@ -39,6 +39,9 @@ public partial class Chat : IDisposable
     private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
     private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
 
+    // Dirty state 관리 - 대화 내용이 있는지 추적
+    private bool _hasUnsavedContent => _messages.Any() || !string.IsNullOrWhiteSpace(_userInput);
+
     // 필요한 서비스들 inject
     [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
 
@@ -120,6 +123,9 @@ public partial class Chat : IDisposable
             dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
             
+            // beforeunload 이벤트 핸들러 등록
+            await JSRuntime.InvokeVoidAsync("setupBeforeUnloadHandler", dotNetHelper);
+            
             // 캐시 무효화 및 버전 체크
             await CheckAppVersionAsync();
             
@@ -131,6 +137,13 @@ public partial class Chat : IDisposable
         }
 
         await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 - beforeunload 시 unsaved content 확인
+    [JSInvokable]
+    public bool HasUnsavedContent()
+    {
+        return _hasUnsavedContent;
     }
 
     // 앱 버전 체크 및 캐시 관리
@@ -408,6 +421,18 @@ public partial class Chat : IDisposable
 
     protected async Task Logout()
     {
+        // 저장되지 않은 대화 내용이 있다면 확인 다이얼로그 표시
+        if (_hasUnsavedContent)
+        {
+            var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
+                "현재 진행 중인 대화 내용이 있습니다. 로그아웃하면 대화 내용이 사라집니다. 정말 로그아웃하시겠습니까?");
+            
+            if (!shouldLogout)
+            {
+                return;
+            }
+        }
+
         await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
         
         // 상태 업데이트
@@ -463,6 +488,18 @@ public partial class Chat : IDisposable
 
     private async Task ResetConversationAsync()
     {
+        // 저장되지 않은 대화 내용이 있다면 확인 다이얼로그 표시
+        if (_hasUnsavedContent)
+        {
+            var shouldReset = await JSRuntime.InvokeAsync<bool>("confirm", 
+                "현재 진행 중인 대화 내용이 있습니다. 새로운 채팅을 시작하면 현재 대화 내용이 사라집니다. 계속하시겠습니까?");
+            
+            if (!shouldReset)
+            {
+                return;
+            }
+        }
+
         _messages.Clear();
         _sessionId = Guid.NewGuid().ToString();
         await ChatService.ClearSessionAsync(_sessionId);
@@ -605,6 +642,16 @@ public partial class Chat : IDisposable
 
     public void Dispose()
     {
+        // beforeunload 핸들러 정리
+        try
+        {
+            JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
+        }
+        catch
+        {
+            // Disposal 중 오류는 무시
+        }
+
         dotNetHelper?.Dispose();
     }
 }

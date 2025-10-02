@@ -12,6 +12,96 @@
 
 window.Helpers = Helpers;
 
+// beforeunload 이벤트 핸들러 관련 함수들
+let dotNetHelperRef = null;
+let beforeUnloadHandler = null;
+
+// DotNet helper 참조 설정 및 beforeunload 핸들러 등록
+window.setupBeforeUnloadHandler = function (dotNetHelper) {
+    dotNetHelperRef = dotNetHelper;
+    
+    // 기존 핸들러가 있다면 제거
+    if (beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
+    
+    // 새로운 beforeunload 핸들러 등록
+    beforeUnloadHandler = function (e) {
+        try {
+            // DotNet 메서드 호출하여 unsaved content 확인
+            const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+            
+            if (hasUnsavedContent) {
+                // 표준 메시지 설정
+                const message = '현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다.';
+                
+                // Chrome 34+
+                e.returnValue = message;
+                
+                // Safari, Firefox
+                e.preventDefault();
+                
+                // 일부 구형 브라우저
+                return message;
+            }
+        } catch (error) {
+            console.warn('beforeunload 핸들러에서 오류 발생:', error);
+        }
+    };
+    
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+};
+
+// beforeunload 핸들러 정리
+window.cleanupBeforeUnloadHandler = function () {
+    if (beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        beforeUnloadHandler = null;
+    }
+    dotNetHelperRef = null;
+};
+
+// 페이지 네비게이션 시에도 확인 (SPA 라우팅용)
+window.setupNavigationGuard = function () {
+    // Blazor의 NavigationManager를 위한 추가 보호
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function (...args) {
+        if (dotNetHelperRef) {
+            try {
+                const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+                if (hasUnsavedContent) {
+                    const shouldNavigate = confirm('현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다. 계속하시겠습니까?');
+                    if (!shouldNavigate) {
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Navigation guard에서 오류 발생:', error);
+            }
+        }
+        originalPushState.apply(history, args);
+    };
+    
+    history.replaceState = function (...args) {
+        if (dotNetHelperRef) {
+            try {
+                const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+                if (hasUnsavedContent) {
+                    const shouldNavigate = confirm('현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다. 계속하시겠습니까?');
+                    if (!shouldNavigate) {
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Navigation guard에서 오류 발생:', error);
+            }
+        }
+        originalReplaceState.apply(history, args);
+    };
+};
+
 window.scrollToBottom = function (elementId) {
     const element = document.getElementById(elementId);
     if (element) {
@@ -328,6 +418,9 @@ if ('serviceWorker' in navigator) {
 
 // DOM 로드 후 최적화된 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    // 네비게이션 가드 설정
+    window.setupNavigationGuard();
+    
     // 캐시 상태 로깅 (개발용)
     if (window.location.hostname === 'localhost') {
         setTimeout(() => window.getCacheStatus(), 2000);
