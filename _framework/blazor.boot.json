@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TableClothLite",
   "resources": {
-    "hash": "sha256-UA7vhXcKMQan3TiXE9QTtuMXIykJMbGTJuoW0zYsD8Q=",
+    "hash": "sha256-LYvSDq6pN8Kxxy/c0EgLqC9u73ko4lzYnREov3wIzYM=",
     "fingerprinting": {
       "AngleSharp.up7648hgwu.wasm": "AngleSharp.wasm",
       "Blazored.LocalStorage.12n6dz54qr.wasm": "Blazored.LocalStorage.wasm",
@@ -81,8 +81,8 @@
       "System.Threading.82acoiyymq.wasm": "System.Threading.wasm",
       "System.Web.HttpUtility.h1htfqt019.wasm": "System.Web.HttpUtility.wasm",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "System.Xml.ReaderWriter.wasm",
-      "TableClothLite.Shared.pbx6s1hv4e.wasm": "TableClothLite.Shared.wasm",
-      "TableClothLite.z1tb1zzx9k.wasm": "TableClothLite.wasm",
+      "TableClothLite.Shared.fmnzwfkt0j.wasm": "TableClothLite.Shared.wasm",
+      "TableClothLite.tihfyrg99p.wasm": "TableClothLite.wasm",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "TG.Blazor.IndexedDB.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.9ih887ebfz.js": "dotnet.native.js",
@@ -187,8 +187,8 @@
       "System.Threading.82acoiyymq.wasm": "sha256-8P2hHDMhWmFasTjydp596prdpBK7XM8QOkUCY/ZBx+k=",
       "System.Web.HttpUtility.h1htfqt019.wasm": "sha256-heJjIS0TxXlTOzoQF5/OcGGEsa8zaQLoOJWyssZdj1U=",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "sha256-o/aGLZlaugH+0+JJg2HH0YxQ0ZrgpS4EGtufa8qkGOs=",
-      "TableClothLite.Shared.pbx6s1hv4e.wasm": "sha256-ywHd1ls6/z3MRI4AbRRFBNH/lj/d9+Yq6bFUqG8LyF4=",
-      "TableClothLite.z1tb1zzx9k.wasm": "sha256-KRvbsY2TJDD/QoYjFfhUC4e7cxS1YujEw6SDg8oX9oU=",
+      "TableClothLite.Shared.fmnzwfkt0j.wasm": "sha256-qWHstLd3eXfZjLXBsRe7o6E3sHZeoa7Qlx1Jr4mP0r0=",
+      "TableClothLite.tihfyrg99p.wasm": "sha256-iwsAE2bWZwuBEb1+5QXtGBYvP4kBmgJVFnKpSr3vIrs=",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "sha256-4u3DzThxux9K9sTeHhZyBhid/AlxJKAaouBiayJ/n5Y="
     },
     "libraryInitializers": {
