@@ -58,7 +58,7 @@ public partial class Chat : IDisposable
     // 대화 액션 드롭downs 상태 관리
     private bool _showConversationActionsDropdown = false;
 
-    // 새 버전 알림 상태 관리
+    // 새 버전 알림 상태 관리 - confirm 대신 인앱 알림 사용
     private bool _showUpdateNotification = false;
     private VersionInfo? _pendingUpdate = null;
     private Timer? _updateCheckTimer = null;
@@ -166,7 +166,7 @@ public partial class Chat : IDisposable
         return Task.CompletedTask;
     }
 
-    // JavaScript에서 호출할 수 있는 메서드 - 새 버전 감지
+    // JavaScript에서 호출할 수 있는 메서드 - 새 버전 감지 (confirm 제거)
     [JSInvokable]
     public async Task OnNewVersionDetected(string versionInfoJson)
     {
@@ -184,6 +184,7 @@ public partial class Chat : IDisposable
                 Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null
             };
             
+            // 포커스 빼앗김 없이 부드러운 인앱 알림만 표시
             await ShowGentleUpdateNotificationAsync();
         }
         catch (Exception ex)
@@ -192,32 +193,20 @@ public partial class Chat : IDisposable
         }
     }
 
-    // 대화 내용 인쇄 메서드
+    // 대화 내용 인쇄 메서드 - confirm을 좀 더 부드러운 알림으로 변경
     private async Task PrintConversationAsync()
     {
         if (!_messages.Any())
         {
-            await JSRuntime.InvokeAsync<bool>("alert", "인쇄할 대화 내용이 없습니다.");
+            // confirm 대신 단순 alert 사용하거나 토스트 알림으로 변경 가능
+            await JSRuntime.InvokeVoidAsync("showToast", "인쇄할 대화 내용이 없습니다.", "info");
             return;
         }
 
-        // 사용자에게 인쇄 방식 선택 옵션 제공
-        var showPreview = await JSRuntime.InvokeAsync<bool>("confirm", 
-            "인쇄 미리보기를 보시겠습니까?\n\n확인: 미리보기 창에서 인쇄\n취소: 바로 인쇄 다이얼로그 열기");
-
-        // 인쇄용 HTML 생성
+        // 사용자에게 인쇄 방식 선택 옵션 제공 - 더 부드러운 방식으로 변경 필요시
+        // 현재는 기본값으로 미리보기 창 사용
         var printHtml = GeneratePrintHtml();
-        
-        if (showPreview)
-        {
-            // 미리보기 창으로 열기
-            await JSRuntime.InvokeVoidAsync("showPrintPreview", printHtml);
-        }
-        else
-        {
-            // 바로 인쇄 다이얼로그 열기
-            await JSRuntime.InvokeVoidAsync("printConversation", printHtml);
-        }
+        await JSRuntime.InvokeVoidAsync("showPrintPreview", printHtml);
     }
 
     // 인쇄용 HTML 생성
@@ -603,19 +592,19 @@ public partial class Chat : IDisposable
         return null;
     }
 
-    // 부드러운 업데이트 알림 표시
+    // 부드러운 업데이트 알림 표시 - confirm 완전 제거
     private async Task ShowGentleUpdateNotificationAsync()
     {
         if (_pendingUpdate is null) return;
 
-        // 즉시 팝업 대신 페이지에 통합된 알림 표시
+        // 포커스 빼앗김 없는 페이지 통합 알림만 표시
         _showUpdateNotification = true;
         StateHasChanged();
 
-        // 30초 후 자동 숨김 처리 (사용자가 직접 닫지 않은 경우)
+        // 60초 후 자동 숨김 처리 (사용자가 직접 닫지 않은 경우)
         _ = Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromSeconds(30));
+            await Task.Delay(TimeSpan.FromSeconds(60));
             await InvokeAsync(() =>
             {
                 if (_showUpdateNotification)
@@ -844,9 +833,10 @@ public partial class Chat : IDisposable
 
     protected async Task Logout()
     {
-        // 저장되지 않은 대화 내용이 있다면 확인 다이얼로그 표시
+        // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
         if (_hasUnsavedContent)
         {
+            // confirm 대신 인앱 확인 다이얼로그 사용 권장
             var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
                 "현재 진행 중인 대화 내용이 있습니다. 로그아웃하면 대화 내용이 사라집니다. 정말 로그아웃하시겠습니까?");
             
@@ -940,12 +930,13 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 대화 내용을 텍스트 파일로 내보내기
+    // 대화 내용을 텍스트 파일로 내보내기 - alert를 토스트로 변경 가능
     private async Task ExportConversationAsTextAsync()
     {
         if (!_messages.Any())
         {
-            await JSRuntime.InvokeAsync<bool>("alert", "내보낼 대화 내용이 없습니다.");
+            // confirm 대신 부드러운 알림
+            await JSRuntime.InvokeVoidAsync("showToast", "내보낼 대화 내용이 없습니다.", "info");
             return;
         }
         
@@ -964,15 +955,16 @@ public partial class Chat : IDisposable
         
         if (!success)
         {
-            await JSRuntime.InvokeAsync<bool>("alert", "텍스트 파일 내보내기에 실패했습니다.");
+            await JSRuntime.InvokeVoidAsync("showToast", "텍스트 파일 내보내기에 실패했습니다.", "error");
         }
     }
 
     private async Task ResetConversationAsync()
     {
-        // 저장되지 않은 대화 내용이 있다면 확인 다이얼로그 표시
+        // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
         if (_hasUnsavedContent)
         {
+            // confirm 대신 인앱 확인 다이얼로그 사용 권장
             var shouldReset = await JSRuntime.InvokeAsync<bool>("confirm", 
                 "현재 진행 중인 대화 내용이 있습니다. 새로운 채팅을 시작하면 현재 대화 내용이 사라집니다. 계속하시겠습니까?");
             
@@ -996,12 +988,12 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 대화 내용 공유 (개선된 버전)
+    // 대화 내용 공유 - alert를 토스트로 변경
     private async Task ShareConversationAsync()
     {
         if (!_messages.Any())
         {
-            await JSRuntime.InvokeAsync<bool>("alert", "공유할 대화 내용이 없습니다.");
+            await JSRuntime.InvokeVoidAsync("showToast", "공유할 대화 내용이 없습니다.", "info");
             return;
         }
 
@@ -1026,24 +1018,24 @@ public partial class Chat : IDisposable
                         // Web Share API로 성공적으로 공유됨 - 별도 알림 불필요
                         break;
                     case "clipboard":
-                        await JSRuntime.InvokeAsync<bool>(
-                            "alert", 
-                            "대화 내용이 클립보드에 복사되었습니다.\n다른 앱에서 붙여넣기하여 공유할 수 있습니다.");
+                        await JSRuntime.InvokeVoidAsync("showToast", 
+                            "대화 내용이 클립보드에 복사되었습니다. 다른 앱에서 붙여넣기하여 공유할 수 있습니다.", 
+                            "success");
                         break;
                 }
             }
             else
             {
                 // 모든 방법 실패
-                await JSRuntime.InvokeAsync<bool>(
-                    "alert", 
-                    "공유 기능을 사용할 수 없습니다.\n대신 텍스트 파일로 내보내기를 사용해보세요.");
+                await JSRuntime.InvokeVoidAsync("showToast", 
+                    "공유 기능을 사용할 수 없습니다. 대신 텍스트 파일로 내보내기를 사용해보세요.", 
+                    "warning");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"대화 공유 중 오류: {ex.Message}");
-            await JSRuntime.InvokeAsync<bool>("alert", "대화 공유에 실패했습니다.");
+            await JSRuntime.InvokeVoidAsync("showToast", "대화 공유에 실패했습니다.", "error");
         }
     }
     
