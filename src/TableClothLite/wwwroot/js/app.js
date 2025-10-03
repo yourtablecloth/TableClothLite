@@ -1,4 +1,4 @@
-﻿class Helpers {
+class Helpers {
     static dotNetHelper;
 
     static setDotNetHelper(value) {
