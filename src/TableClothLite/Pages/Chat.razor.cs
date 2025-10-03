@@ -31,6 +31,9 @@ public partial class Chat : IDisposable
     private bool _hasApiKey = false;
     private bool _isCheckingApiKey = true;
 
+    // 스트리밍 취소를 위한 CancellationTokenSource 추가
+    private CancellationTokenSource? _streamingCancellationTokenSource;
+
     // 글자 수 제한 관련 변수
     private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
     private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
@@ -566,6 +569,12 @@ public partial class Chat : IDisposable
     // 로그아웃 메서드 추가
     private async Task Logout()
     {
+        // 진행 중인 스트리밍 작업이 있다면 취소
+        if (_isStreaming && _streamingCancellationTokenSource != null)
+        {
+            _streamingCancellationTokenSource.Cancel();
+        }
+
         // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
         if (_hasUnsavedContent)
         {
@@ -581,13 +590,17 @@ public partial class Chat : IDisposable
 
         await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
         
+        // 스트리밍 상태 완전 초기화
+        _isStreaming = false;
+        _currentStreamedMessage = string.Empty;
+        _streamingCancellationTokenSource?.Cancel();
+        _streamingCancellationTokenSource = null;
+        
         // 상태 업데이트
         _hasApiKey = false;
         _client = null;
         _messages.Clear();
         _userInput = string.Empty;
-        _isStreaming = false;
-        _currentStreamedMessage = string.Empty;
         _sessionId = Guid.NewGuid().ToString();
         
         StateHasChanged();
@@ -642,6 +655,11 @@ public partial class Chat : IDisposable
         _userInput = string.Empty;
         _isStreaming = true;
         _currentStreamedMessage = string.Empty;
+        
+        // 새로운 스트리밍 작업을 위한 CancellationTokenSource 생성
+        _streamingCancellationTokenSource?.Cancel();
+        _streamingCancellationTokenSource = new CancellationTokenSource();
+        
         StateHasChanged();
 
         try
@@ -651,14 +669,22 @@ public partial class Chat : IDisposable
 
             await SafeInvokeJSAsync("scrollToBottom", "messages");
 
-            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId))
+            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId, _streamingCancellationTokenSource.Token))
             {
+                // 취소가 요청되었는지 확인
+                _streamingCancellationTokenSource.Token.ThrowIfCancellationRequested();
+                
                 _currentStreamedMessage += chunk;
                 StateHasChanged();
                 await Task.Delay(10); // 자연스러운 타이핑 효과
             }
 
             _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
+        }
+        catch (OperationCanceledException)
+        {
+            // 스트리밍이 취소된 경우 - 오류 메시지 없이 조용히 처리
+            Console.WriteLine("스트리밍 작업이 취소되었습니다.");
         }
         catch (Exception ex)
         {
@@ -717,6 +743,12 @@ public partial class Chat : IDisposable
 
     private async Task ResetConversationAsync()
     {
+        // 진행 중인 스트리밍 작업이 있다면 취소
+        if (_isStreaming && _streamingCancellationTokenSource != null)
+        {
+            _streamingCancellationTokenSource.Cancel();
+        }
+
         // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
         if (_hasUnsavedContent)
         {
@@ -730,6 +762,13 @@ public partial class Chat : IDisposable
             }
         }
 
+        // 스트리밍 관련 상태 완전 초기화
+        _isStreaming = false;
+        _currentStreamedMessage = string.Empty;
+        _streamingCancellationTokenSource?.Cancel();
+        _streamingCancellationTokenSource = null;
+
+        // 대화 내용 초기화
         _messages.Clear();
         _sessionId = Guid.NewGuid().ToString();
         await ChatService.ClearSessionAsync(_sessionId);
@@ -825,7 +864,7 @@ public partial class Chat : IDisposable
             html.AppendLine("</div>");
             html.AppendLine($"<div class='message-content'>");
             
-            // 마크다운을 HTML로 변환하되 인쇄용으로 정리
+            // 마크다운을 HTML로 변환하되 인쇄용로 정리
             var content = ConvertMarkdownForPrint(message.Content);
             html.AppendLine(content);
             
@@ -1241,6 +1280,10 @@ public partial class Chat : IDisposable
 
     public void Dispose()
     {
+        // 스트리밍 작업 취소 및 정리
+        _streamingCancellationTokenSource?.Cancel();
+        _streamingCancellationTokenSource?.Dispose();
+
         // beforeunload 핸들러 정리
         try
         {
