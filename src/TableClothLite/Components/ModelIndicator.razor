@@ -1,0 +1,224 @@
+﻿@using TableClothLite.Services
+@using TableClothLite.Shared.Models
+
+<div class="model-indicator @(HasApiKey ? "" : "disabled")" @onclick="OnModelClick" title="@(HasApiKey ? "클릭하여 AI 모델 설정 변경" : "로그인 후 사용 가능")">
+    <div class="model-info">
+        <span class="model-icon">🤖</span>
+        <div class="model-details">
+            <span class="model-name">@GetModelDisplayName()</span>
+            @if (HasApiKey)
+            {
+                <span class="model-hint">설정 변경</span>
+            }
+            else
+            {
+                <span class="model-hint">로그인 필요</span>
+            }
+        </div>
+    </div>
+    @if (HasApiKey)
+    {
+        <span class="settings-icon">⚙️</span>
+    }
+    else
+    {
+        <span class="lock-icon">🔒</span>
+    }
+</div>
+
+<style>
+    .model-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        margin: 8px 0;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        user-select: none;
+    }
+
+    .model-indicator:hover:not(.disabled) {
+        background: #e9ecef;
+        border-color: #007bff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+    }
+
+    .model-indicator.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: #f8f9fa;
+    }
+
+    .model-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .model-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .model-details {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .model-name {
+        font-weight: 600;
+        color: #2c3e50;
+        line-height: 1.2;
+    }
+
+    .model-indicator.disabled .model-name {
+        color: #6c757d;
+    }
+
+    .model-hint {
+        font-size: 11px;
+        color: #6c757d;
+        line-height: 1.2;
+    }
+
+    .model-indicator:hover:not(.disabled) .model-hint {
+        color: #007bff;
+    }
+
+    .settings-icon, .lock-icon {
+        font-size: 14px;
+        color: #6c757d;
+        flex-shrink: 0;
+    }
+
+    .model-indicator:hover:not(.disabled) .settings-icon {
+        color: #007bff;
+    }
+
+    /* 모바일 최적화 */
+    @@media (max-width: 480px) {
+        .model-indicator {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .model-icon {
+            font-size: 14px;
+        }
+
+        .settings-icon, .lock-icon {
+            font-size: 12px;
+        }
+
+        .model-hint {
+            display: none; /* 모바일에서는 힌트 텍스트 숨김 */
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool HasApiKey { get; set; }
+    [Parameter] public EventCallback OnOpenSettings { get; set; }
+    [Parameter] public EventCallback OnLogin { get; set; }
+
+    [Inject] private ConfigService ConfigService { get; set; } = default!;
+
+    private SandboxConfig? _currentConfig;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentConfig();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // API 키 상태가 변경되면 설정 다시 로드
+        if (HasApiKey && _currentConfig is null)
+        {
+            await LoadCurrentConfig();
+        }
+    }
+
+    private async Task LoadCurrentConfig()
+    {
+        try
+        {
+            _currentConfig = await ConfigService.LoadAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"모델 설정 로드 중 오류: {ex.Message}");
+            // 기본값 사용
+            _currentConfig = new SandboxConfig();
+        }
+    }
+
+    private string GetModelDisplayName()
+    {
+        if (!HasApiKey)
+        {
+            return "AI 모델";
+        }
+
+        if (_currentConfig is null)
+        {
+            return "모델 로딩중...";
+        }
+
+        // 모델 이름을 사용자 친화적으로 변환
+        return _currentConfig.OpenRouterModel switch
+        {
+            "meta-llama/llama-3.1-70b-instruct" => "Llama 3.1 70B",
+            "meta-llama/llama-3.1-8b-instruct" => "Llama 3.1 8B",
+            "anthropic/claude-3.5-sonnet" => "Claude 3.5 Sonnet",
+            "openai/gpt-4o" => "GPT-4o",
+            "openai/gpt-3.5-turbo" => "GPT-3.5 Turbo",
+            "google/gemini-pro-1.5" => "Gemini Pro 1.5",
+            "anthropic/claude-3-haiku" => "Claude 3 Haiku",
+            "meta-llama/llama-3.2-90b-vision-instruct" => "Llama 3.2 90B Vision",
+            "qwen/qwen-2.5-72b-instruct" => "Qwen 2.5 72B",
+            "microsoft/wizardlm-2-8x22b" => "WizardLM-2 8x22B",
+            _ => ExtractModelName(_currentConfig.OpenRouterModel)
+        };
+    }
+
+    private string ExtractModelName(string fullModelName)
+    {
+        // "provider/model-name" 형식에서 모델명만 추출
+        var parts = fullModelName.Split('/');
+        if (parts.Length > 1)
+        {
+            var modelPart = parts[1];
+            // 대문자로 시작하도록 변환
+            return char.ToUpper(modelPart[0]) + modelPart.Substring(1);
+        }
+        return fullModelName;
+    }
+
+    private async Task OnModelClick()
+    {
+        if (!HasApiKey)
+        {
+            await OnLogin.InvokeAsync();
+        }
+        else
+        {
+            await OnOpenSettings.InvokeAsync();
+        }
+    }
+
+    // 외부에서 설정 변경 후 호출할 수 있는 메서드
+    public async Task RefreshConfig()
+    {
+        await LoadCurrentConfig();
+    }
+}

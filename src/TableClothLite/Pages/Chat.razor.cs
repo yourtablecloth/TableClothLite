@@ -8,6 +8,7 @@ using System.Net;
 using TableClothLite.Models;
 using TableClothLite.Shared.Models;
 using TableClothLite.Services;
+using TableClothLite.Components;
 
 namespace TableClothLite.Pages;
 
@@ -62,6 +63,9 @@ public partial class Chat : IDisposable
     private bool _showUpdateNotification = false;
     private VersionInfo? _pendingUpdate = null;
     private Timer? _updateCheckTimer = null;
+
+    // ModelIndicator 참조
+    private ModelIndicator? _modelIndicator;
 
     // 버전 정보 클래스 - 간소화
     private class VersionInfo
@@ -1219,10 +1223,17 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 설정 모달 닫기
-    private void CloseSettingsModal()
+    // 설정 모달 닫기 - 모델 인디케이터 새로고침 추가
+    private async Task CloseSettingsModal()
     {
         _showSettingsModal = false;
+        
+        // 모델 설정이 변경되었을 수 있으므로 ModelIndicator 새로고침
+        if (_modelIndicator is not null)
+        {
+            await _modelIndicator.RefreshConfig();
+        }
+        
         StateHasChanged();
     }
 

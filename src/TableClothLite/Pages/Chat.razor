@@ -10,6 +10,7 @@
 @using TableClothLite.Components.Settings
 @using TableClothLite.Services
 @using TableClothLite.Components.Guide
+@using TableClothLite.Components
 @using Markdig
 
 @inject OpenAIChatService ChatService
@@ -266,6 +267,13 @@
                         </button>
                     </div>
                 }
+                
+                <!-- Model Indicator -->
+                <ModelIndicator HasApiKey="_hasApiKey"
+                              OnOpenSettings="OpenSettingDialog"
+                              OnLogin="HandleLoginAsync"
+                              @ref="_modelIndicator" />
+                
                 <div class="input-wrapper @(!_hasApiKey ? "disabled" : "")">
                     <textarea @oninput="OnInputChange"
                              value="@_userInput"
