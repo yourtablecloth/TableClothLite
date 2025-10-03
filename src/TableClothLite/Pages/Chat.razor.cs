@@ -834,7 +834,7 @@ public partial class Chat : IDisposable
         html.AppendLine("<head>");
         html.AppendLine("<meta charset='UTF-8'>");
         html.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        html.AppendLine("<title>TableClothLite AI 대화 기록</title>");
+        html.AppendLine("<title>식탁보 AI 대화 기록</title>");
         html.AppendLine("<style>");
         html.AppendLine(GetPrintStyles());
         html.AppendLine("</style>");
@@ -843,7 +843,7 @@ public partial class Chat : IDisposable
         
         // 헤더 정보
         html.AppendLine("<div class='print-header'>");
-        html.AppendLine("<h1>TableClothLite AI 대화 기록</h1>");
+        html.AppendLine("<h1>식탁보 AI 대화 기록</h1>");
         html.AppendLine($"<p class='print-date'>생성일: {DateTime.Now:yyyy년 MM월 dd일 HH:mm}</p>");
         html.AppendLine($"<p class='print-info'>총 {_messages.Count}개의 메시지</p>");
         html.AppendLine("</div>");
@@ -855,7 +855,7 @@ public partial class Chat : IDisposable
         {
             var message = _messages[i];
             var messageClass = message.IsUser ? "user-message" : "assistant-message";
-            var sender = message.IsUser ? "사용자" : "TableClothLite AI";
+            var sender = message.IsUser ? "사용자" : "식탁보 AI";
             
             html.AppendLine($"<div class='message {messageClass}'>");
             html.AppendLine($"<div class='message-header'>");
@@ -876,7 +876,7 @@ public partial class Chat : IDisposable
         
         // 푸터
         html.AppendLine("<div class='print-footer'>");
-        html.AppendLine("<p>TableClothLite AI - 금융과 공공 부문 AI 어시스턴트</p>");
+        html.AppendLine("<p>식탁보 AI - 금융과 공공 부문 AI 어시스턴트</p>");
         html.AppendLine("<p>https://yourtablecloth.app</p>");
         html.AppendLine("</div>");
         
@@ -1172,7 +1172,7 @@ public partial class Chat : IDisposable
             
             var shareData = new
             {
-                title = "TableClothLite AI 대화 기록",
+                title = "식탁보 AI 대화 기록",
                 text = shareText
             };
             
@@ -1212,7 +1212,7 @@ public partial class Chat : IDisposable
     private string GenerateShareText()
     {
         var text = new System.Text.StringBuilder();
-        text.AppendLine("TableClothLite AI 대화 기록");
+        text.AppendLine("식탁보 AI 대화 기록");
         text.AppendLine($"생성일: {DateTime.Now:yyyy년 MM월 dd일 HH:mm}");
         text.AppendLine(new string('=', 40));
         text.AppendLine();
@@ -1228,7 +1228,7 @@ public partial class Chat : IDisposable
         }
         
         text.AppendLine(new string('=', 40));
-        text.AppendLine("TableClothLite AI - https://yourtablecloth.app");
+        text.AppendLine("식탁보 AI - https://yourtablecloth.app");
         
         return text.ToString();
     }
