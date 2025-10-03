@@ -2,20 +2,8 @@
 @using TableClothLite.Shared.Models
 
 <div class="model-indicator @(HasApiKey ? "" : "disabled")" @onclick="OnModelClick" title="@(HasApiKey ? "클릭하여 AI 모델 설정 변경" : "로그인 후 사용 가능")">
-    <div class="model-info">
-        <span class="model-icon">🤖</span>
-        <div class="model-details">
-            <span class="model-name">@GetModelDisplayName()</span>
-            @if (HasApiKey)
-            {
-                <span class="model-hint">설정 변경</span>
-            }
-            else
-            {
-                <span class="model-hint">로그인 필요</span>
-            }
-        </div>
-    </div>
+    <span class="model-icon">🤖</span>
+    <span class="model-name">@GetModelDisplayName()</span>
     @if (HasApiKey)
     {
         <span class="settings-icon">⚙️</span>
@@ -30,23 +18,24 @@
     .model-indicator {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        margin: 8px 0;
+        gap: 6px;
+        padding: 4px 8px;
+        margin: 4px 0;
         background: #f8f9fa;
         border: 1px solid #e9ecef;
-        border-radius: 8px;
+        border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s ease;
-        font-size: 13px;
+        font-size: 12px;
         user-select: none;
+        color: #6c757d;
+        min-height: 24px;
     }
 
     .model-indicator:hover:not(.disabled) {
         background: #e9ecef;
         border-color: #007bff;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+        color: #007bff;
     }
 
     .model-indicator.disabled {
@@ -55,71 +44,48 @@
         background: #f8f9fa;
     }
 
-    .model-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-    }
-
     .model-icon {
-        font-size: 16px;
+        font-size: 14px;
         flex-shrink: 0;
-    }
-
-    .model-details {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
     }
 
     .model-name {
-        font-weight: 600;
-        color: #2c3e50;
-        line-height: 1.2;
-    }
-
-    .model-indicator.disabled .model-name {
-        color: #6c757d;
-    }
-
-    .model-hint {
-        font-size: 11px;
-        color: #6c757d;
-        line-height: 1.2;
-    }
-
-    .model-indicator:hover:not(.disabled) .model-hint {
-        color: #007bff;
+        font-weight: 500;
+        color: inherit;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
     }
 
     .settings-icon, .lock-icon {
-        font-size: 14px;
-        color: #6c757d;
+        font-size: 12px;
+        color: inherit;
         flex-shrink: 0;
+        opacity: 0.7;
     }
 
-    .model-indicator:hover:not(.disabled) .settings-icon {
-        color: #007bff;
+    .model-indicator:hover:not(.disabled) .settings-icon,
+    .model-indicator:hover:not(.disabled) .lock-icon {
+        opacity: 1;
     }
 
     /* 모바일 최적화 */
     @@media (max-width: 480px) {
         .model-indicator {
-            font-size: 12px;
-            padding: 6px 10px;
+            font-size: 11px;
+            padding: 3px 6px;
+            gap: 4px;
+            min-height: 20px;
         }
 
         .model-icon {
-            font-size: 14px;
-        }
-
-        .settings-icon, .lock-icon {
             font-size: 12px;
         }
 
-        .model-hint {
-            display: none; /* 모바일에서는 힌트 텍스트 숨김 */
+        .settings-icon, .lock-icon {
+            font-size: 10px;
         }
     }
 </style>
@@ -171,22 +137,22 @@
 
         if (_currentConfig is null)
         {
-            return "모델 로딩중...";
+            return "로딩중...";
         }
 
-        // 모델 이름을 사용자 친화적으로 변환
+        // 모델 이름을 사용자 친화적으로 변환 (더 짧게)
         return _currentConfig.OpenRouterModel switch
         {
             "meta-llama/llama-3.1-70b-instruct" => "Llama 3.1 70B",
             "meta-llama/llama-3.1-8b-instruct" => "Llama 3.1 8B",
-            "anthropic/claude-3.5-sonnet" => "Claude 3.5 Sonnet",
+            "anthropic/claude-3.5-sonnet" => "Claude 3.5",
             "openai/gpt-4o" => "GPT-4o",
-            "openai/gpt-3.5-turbo" => "GPT-3.5 Turbo",
-            "google/gemini-pro-1.5" => "Gemini Pro 1.5",
-            "anthropic/claude-3-haiku" => "Claude 3 Haiku",
-            "meta-llama/llama-3.2-90b-vision-instruct" => "Llama 3.2 90B Vision",
-            "qwen/qwen-2.5-72b-instruct" => "Qwen 2.5 72B",
-            "microsoft/wizardlm-2-8x22b" => "WizardLM-2 8x22B",
+            "openai/gpt-3.5-turbo" => "GPT-3.5",
+            "google/gemini-pro-1.5" => "Gemini Pro",
+            "anthropic/claude-3-haiku" => "Claude 3",
+            "meta-llama/llama-3.2-90b-vision-instruct" => "Llama 3.2 90B",
+            "qwen/qwen-2.5-72b-instruct" => "Qwen 2.5",
+            "microsoft/wizardlm-2-8x22b" => "WizardLM-2",
             _ => ExtractModelName(_currentConfig.OpenRouterModel)
         };
     }
@@ -198,10 +164,11 @@
         if (parts.Length > 1)
         {
             var modelPart = parts[1];
-            // 대문자로 시작하도록 변환
-            return char.ToUpper(modelPart[0]) + modelPart.Substring(1);
+            // 대문자로 시작하도록 변환하고 길이 제한
+            var name = char.ToUpper(modelPart[0]) + modelPart.Substring(1);
+            return name.Length > 15 ? name.Substring(0, 15) + "..." : name;
         }
-        return fullModelName;
+        return fullModelName.Length > 15 ? fullModelName.Substring(0, 15) + "..." : fullModelName;
     }
 
     private async Task OnModelClick()
