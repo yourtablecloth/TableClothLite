@@ -406,6 +406,8 @@ if ('serviceWorker' in navigator) {
 
 // DOM 로드 후 최적화된 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM 로드 완료 - JavaScript 초기화 시작');
+    
     // 네비게이션 가드 설정
     window.setupNavigationGuard();
     
@@ -476,6 +478,8 @@ if (window.location.hostname === 'localhost') {
 
 // 채팅 입력 초기화 함수
 window.initChatInput = function () {
+    console.log('채팅 입력 초기화 시작');
+    
     const textarea = document.getElementById('chatTextArea');
     if (textarea) {
         // 초기 높이 설정
@@ -495,6 +499,10 @@ window.initChatInput = function () {
                 this.scrollTop = 0;
             }, 0);
         });
+        
+        console.log('채팅 입력 필드 초기화 완료');
+    } else {
+        console.warn('채팅 입력 필드를 찾을 수 없습니다');
     }
 
     // 모바일 기능 초기화
@@ -541,6 +549,8 @@ window.initChatInput = function () {
             isPageVisible = false;
         }
     });
+    
+    console.log('채팅 입력 초기화 완료');
 };
 
 // 창 크기 변경 리스너 설정
@@ -999,3 +1009,147 @@ window.exportConversationAsText = function(conversationData) {
         return false;
     }
 };
+
+// 안전한 version.json 가져오기 함수
+window.fetchVersionJson = async function(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log('version.json 파일을 찾을 수 없습니다.');
+                return null;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('version.json이 JSON 형식이 아닐 수 있습니다.');
+        }
+
+        const jsonText = await response.text();
+        
+        // JSON 유효성 검사
+        try {
+            JSON.parse(jsonText);
+            return jsonText;
+        } catch (parseError) {
+            console.error('version.json JSON 파싱 오류:', parseError);
+            return null;
+        }
+        
+    } catch (error) {
+        console.log('version.json 가져오기 실패:', error.message);
+        return null;
+    }
+};
+
+// 토스트 알림 표시 함수 (간단한 구현)
+window.showToast = function(message, type = 'info') {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    
+    // 기존 토스트가 있다면 제거
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // 토스트 엘리먼트 생성
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 300px;
+        padding: 12px 16px;
+        background: ${getToastColor(type)};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        font-size: 14px;
+        line-height: 1.4;
+        animation: slideInFromRight 0.3s ease-out;
+        word-wrap: break-word;
+    `;
+    
+    // 아이콘 추가
+    const icon = getToastIcon(type);
+    toast.innerHTML = `${icon} ${message}`;
+    
+    // 애니메이션 CSS 추가 (한 번만)
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes slideInFromRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes slideOutToRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(toast);
+    
+    // 클릭 시 닫기
+    toast.addEventListener('click', () => {
+        toast.style.animation = 'slideOutToRight 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+    });
+    
+    // 자동 삭제
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.animation = 'slideOutToRight 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, type === 'error' ? 5000 : 3000); // 에러는 5초, 나머지는 3초
+};
+
+function getToastColor(type) {
+    switch (type) {
+        case 'success': return '#10b981';
+        case 'error': return '#ef4444';
+        case 'warning': return '#f59e0b';
+        default: return '#3b82f6';
+    }
+}
+
+function getToastIcon(type) {
+    switch (type) {
+        case 'success': return '✅';
+        case 'error': return '❌';
+        case 'warning': return '⚠️';
+        default: return 'ℹ️';
+    }
+}
+
+// 초기화 완료 로그
+console.log('TableClothLite JavaScript 모듈 로드 완료 ✅');

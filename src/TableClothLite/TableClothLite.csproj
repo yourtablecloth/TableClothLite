@@ -29,4 +29,61 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <!-- 빌드 시 간소화된 version.json 자동 생성 -->
+  <Target Name="GenerateVersionJson" BeforeTargets="Build">
+    <!-- Git 정보 가져오기 -->
+    <PropertyGroup>
+      <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</BuildTimestamp>
+      <VersionString>$([System.DateTime]::UtcNow.ToString("yyyy.MM.dd.HHmm"))</VersionString>
+    </PropertyGroup>
+    
+    <!-- Git commit hash 가져오기 -->
+    <Exec Command="git rev-parse HEAD" 
+          ContinueOnError="true" 
+          ConsoleToMSBuild="true"
+          Condition="Exists('.git')">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
+    </Exec>
+    
+    <!-- Git branch 가져오기 -->
+    <Exec Command="git rev-parse --abbrev-ref HEAD" 
+          ContinueOnError="true" 
+          ConsoleToMSBuild="true"
+          Condition="Exists('.git')">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitBranchName" />
+    </Exec>
+    
+    <!-- CI 환경에서의 값 사용 (GitHub Actions, Azure DevOps 등) -->
+    <PropertyGroup>
+      <GitCommit Condition="'$(GitCommitHash)' != ''">$(GitCommitHash)</GitCommit>
+      <GitCommit Condition="'$(GitCommit)' == '' AND '$(BUILD_SOURCEVERSION)' != ''">$(BUILD_SOURCEVERSION)</GitCommit>
+      <GitCommit Condition="'$(GitCommit)' == '' AND '$(GITHUB_SHA)' != ''">$(GITHUB_SHA)</GitCommit>
+      <GitCommit Condition="'$(GitCommit)' == ''">local-build</GitCommit>
+      
+      <GitBranch Condition="'$(GitBranchName)' != ''">$(GitBranchName)</GitBranch>
+      <GitBranch Condition="'$(GitBranch)' == '' AND '$(BUILD_SOURCEBRANCH)' != ''">$(BUILD_SOURCEBRANCH)</GitBranch>
+      <GitBranch Condition="'$(GitBranch)' == '' AND '$(GITHUB_REF_NAME)' != ''">$(GITHUB_REF_NAME)</GitBranch>
+      <GitBranch Condition="'$(GitBranch)' == ''">main</GitBranch>
+    </PropertyGroup>
+    
+    <!-- 간소화된 JSON 내용 생성 -->
+    <PropertyGroup>
+      <VersionJsonContent>
+{
+  "version": "$(VersionString)",
+  "buildDate": "$(BuildTimestamp)",
+  "commit": "$(GitCommit)",
+  "branch": "$(GitBranch)"
+}
+      </VersionJsonContent>
+    </PropertyGroup>
+    
+    <WriteLinesToFile
+      File="$(MSBuildProjectDirectory)\wwwroot\version.json"
+      Lines="$(VersionJsonContent)"
+      Overwrite="true" />
+    
+    <Message Text="Generated simplified version.json with version $(VersionString)" Importance="high" />
+  </Target>
+
 </Project>

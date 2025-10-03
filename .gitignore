@@ -403,3 +403,4 @@ FodyWeavers.xsd
 installer/
 
 .DS_Store
+/src/TableClothLite/wwwroot/version.json

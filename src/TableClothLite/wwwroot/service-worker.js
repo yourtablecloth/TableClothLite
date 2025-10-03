@@ -1,4 +1,4 @@
-// Caution! Be sure you understand the caveats before publishing an application with
+ï»¿// Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 
 self.importScripts('./service-worker-assets.js');
@@ -9,19 +9,19 @@ self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
-const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+const offlineAssetsExclude = [ /^service-worker\.js$/, /version\.json$/ ]; // version.json ì œì™¸
 
-// ¾Û ¹öÀü Á¤º¸ - GitHub Actions¿¡¼­ ÀÚµ¿ ¾÷µ¥ÀÌÆ®
+// ë¹Œë“œ ì •ë³´ ë³€ìˆ˜ - GitHub Actionsì—ì„œ ìë™ ì—…ë°ì´íŠ¸
 const APP_VERSION = '2024.1.0';
 const BUILD_TIMESTAMP = 1234567890;
 
 async function onInstall(event) {
     console.info('Service worker: Install');
 
-    // Á¡ÁøÀû È°¼ºÈ­ - »ç¿ëÀÚ ºê¶ó¿ìÂ¡ ¹æÇØÇÏÁö ¾ÊÀ½
-    // self.skipWaiting(); // Á¦°Å - Áï½Ã È°¼ºÈ­ÇÏÁö ¾ÊÀ½
+    // ì¦‰ì‹œ í™œì„±í™” - ì‚¬ìš©ì ê²½í—˜ì„ ìœ„í•´ ë¹„í™œì„±í™”
+    // self.skipWaiting(); // ì£¼ì„ - ì¦‰ì‹œ í™œì„±í™”í•˜ì§€ ì•ŠìŒ
 
-    // ½º¸¶Æ® Ä³½Ì - ÇØ½Ã ±â¹İÀ¸·Î º¯°æµÈ ¿¡¼Â¸¸ Ä³½Ã
+    // ìŠ¤ë§ˆíŠ¸ ìºì‹œ - í•´ì‹œ ë¹„êµë¥¼ í†µí•œ ì„ íƒì  ìºì‹œ
     const cache = await caches.open(cacheName);
     const existingCache = await caches.open(cacheNamePrefix + 'previous');
     
@@ -31,7 +31,7 @@ async function onInstall(event) {
         if (offlineAssetsInclude.some(pattern => pattern.test(asset.url)) && 
             !offlineAssetsExclude.some(pattern => pattern.test(asset.url))) {
             
-            // ÀÌÀü Ä³½ÃµÈ ¿¡¼Â°ú ÇØ½Ã ºñ±³
+            // ê¸°ì¡´ ìºì‹œëœ ì‘ë‹µê³¼ í•´ì‹œ ë¹„êµ
             const cachedResponse = await existingCache.match(asset.url);
             const currentHash = asset.hash;
             
@@ -39,47 +39,75 @@ async function onInstall(event) {
             if (cachedResponse) {
                 const cachedHash = cachedResponse.headers.get('x-asset-hash');
                 if (cachedHash === currentHash) {
-                    // ÇØ½Ã°¡ °°À¸¸é ±âÁ¸ Ä³½Ã Àç»ç¿ë
+                    // í•´ì‹œê°€ ê°™ìœ¼ë©´ ê¸°ì¡´ ìºì‹œ ì¬ì‚¬ìš©
                     const clonedResponse = cachedResponse.clone();
                     await cache.put(asset.url, clonedResponse);
                     shouldCache = false;
-                    console.log(`Ä³½Ã Àç»ç¿ë: ${asset.url}`);
+                    console.log(`ìºì‹œ ì¬ì‚¬ìš©: ${asset.url}`);
                 }
             }
             
             if (shouldCache) {
-                assetsToCache.push(new Request(asset.url, { 
-                    integrity: asset.hash, 
-                    cache: 'reload' 
-                }));
-                console.log(`»õ·Î Ä³½Ã: ${asset.url}`);
+                // version.jsonê³¼ ê°™ì€ ë™ì  íŒŒì¼ì€ SRI ì²´í¬ ì—†ì´ ìºì‹œ
+                if (/version\.json$/.test(asset.url)) {
+                    assetsToCache.push(new Request(asset.url, { 
+                        cache: 'reload' 
+                    }));
+                } else {
+                    assetsToCache.push(new Request(asset.url, { 
+                        integrity: asset.hash, 
+                        cache: 'reload' 
+                    }));
+                }
+                console.log(`ìƒˆë¡œ ìºì‹œ: ${asset.url}`);
             }
         }
     }
     
-    // º¯°æµÈ ¿¡¼Â¸¸ ´Ù¿î·Îµå
+    // í•„ìš”í•œ ìì›ë§Œ ë‹¤ìš´ë¡œë“œ
     if (assetsToCache.length > 0) {
-        console.log(`${assetsToCache.length}°³ ÆÄÀÏÀ» »õ·Î ´Ù¿î·ÎµåÇÕ´Ï´Ù.`);
-        await cache.addAll(assetsToCache);
+        console.log(`${assetsToCache.length}ê°œ ìì›ì„ ìƒˆë¡œ ë‹¤ìš´ë¡œë“œí•©ë‹ˆë‹¤.`);
+        // ë°°ì¹˜ë¡œ ì²˜ë¦¬í•˜ì—¬ ì—ëŸ¬ ë°©ì§€
+        const batchSize = 10;
+        for (let i = 0; i < assetsToCache.length; i += batchSize) {
+            const batch = assetsToCache.slice(i, i + batchSize);
+            try {
+                await cache.addAll(batch);
+                console.log(`ë°°ì¹˜ ${Math.floor(i/batchSize) + 1} ì™„ë£Œ`);
+            } catch (error) {
+                console.error(`ë°°ì¹˜ ${Math.floor(i/batchSize) + 1} ì‹¤íŒ¨:`, error);
+                // ê°œë³„ ìš”ì²­ìœ¼ë¡œ ì¬ì‹œë„
+                for (const request of batch) {
+                    try {
+                        const response = await fetch(request);
+                        if (response.ok) {
+                            await cache.put(request, response);
+                        }
+                    } catch (individualError) {
+                        console.error(`ê°œë³„ ìš”ì²­ ì‹¤íŒ¨: ${request.url}`, individualError);
+                    }
+                }
+            }
+        }
     } else {
-        console.log('¸ğµç ÆÄÀÏÀÌ ÃÖ½Å »óÅÂÀÔ´Ï´Ù.');
+        console.log('ëª¨ë“  ìì›ì´ ìµœì‹  ìƒíƒœì…ë‹ˆë‹¤.');
     }
 }
 
 async function onActivate(event) {
     console.info('Service worker: Activate');
 
-    // Å¬¶óÀÌ¾ğÆ® Á¦¾î´Â ´ÙÀ½ ¹æ¹®½ÃºÎÅÍ
-    // await clients.claim(); // Á¦°Å - Áï½Ã Á¦¾îÇÏÁö ¾ÊÀ½
+    // í´ë¼ì´ì–¸íŠ¸ ì¦‰ì‹œ ì œì–´ ì‹œì‘
+    // await clients.claim(); // ì£¼ì„ - ì¦‰ì‹œ ì ìš©í•˜ì§€ ì•ŠìŒ
 
-    // ÀÌÀü Ä³½Ã¸¦ 'previous'·Î ¹é¾÷ ÈÄ Á¤¸®
+    // ì´ì „ ìºì‹œë¥¼ 'previous'ë¡œ ë³´ê´€ í›„ ì •ë¦¬
     const cacheKeys = await caches.keys();
     const previousCaches = cacheKeys.filter(key => 
         key.startsWith(cacheNamePrefix) && key !== cacheName
     );
     
     if (previousCaches.length > 0) {
-        // °¡Àå ÃÖ½Å Ä³½Ã¸¦ 'previous'·Î º¸Á¸
+        // ê°€ì¥ ìµœì‹  ìºì‹œë¥¼ 'previous'ë¡œ ë³´ê´€
         const latestPreviousCache = previousCaches.sort().pop();
         if (latestPreviousCache) {
             const oldCache = await caches.open(latestPreviousCache);
@@ -94,32 +122,52 @@ async function onActivate(event) {
             }
         }
         
-        // ¿À·¡µÈ Ä³½Ãµé »èÁ¦
+        // ë‚˜ë¨¸ì§€ ìºì‹œë“¤ ì‚­ì œ
         await Promise.all(previousCaches.map(key => caches.delete(key)));
     }
         
-    // Å¬¶óÀÌ¾ğÆ®¿¡°Ô ºÎµå·¯¿î ¾÷µ¥ÀÌÆ® ¾Ë¸²
+    // í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì¡°ìš©í•œ ì—…ë°ì´íŠ¸ ì•Œë¦¼
     const allClients = await clients.matchAll();
     allClients.forEach(client => {
         client.postMessage({
             type: 'SW_UPDATED_QUIETLY',
             version: APP_VERSION,
             timestamp: BUILD_TIMESTAMP,
-            message: '¹é±×¶ó¿îµå¿¡¼­ ¾÷µ¥ÀÌÆ®°¡ ¿Ï·áµÇ¾ú½À´Ï´Ù.'
+            message: 'ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì—…ë°ì´íŠ¸ê°€ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.'
         });
     });
 }
 
 async function onFetch(event) {
-    // °³¹ß È¯°æ¿¡¼­´Â ³×Æ®¿öÅ© ¿ì¼±
+    // ê°œë°œ í™˜ê²½ì—ì„œëŠ” ë„¤íŠ¸ì›Œí¬ ìš°ì„ 
     if (event.request.url.includes('localhost') || event.request.url.includes('127.0.0.1')) {
         return fetch(event.request);
     }
     
-    // ³×ºñ°ÔÀÌ¼Ç ¿äÃ» (HTML)
+    // version.jsonì€ í•­ìƒ ë„¤íŠ¸ì›Œí¬ì—ì„œ ê°€ì ¸ì˜¤ê¸° (ìºì‹œ ë¬´ì‹œ)
+    if (event.request.url.includes('version.json')) {
+        try {
+            return await fetch(event.request, {
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            });
+        } catch (error) {
+            console.log('version.json fetch failed:', error);
+            // 404 ë“±ì˜ ì—ëŸ¬ëŠ” ì¡°ìš©íˆ ì²˜ë¦¬
+            return new Response('{}', { 
+                status: 200, 
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+    }
+    
+    // ë„¤ë¹„ê²Œì´ì…˜ ìš”ì²­ (HTML)
     if (event.request.mode === 'navigate') {
         try {
-            // ³×Æ®¿öÅ© ¿ì¼±, ½ÇÆĞ½Ã Ä³½Ã
+            // ë„¤íŠ¸ì›Œí¬ ìš°ì„ , ì‹¤íŒ¨ì‹œ ìºì‹œ
             const networkResponse = await fetch(event.request, {
                 cache: 'no-cache'
             });
@@ -131,26 +179,26 @@ async function onFetch(event) {
             console.log('Network failed for navigation, falling back to cache');
         }
         
-        // ³×Æ®¿öÅ© ½ÇÆĞ ½Ã Ä³½ÃµÈ HTML ¹İÈ¯
+        // ë„¤íŠ¸ì›Œí¬ ì‹¤íŒ¨ ì‹œ ìºì‹œëœ HTML ë°˜í™˜
         const cachedResponse = await caches.match('/');
         if (cachedResponse) {
             return cachedResponse;
         }
     }
     
-    // Á¤Àû ¸®¼Ò½º ¿äÃ»
+    // ê¸°íƒ€ ë¦¬ì†ŒìŠ¤ ìš”ì²­
     if (event.request.method === 'GET') {
         const cachedResponse = await caches.match(event.request);
         
         if (cachedResponse) {
-            // Ä³½ÃµÈ ¸®¼Ò½º ¹İÈ¯ÇÏ¸é¼­ ¹é±×¶ó¿îµå¿¡¼­ ÃÖ½Å¼º È®ÀÎ
+            // ìºì‹œëœ ë¦¬ì†ŒìŠ¤ ë°˜í™˜í•˜ë©´ì„œ ë°±ê·¸ë¼ìš´ë“œì—ì„œ ìµœì‹ ì„± í™•ì¸
             if (shouldCheckFreshness(event.request)) {
                 event.waitUntil(checkAndUpdateCache(event.request));
             }
             return cachedResponse;
         }
         
-        // Ä³½Ã¿¡ ¾øÀ¸¸é ³×Æ®¿öÅ©¿¡¼­ °¡Á®¿Í¼­ Ä³½Ã
+        // ìºì‹œì— ì—†ìœ¼ë©´ ë„¤íŠ¸ì›Œí¬ì—ì„œ ê°€ì ¸ì™€ì„œ ìºì‹œ
         try {
             const networkResponse = await fetch(event.request);
             
@@ -166,24 +214,24 @@ async function onFetch(event) {
         }
     }
     
-    // ±âÅ¸ ¿äÃ»Àº ³×Æ®¿öÅ©·Î
+    // ê¸°íƒ€ ìš”ì²­ì€ ë„¤íŠ¸ì›Œí¬ë¡œ
     return fetch(event.request);
 }
 
-// Ä³½Ã °¡´ÉÇÑ ¸®¼Ò½ºÀÎÁö È®ÀÎ
+// ìºì‹œ ëŒ€ìƒ ë¦¬ì†ŒìŠ¤ì¸ì§€ í™•ì¸
 function shouldCache(request) {
     const url = new URL(request.url);
     return offlineAssetsInclude.some(pattern => pattern.test(url.pathname)) &&
            !offlineAssetsExclude.some(pattern => pattern.test(url.pathname));
 }
 
-// ÃÖ½Å¼º È®ÀÎÀÌ ÇÊ¿äÇÑ ¸®¼Ò½ºÀÎÁö ÆÇ´Ü
+// ìµœì‹ ì„± í™•ì¸ì´ í•„ìš”í•œ ë¦¬ì†ŒìŠ¤ì¸ì§€ íŒë‹¨
 function shouldCheckFreshness(request) {
-    // CSS, JS ÆÄÀÏÀº ÁÖ±âÀûÀ¸·Î ÃÖ½Å¼º È®ÀÎ
-    return /\.(css|js)$/.test(request.url) && Math.random() < 0.1; // 10% È®·ü·Î Ã¼Å©
+    // CSS, JS íŒŒì¼ë§Œ ì£¼ê¸°ì ìœ¼ë¡œ ìµœì‹ ì„± í™•ì¸
+    return /\.(css|js)$/.test(request.url) && Math.random() < 0.1; // 10% í™•ë¥ ë¡œ ì²´í¬
 }
 
-// ¹é±×¶ó¿îµå¿¡¼­ Ä³½Ã ÃÖ½Å¼º È®ÀÎ ¹× ¾÷µ¥ÀÌÆ®
+// ë°±ê·¸ë¼ìš´ë“œì—ì„œ ìºì‹œ ìµœì‹ ì„± í™•ì¸ ë° ì—…ë°ì´íŠ¸
 async function checkAndUpdateCache(request) {
     try {
         const networkResponse = await fetch(request, { cache: 'no-cache' });
@@ -195,13 +243,13 @@ async function checkAndUpdateCache(request) {
             const cachedETag = cachedResponse.headers.get('etag');
             const cachedLastModified = cachedResponse.headers.get('last-modified');
             
-            // ETag ¶Ç´Â Last-Modified°¡ ´Ù¸£¸é ¾÷µ¥ÀÌÆ®
+            // ETag ë˜ëŠ” Last-Modifiedê°€ ë‹¤ë¥´ë©´ ì—…ë°ì´íŠ¸
             if ((networkETag && networkETag !== cachedETag) ||
                 (networkLastModified && networkLastModified !== cachedLastModified)) {
                 
                 const cache = await caches.open(cacheName);
                 await cache.put(request, networkResponse);
-                console.log(`¹é±×¶ó¿îµå ¾÷µ¥ÀÌÆ®: ${request.url}`);
+                console.log(`ë°±ê·¸ë¼ìš´ë“œ ì—…ë°ì´íŠ¸: ${request.url}`);
             }
         }
     } catch (error) {
@@ -209,7 +257,7 @@ async function checkAndUpdateCache(request) {
     }
 }
 
-// ¸Ş½ÃÁö ¸®½º³Ê
+// ë©”ì‹œì§€ ë¦¬ìŠ¤ë„ˆ
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();

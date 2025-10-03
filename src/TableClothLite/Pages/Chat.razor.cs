@@ -1,4 +1,4 @@
-ï»¿using AngleSharp.Html.Parser;
+using AngleSharp.Html.Parser;
 using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -26,46 +26,63 @@ public partial class Chat : IDisposable
     private MarkdownPipeline? _markdownPipeline;
     private HtmlParser _htmlParser = new HtmlParser();
     
-    // API í‚¤ ìƒíƒœ ê´€ë¦¬
+    // API Å° »óÅÂ °ü¸®
     private bool _hasApiKey = false;
     private bool _isCheckingApiKey = true;
 
-    // ì‚¬ì´ë“œë°” ìƒíƒœ ê´€ë¦¬ (ì´ˆê¸°ê°’ì€ false, í™”ë©´ í¬ê¸°ì— ë”°ë¼ ë™ì  ê²°ì •)
+    // »çÀÌµå¹Ù »óÅÂ °ü¸® (ÃÊ±â°ªÀº false, È­¸é Å©±â¿¡ µû¶ó µ¿Àû °áÁ¤)
     private bool _isSidebarOpen = false;
     private bool _isInitialized = false;
 
-    // ê¸€ì ìˆ˜ ì œí•œ ê´€ë ¨ ë³€ìˆ˜
-    private readonly int _maxInputLength = 1000; // ìµœëŒ€ ê¸€ì ìˆ˜ ì œí•œ
-    private readonly int _warningThreshold = 100; // ì œí•œì— ê·¼ì ‘í–ˆë‹¤ê³  ê²½ê³ í•  ì”ì—¬ ê¸€ì ìˆ˜ ê¸°ì¤€
+    // ±ÛÀÚ ¼ö Á¦ÇÑ °ü·Ã º¯¼ö
+    private readonly int _maxInputLength = 1000; // ÃÖ´ë ±ÛÀÚ ¼ö Á¦ÇÑ
+    private readonly int _warningThreshold = 100; // Á¦ÇÑ¿¡ ±ÙÁ¢Çß´Ù°í °æ°íÇÒ ÀÜ¿© ±ÛÀÚ ¼ö ±âÁØ
     private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
 
-    // Dirty state ê´€ë¦¬ - ëŒ€í™” ë‚´ìš©ì´ ìˆëŠ”ì§€ ì¶”ì 
+    // Dirty state °ü¸® - ´ëÈ­ ³»¿ëÀÌ ÀÖ´ÂÁö ÃßÀû
     private bool _hasUnsavedContent => _messages.Any() || !string.IsNullOrWhiteSpace(_userInput);
 
-    // í•„ìš”í•œ ì„œë¹„ìŠ¤ë“¤ inject
+    // ÇÊ¿äÇÑ ¼­ºñ½ºµé inject
     [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
 
-    // Windows Sandbox ê°€ì´ë“œ ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
+    // Windows Sandbox °¡ÀÌµå ¸ğ´Ş »óÅÂ °ü¸®
     private bool _showSandboxGuide = false;
     private bool _isWindowsOS = true;
 
-    // ì„œë¹„ìŠ¤ ëª©ë¡ ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
+    // ¼­ºñ½º ¸ñ·Ï ¸ğ´Ş »óÅÂ °ü¸®
     private bool _showServicesModal = false;
     
-    // ì„¤ì • ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
+    // ¼³Á¤ ¸ğ´Ş »óÅÂ °ü¸®
     private bool _showSettingsModal = false;
 
-    // ëŒ€í™” ì•¡ì…˜ ë“œë¡­downs ìƒíƒœ ê´€ë¦¬
+    // ´ëÈ­ ¾×¼Ç µå·Ódowns »óÅÂ °ü¸®
     private bool _showConversationActionsDropdown = false;
 
-    // ìƒˆ ë²„ì „ ì•Œë¦¼ ìƒíƒœ ê´€ë¦¬ - confirm ëŒ€ì‹  ì¸ì•± ì•Œë¦¼ ì‚¬ìš©
+    // »õ ¹öÀü ¾Ë¸² »óÅÂ °ü¸® - confirm ´ë½Å ÀÎ¾Û ¾Ë¸² »ç¿ë
     private bool _showUpdateNotification = false;
     private VersionInfo? _pendingUpdate = null;
     private Timer? _updateCheckTimer = null;
 
+    // ¹öÀü Á¤º¸ Å¬·¡½º - °£¼ÒÈ­
+    private class VersionInfo
+    {
+        public string? Version { get; set; }
+        public string? BuildDate { get; set; }
+        public string? Commit { get; set; }
+        public string? Branch { get; set; }
+    }
+
+    // JavaScript¿¡¼­ ¹İÈ¯ÇÒ °øÀ¯ °á°ú Å¬·¡½º
+    private class ShareResult
+    {
+        public bool Success { get; set; }
+        public string Method { get; set; } = string.Empty;
+        public string? Error { get; set; }
+    }
+
     protected override void OnInitialized()
     {
-        // í˜¸í™˜ì„±ì„ ìœ„í•œ /Chat ê²½ë¡œ ë¦¬ë‹¤ì´ë ‰íŠ¸ ì²˜ë¦¬
+        // È£È¯¼ºÀ» À§ÇÑ /Chat °æ·Î ¸®´ÙÀÌ·ºÆ® Ã³¸®
         var uri = new Uri(NavigationManager.Uri);
         if (uri.AbsolutePath.Equals("/Chat", StringComparison.OrdinalIgnoreCase))
         {
@@ -114,7 +131,7 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"API í‚¤ ìƒíƒœ í™•ì¸ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
+            Console.WriteLine($"API Å° »óÅÂ È®ÀÎ Áß ¿À·ù: {ex.Message}");
             _hasApiKey = false;
         }
         finally
@@ -129,35 +146,97 @@ public partial class Chat : IDisposable
         if (firstRender)
         {
             dotNetHelper = DotNetObjectReference.Create(this);
-            await JSRuntime.InvokeVoidAsync("Helpers.setDotNetHelper", dotNetHelper);
             
-            // beforeunload ì´ë²¤íŠ¸ í•¸ë“¤ëŸ¬ ë“±ë¡
-            await JSRuntime.InvokeVoidAsync("setupBeforeUnloadHandler", dotNetHelper);
+            // JavaScript ÇÔ¼öµéÀ» ¾ÈÀüÇÏ°Ô ÃÊ±âÈ­
+            await InitializeJavaScriptAsync();
             
-            // ë“œë¡­ë‹¤ìš´ ì™¸ë¶€ í´ë¦­ í•¸ë“¤ëŸ¬ ì„¤ì •
-            await JSRuntime.InvokeVoidAsync("setupDropdownClickOutside", dotNetHelper);
-            
-            // ìºì‹œ ë¬´íš¨í™” ë° ë²„ì „ ì²´í¬
+            // Ä³½Ã ¹«È¿È­ ¹× ¹öÀü Ã¼Å©
             await CheckAppVersionAsync();
             
-            // ì´ˆê¸° í™”ë©´ í¬ê¸°ì— ë”°ë¥¸ ì‚¬ì´ë“œë°” ìƒíƒœ ì„¤ì •
+            // ÃÊ±â È­¸é Å©±â¿¡ µû¸¥ »çÀÌµå¹Ù »óÅÂ ¼³Á¤
             await InitializeSidebarState();
-            
-            // ì…ë ¥ í•„ë“œ ìë™ ë¦¬ì‚¬ì´ì¦ˆ ìŠ¤í¬ë¦½íŠ¸ ì‹¤í–‰
-            await JSRuntime.InvokeVoidAsync("initChatInput");
         }
 
-        await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
+        await SafeInvokeJSAsync("scrollToBottom", "messages");
     }
 
-    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - beforeunload ì‹œ unsaved content í™•ì¸
+    // JavaScript ÃÊ±âÈ­¸¦ ¾ÈÀüÇÏ°Ô Ã³¸®
+    private async Task InitializeJavaScriptAsync()
+    {
+        try
+        {
+            // ±âº» JavaScript ÇÔ¼öµéÀÌ ·ÎµåµÉ ¶§±îÁö ´ë±â
+            var maxAttempts = 50; // 5ÃÊ ´ë±â (100ms * 50)
+            var attempts = 0;
+            
+            while (attempts < maxAttempts)
+            {
+                try
+                {
+                    // Helpers °´Ã¼°¡ Á¸ÀçÇÏ´ÂÁö È®ÀÎ
+                    var helpersExists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.Helpers !== 'undefined'");
+                    if (helpersExists)
+                    {
+                        Console.WriteLine("JavaScript Helpers °´Ã¼°¡ ÁØºñµÇ¾ú½À´Ï´Ù.");
+                        break;
+                    }
+                }
+                catch
+                {
+                    // °è¼Ó ½Ãµµ
+                }
+                
+                attempts++;
+                await Task.Delay(100);
+            }
+
+            if (attempts >= maxAttempts)
+            {
+                Console.WriteLine("Warning: JavaScript Helpers °´Ã¼¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù. ±âº» ±â´É¸¸ »ç¿ëµË´Ï´Ù.");
+                return;
+            }
+
+            // Helpers°¡ ÁØºñµÇ¸é ÃÊ±âÈ­ ÁøÇà
+            await SafeInvokeJSAsync("Helpers.setDotNetHelper", dotNetHelper);
+            await SafeInvokeJSAsync("setupBeforeUnloadHandler", dotNetHelper);
+            await SafeInvokeJSAsync("setupDropdownClickOutside", dotNetHelper);
+            await SafeInvokeJSAsync("initChatInput");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JavaScript ÃÊ±âÈ­ Áß ¿À·ù: {ex.Message}");
+        }
+    }
+
+    // ¾ÈÀüÇÑ JavaScript È£Ãâ
+    private async Task SafeInvokeJSAsync(string identifier, params object[] args)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync(identifier, args);
+        }
+        catch (JSException ex) when (ex.Message.Contains("undefined"))
+        {
+            Console.WriteLine($"JavaScript ÇÔ¼ö '{identifier}'°¡ Á¤ÀÇµÇÁö ¾ÊÀ½: {ex.Message}");
+        }
+        catch (JSException ex)
+        {
+            Console.WriteLine($"JavaScript È£Ãâ ½ÇÆĞ '{identifier}': {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"¿¹»óÄ¡ ¸øÇÑ ¿À·ù '{identifier}': {ex.Message}");
+        }
+    }
+
+    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - beforeunload ½Ã unsaved content È®ÀÎ
     [JSInvokable]
     public bool HasUnsavedContent()
     {
         return _hasUnsavedContent;
     }
 
-    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - ë“œë¡­ë‹¤ìš´ ìˆ¨ê¸°ê¸°
+    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - µå·Ó´Ù¿î ¼û±â±â
     [JSInvokable]
     public Task HideConversationActionsDropdown()
     {
@@ -166,7 +245,7 @@ public partial class Chat : IDisposable
         return Task.CompletedTask;
     }
 
-    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - ìƒˆ ë²„ì „ ê°ì§€ (confirm ì œê±°)
+    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - »õ ¹öÀü °¨Áö (°£¼ÒÈ­µÈ ±¸Á¶)
     [JSInvokable]
     public async Task OnNewVersionDetected(string versionInfoJson)
     {
@@ -180,68 +259,575 @@ public partial class Chat : IDisposable
             _pendingUpdate = new VersionInfo
             {
                 Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
-                Timestamp = root.TryGetProperty("timestamp", out var timestamp) ? timestamp.GetString() : null,
-                Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null
+                BuildDate = root.TryGetProperty("buildDate", out var buildDate) ? buildDate.GetString() : null,
+                Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null,
+                Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
             };
             
-            // í¬ì»¤ìŠ¤ ë¹¼ì•—ê¹€ ì—†ì´ ë¶€ë“œëŸ¬ìš´ ì¸ì•± ì•Œë¦¼ë§Œ í‘œì‹œ
+            // Æ÷Ä¿½º »©¾Ñ±è ¾øÀÌ ºÎµå·¯¿î ÀÎ¾Û ¾Ë¸²¸¸ Ç¥½Ã
             await ShowGentleUpdateNotificationAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ìƒˆ ë²„ì „ ê°ì§€ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
+            Console.WriteLine($"»õ ¹öÀü °¨Áö Ã³¸® Áß ¿À·ù: {ex.Message}");
         }
     }
 
-    // ëŒ€í™” ë‚´ìš© ì¸ì‡„ ë©”ì„œë“œ - confirmì„ ì¢€ ë” ë¶€ë“œëŸ¬ìš´ ì•Œë¦¼ìœ¼ë¡œ ë³€ê²½
+    // ¾Û ¹öÀü Ã¼Å© ¹× Ä³½Ã °ü¸®
+    private async Task CheckAppVersionAsync()
+    {
+        try
+        {
+            // ÇöÀç ¾Û ¹öÀü (fallback¿ë)
+            const string FALLBACK_VERSION = "2024.12.17.1";
+            
+            // version.json¿¡¼­ ¼­¹ö ¹öÀü È®ÀÎ
+            var serverVersionInfo = await GetServerVersionAsync();
+            
+            // ·ÎÄÃ ½ºÅä¸®Áö¿¡¼­ ÀúÀåµÈ Á¤º¸ È®ÀÎ
+            var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
+            var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
+            var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
+                ? new List<string>() 
+                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
+            
+            if (string.IsNullOrEmpty(storedVersion))
+            {
+                // Ã³À½ ¹æ¹® - ÇöÀç ¹öÀü ÀúÀå
+                var versionToStore = serverVersionInfo?.Version ?? FALLBACK_VERSION;
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
+                Console.WriteLine($"Ã¹ ¹æ¹®: ¹öÀü {versionToStore} ÀúÀå");
+            }
+            else if (serverVersionInfo != null && 
+                     storedVersion != serverVersionInfo.Version &&
+                     !dismissedVersionsList.Contains(serverVersionInfo.Version))
+            {
+                // »õ ¹öÀü °¨ÁöÇÏ°í, »ç¿ëÀÚ°¡ ÀÌÀü¿¡ "³ªÁß¿¡"¸¦ ¼±ÅÃÇÏÁö ¾ÊÀº °æ¿ì¸¸ ¾Ë¸²
+                _pendingUpdate = serverVersionInfo;
+                await ShowGentleUpdateNotificationAsync();
+                Console.WriteLine($"»õ ¹öÀü °¨Áö: {serverVersionInfo.Version} (ÇöÀç: {storedVersion})");
+            }
+            else if (serverVersionInfo != null && dismissedVersionsList.Contains(serverVersionInfo.Version))
+            {
+                Console.WriteLine($"¹öÀü {serverVersionInfo.Version}´Â »ç¿ëÀÚ°¡ ÀÌÀü¿¡ ¹«½ÃÇÔ");
+            }
+            
+            // ¹é±×¶ó¿îµå¿¡¼­ ÁÖ±âÀû ¹öÀü Ã¼Å© ½ÃÀÛ
+            StartPeriodicVersionCheck();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"¹öÀü Ã¼Å© Áß ¿À·ù: {ex.Message}");
+        }
+    }
+
+    // ¼­¹ö¿¡¼­ ¹öÀü Á¤º¸ °¡Á®¿À±â - °£¼ÒÈ­µÈ ±¸Á¶
+    private async Task<VersionInfo?> GetServerVersionAsync()
+    {
+        try
+        {
+            var cacheBuster = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            
+            // JavaScript fetch API Á÷Á¢ »ç¿ëÇÏ¿© ´õ ³ªÀº ¿¡·¯ ÇÚµé¸µ
+            var fetchResult = await SafeInvokeJSWithResultAsync<string>("fetchVersionJson", $"/version.json?t={cacheBuster}");
+            
+            if (!string.IsNullOrEmpty(fetchResult))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(fetchResult);
+                var root = doc.RootElement;
+                
+                var versionInfo = new VersionInfo
+                {
+                    Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
+                    BuildDate = root.TryGetProperty("buildDate", out var buildDate) ? buildDate.GetString() : null,
+                    Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null,
+                    Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
+                };
+                
+                Console.WriteLine($"¼­¹ö ¹öÀü Á¤º¸ ·Îµå ¼º°ø: {versionInfo.Version} (ºôµå: {versionInfo.BuildDate})");
+                return versionInfo;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"¼­¹ö ¹öÀü Á¤º¸ °¡Á®¿À±â ½ÇÆĞ: {ex.Message}");
+            // 404³ª ³×Æ®¿öÅ© ¿À·ù ½Ã Á¶¿ëÈ÷ Ã³¸®
+        }
+
+        return null;
+    }
+
+    // °á°ú¸¦ ¹İÈ¯ÇÏ´Â ¾ÈÀüÇÑ JavaScript È£Ãâ
+    private async Task<T?> SafeInvokeJSWithResultAsync<T>(string identifier, params object[] args)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<T>(identifier, args);
+        }
+        catch (JSException ex) when (ex.Message.Contains("undefined"))
+        {
+            Console.WriteLine($"JavaScript ÇÔ¼ö '{identifier}'°¡ Á¤ÀÇµÇÁö ¾ÊÀ½: {ex.Message}");
+            return default;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JavaScript È£Ãâ ½ÇÆĞ '{identifier}': {ex.Message}");
+            return default;
+        }
+    }
+
+    // ºÎµå·¯¿î ¾÷µ¥ÀÌÆ® ¾Ë¸² Ç¥½Ã - confirm ¿ÏÀü Á¦°Å
+    private async Task ShowGentleUpdateNotificationAsync()
+    {
+        if (_pendingUpdate is null) return;
+
+        // Æ÷Ä¿½º »©¾Ñ±è ¾ø´Â ÆäÀÌÁö ÅëÇÕ ¾Ë¸²¸¸ Ç¥½Ã
+        _showUpdateNotification = true;
+        StateHasChanged();
+
+        // 5ºĞ ÈÄ ÀÚµ¿ ¼û±è Ã³¸® (»ç¿ëÀÚ°¡ Á÷Á¢ ´İÁö ¾ÊÀº °æ¿ì)
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5));
+            await InvokeAsync(() =>
+            {
+                if (_showUpdateNotification)
+                {
+                    _showUpdateNotification = false;
+                    StateHasChanged();
+                }
+            });
+        });
+    }
+
+    // ¾÷µ¥ÀÌÆ® ¾Ë¸² ´İ±â - »ç¿ëÀÚ°¡ "³ªÁß¿¡" ¼±ÅÃ ½Ã ±â¾ï
+    private async Task DismissUpdateNotification()
+    {
+        if (_pendingUpdate is not null)
+        {
+            // ÇöÀç ¹öÀüÀ» "¹«½ÃµÈ ¹öÀü" ¸ñ·Ï¿¡ Ãß°¡
+            var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
+            var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
+                ? new List<string>() 
+                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
+            
+            if (!dismissedVersionsList.Contains(_pendingUpdate.Version ?? ""))
+            {
+                dismissedVersionsList.Add(_pendingUpdate.Version ?? "");
+                
+                // ÃÖ´ë 5°³ ¹öÀü¸¸ ±â¾ï (³Ê¹« ¸¹ÀÌ ½×ÀÌÁö ¾Êµµ·Ï)
+                if (dismissedVersionsList.Count > 5)
+                {
+                    dismissedVersionsList.RemoveRange(0, dismissedVersionsList.Count - 5);
+                }
+                
+                var dismissedVersionsJson = System.Text.Json.JsonSerializer.Serialize(dismissedVersionsList);
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-dismissed-versions", dismissedVersionsJson);
+                
+                Console.WriteLine($"¹öÀü {_pendingUpdate.Version}À» ¹«½Ã ¸ñ·Ï¿¡ Ãß°¡");
+            }
+        }
+        
+        _showUpdateNotification = false;
+        StateHasChanged();
+    }
+
+    // ¾÷µ¥ÀÌÆ® Àû¿ë - ¹«½Ã ¸ñ·Ï Á¤¸®
+    private async Task ApplyUpdateAsync()
+    {
+        if (_pendingUpdate is null) return;
+
+        // »õ ¹öÀüÀ» ÇöÀç ¹öÀüÀ¸·Î ¼³Á¤
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", _pendingUpdate.Version);
+        
+        // ¹«½Ã ¸ñ·Ï¿¡¼­ ÀÌÀü ¹öÀüµé Á¦°Å (»õ ¹öÀü Àû¿ë ½Ã ÃÊ±âÈ­)
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "tablecloth-dismissed-versions");
+        
+        Console.WriteLine($"¹öÀü {_pendingUpdate.Version}·Î ¾÷µ¥ÀÌÆ® Àû¿ë");
+        
+        // ½º¸¶Æ® »õ·Î°íÄ§ ½ÇÇà
+        await SafeInvokeJSAsync("window.forceRefresh");
+    }
+
+    // ÁÖ±âÀû ¹öÀü Ã¼Å© ½ÃÀÛ - ºóµµ Á¶Á¤
+    private void StartPeriodicVersionCheck()
+    {
+        // ±âÁ¸ Å¸ÀÌ¸Ó°¡ ÀÖ´Ù¸é Á¤¸®
+        _updateCheckTimer?.Dispose();
+
+        // 1½Ã°£¸¶´Ù ¹é±×¶ó¿îµå¿¡¼­ Ã¼Å© (30ºĞ¿¡¼­ Áõ°¡)
+        _updateCheckTimer = new Timer(async _ =>
+        {
+            try
+            {
+                await InvokeAsync(async () =>
+                {
+                    var serverVersionInfo = await GetServerVersionAsync();
+                    var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
+                    var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
+                    var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
+                        ? new List<string>() 
+                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
+                    
+                    if (serverVersionInfo != null && 
+                        storedVersion != serverVersionInfo.Version && 
+                        !dismissedVersionsList.Contains(serverVersionInfo.Version) &&
+                        !_showUpdateNotification) // ÀÌ¹Ì ¾Ë¸²ÀÌ Ç¥½ÃµÇÁö ¾ÊÀº °æ¿ì¸¸
+                    {
+                        _pendingUpdate = serverVersionInfo;
+                        await ShowGentleUpdateNotificationAsync();
+                        Console.WriteLine($"ÁÖ±âÀû Ã¼Å©: »õ ¹öÀü {serverVersionInfo.Version} °¨Áö");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ÁÖ±âÀû ¹öÀü Ã¼Å© Áß ¿À·ù: {ex.Message}");
+            }
+        });
+        
+        // 1½Ã°£ ÈÄ ½ÃÀÛÇÏ¿© 1½Ã°£ °£°İÀ¸·Î ½ÇÇà
+        _updateCheckTimer.Change(TimeSpan.FromHours(1), TimeSpan.FromHours(1));
+    }
+
+    private async Task InitializeSidebarState()
+    {
+        try
+        {
+            var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
+            
+            // µ¥½ºÅ©Åé(768px ÃÊ°ú)¿¡¼­´Â ±âº»ÀûÀ¸·Î ¿­¸° »óÅÂ
+            // ¸ğ¹ÙÀÏ(768px ÀÌÇÏ)¿¡¼­´Â ±âº»ÀûÀ¸·Î ´İÈù »óÅÂ
+            _isSidebarOpen = windowWidth > 768;
+            _isInitialized = true;
+            
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"»çÀÌµå¹Ù ÃÊ±â »óÅÂ ¼³Á¤ Áß ¿À·ù: {ex.Message}");
+            // ¿À·ù ¹ß»ı ½Ã µ¥½ºÅ©Åé ±âº»°ªÀ¸·Î ¼³Á¤
+            _isSidebarOpen = true;
+            _isInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå (Ã¢ Å©±â º¯°æ ½Ã)
+    [JSInvokable]
+    public Task OnWindowResize(int width)
+    {
+        var isMobile = width <= 768;
+        
+        // ¸ğ¹ÙÀÏ¿¡¼­ µ¥½ºÅ©ÅéÀ¸·Î ÀüÈ¯ ½Ã »çÀÌµå¹Ù ¿­±â
+        if (!isMobile && !_isSidebarOpen)
+        {
+            _isSidebarOpen = true;
+            StateHasChanged();
+        }
+        // µ¥½ºÅ©Åé¿¡¼­ ¸ğ¹ÙÀÏ·Î ÀüÈ¯ ½Ã »çÀÌµå¹Ù ´İ±â (´Ü, ÀÌ¹Ì ¿­·ÁÀÖ´Ù¸é)
+        else if (isMobile && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        // Á÷Á¢ ÀÎÁõ ÇÃ·Î¿ì ½ÃÀÛ
+        await AuthService.StartAuthFlowAsync();
+    }
+
+    private async Task OpenSettingDialog()
+    {
+        _showSettingsModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task OpenServicesModalAsync()
+    {
+        _showServicesModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private void ToggleSidebar()
+    {
+        _isSidebarOpen = !_isSidebarOpen;
+        StateHasChanged();
+    }
+
+    // ¿¹½Ã ÇÁ·ÒÇÁÆ® ¼³Á¤ ¸Ş¼­µå
+    private async Task SetExamplePrompt(string prompt)
+    {
+        if (!_hasApiKey)
+        {
+            await HandleLoginAsync();
+            return;
+        }
+
+        _userInput = prompt;
+        StateHasChanged();
+        
+        // ¹Ù·Î ¸Ş½ÃÁö Àü¼Û
+        await SendMessage();
+    }
+
+    // ÀÔ·Â ³»¿ëÀÌ º¯°æµÉ ¶§ È£ÃâµÇ´Â ¸Ş¼­µå
+    private async Task OnInputChange(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString() ?? string.Empty;
+
+        // ÃÖ´ë ±æÀÌ¸¦ ÃÊ°úÇÏ´Â °æ¿ì Àß¶ó³»±â
+        if (newValue.Length > _maxInputLength)
+            newValue = newValue.Substring(0, _maxInputLength);
+
+        _userInput = newValue;
+        
+        // ÅØ½ºÆ® ¿µ¿ª ÀÚµ¿ ¸®»çÀÌÁî
+        await SafeInvokeJSAsync("autoResizeTextarea", "chatTextArea");
+    }
+
+    private async Task SendMessage()
+    {
+        if (!_hasApiKey)
+        {
+            await HandleLoginAsync();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
+            return;
+
+        // ¸ğ¹ÙÀÏ¿¡¼­ ¸Ş½ÃÁö Àü¼Û ½Ã »çÀÌµå¹Ù ´İ±â
+        var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
+        if (windowWidth <= 768 && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+        }
+
+        var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
+        _messages.Add(userMessage);
+
+        var input = _userInput;
+        _userInput = string.Empty;
+        _isStreaming = true;
+        _currentStreamedMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            if (_client == null)
+                throw new InvalidOperationException("Client is not initialized.");
+
+            await SafeInvokeJSAsync("scrollToBottom", "messages");
+
+            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId))
+            {
+                _currentStreamedMessage += chunk;
+                StateHasChanged();
+                await Task.Delay(10); // ÀÚ¿¬½º·¯¿î Å¸ÀÌÇÎ È¿°ú
+            }
+
+            _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage
+            {
+                Content = $"ÁË¼ÛÇÕ´Ï´Ù. ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù: {ex.Message}",
+                IsUser = false
+            });
+        }
+        finally
+        {
+            _isStreaming = false;
+            _currentStreamedMessage = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Logout()
+    {
+        // ÀúÀåµÇÁö ¾ÊÀº ´ëÈ­ ³»¿ëÀÌ ÀÖ´Ù¸é ºÎµå·¯¿î È®ÀÎ Ã³¸®
+        if (_hasUnsavedContent)
+        {
+            // confirm ´ë½Å ÀÎ¾Û È®ÀÎ ´ÙÀÌ¾ó·Î±× »ç¿ë ±ÇÀå
+            var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
+                "ÇöÀç ÁøÇà ÁßÀÎ ´ëÈ­ ³»¿ëÀÌ ÀÖ½À´Ï´Ù. ·Î±×¾Æ¿ôÇÏ¸é ´ëÈ­ ³»¿ëÀÌ »ç¶óÁı´Ï´Ù. Á¤¸» ·Î±×¾Æ¿ôÇÏ½Ã°Ú½À´Ï±î?");
+            
+            if (!shouldLogout)
+            {
+                return;
+            }
+        }
+
+        await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
+        
+        // »óÅÂ ¾÷µ¥ÀÌÆ®
+        _hasApiKey = false;
+        _client = null;
+        _messages.Clear();
+        _userInput = string.Empty;
+        _isStreaming = false;
+        _currentStreamedMessage = string.Empty;
+        _sessionId = Guid.NewGuid().ToString();
+        
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && e.ShiftKey == false)
+        {
+            await SendMessage();
+        }
+    }
+
+    private MarkupString FormatMessage(string markdown)
+    {
+        var html = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(markdown))
+            return (MarkupString)html;
+
+        // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯
+        html = Markdown.ToHtml(markdown, _markdownPipeline);
+        var document = _htmlParser.ParseDocument(html);
+
+        if (document.Body == null)
+        {
+            Console.Error.WriteLine("Cannot parse fragment element.");
+            return (MarkupString)html;
+        }
+
+        foreach (var eachAnchorElem in document.QuerySelectorAll("a"))
+        {
+            var currentHref = (eachAnchorElem.GetAttribute("href") ?? string.Empty).Trim();
+            eachAnchorElem.RemoveAttribute("href");
+            eachAnchorElem.SetAttribute("onclick", $"window.Helpers.openSandbox('{currentHref}');");
+            eachAnchorElem.SetAttribute("style", "font-weight: bold; cursor: pointer; color: #2563eb; text-decoration: underline;");
+            eachAnchorElem.InnerHtml = WebUtility.HtmlEncode(currentHref);
+        }
+
+        html = document.Body.InnerHtml;
+
+        return (MarkupString)html;
+    }
+
+    private async Task ResetConversationAsync()
+    {
+        // ÀúÀåµÇÁö ¾ÊÀº ´ëÈ­ ³»¿ëÀÌ ÀÖ´Ù¸é ºÎµå·¯¿î È®ÀÎ Ã³¸®
+        if (_hasUnsavedContent)
+        {
+            // confirm ´ë½Å ÀÎ¾Û È®ÀÎ ´ÙÀÌ¾ó·Î±× »ç¿ë ±ÇÀå
+            var shouldReset = await JSRuntime.InvokeAsync<bool>("confirm", 
+                "ÇöÀç ÁøÇà ÁßÀÎ ´ëÈ­ ³»¿ëÀÌ ÀÖ½À´Ï´Ù. »õ·Î¿î Ã¤ÆÃÀ» ½ÃÀÛÇÏ¸é ÇöÀç ´ëÈ­ ³»¿ëÀÌ »ç¶óÁı´Ï´Ù. °è¼ÓÇÏ½Ã°Ú½À´Ï±î?");
+            
+            if (!shouldReset)
+            {
+                return;
+            }
+        }
+
+        _messages.Clear();
+        _sessionId = Guid.NewGuid().ToString();
+        await ChatService.ClearSessionAsync(_sessionId);
+        
+        // ¸ğ¹ÙÀÏ¿¡¼­ ´ëÈ­ ¸®¼Â ½Ã »çÀÌµå¹Ù ´İ±â
+        var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
+        if (windowWidth <= 768 && _isSidebarOpen)
+        {
+            _isSidebarOpen = false;
+        }
+        
+        StateHasChanged();
+    }
+
+    // ´ëÈ­ ¾×¼Ç µå·Ó´Ù¿î Åä±Û
+    private void ToggleConversationActionsDropdown()
+    {
+        _showConversationActionsDropdown = !_showConversationActionsDropdown;
+        StateHasChanged();
+    }
+
+    // µå·Ódowns¿¡¼­ ÀÎ¼â ÈÄ ¼û±â±â
+    private async Task PrintAndHideDropdown()
+    {
+        await PrintConversationAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // µå·Ódowns¿¡¼­ ³»º¸³»±â ÈÄ ¼û±â±â
+    private async Task ExportAndHideDropdown()
+    {
+        await ExportConversationAsTextAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // µå·Ódown¿¡¼­ °øÀ¯ ÈÄ ¼û±â±â
+    private async Task ShareAndHideDropdown()
+    {
+        await ShareConversationAsync();
+        _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+
+    // ´ëÈ­ ³»¿ë ÀÎ¼â ¸Ş¼­µå - confirmÀ» Á» ´õ ºÎµå·¯¿î ¾Ë¸²À¸·Î º¯°æ
     private async Task PrintConversationAsync()
     {
         if (!_messages.Any())
         {
-            // confirm ëŒ€ì‹  ë‹¨ìˆœ alert ì‚¬ìš©í•˜ê±°ë‚˜ í† ìŠ¤íŠ¸ ì•Œë¦¼ìœ¼ë¡œ ë³€ê²½ ê°€ëŠ¥
-            await JSRuntime.InvokeVoidAsync("showToast", "ì¸ì‡„í•  ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
+            // confirm ´ë½Å ´Ü¼ø alert »ç¿ëÇÏ°Å³ª Åä½ºÆ® ¾Ë¸²À¸·Î º¯°æ °¡´É
+            await SafeInvokeJSAsync("showToast", "ÀÎ¼âÇÒ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
             return;
         }
 
-        // ì‚¬ìš©ìì—ê²Œ ì¸ì‡„ ë°©ì‹ ì„ íƒ ì˜µì…˜ ì œê³µ - ë” ë¶€ë“œëŸ¬ìš´ ë°©ì‹ìœ¼ë¡œ ë³€ê²½ í•„ìš”ì‹œ
-        // í˜„ì¬ëŠ” ê¸°ë³¸ê°’ìœ¼ë¡œ ë¯¸ë¦¬ë³´ê¸° ì°½ ì‚¬ìš©
+        // »ç¿ëÀÚ¿¡°Ô ÀÎ¼â ¹æ½Ä ¼±ÅÃ ¿É¼Ç Á¦°ø - ´õ ºÎµå·¯¿î ¹æ½ÄÀ¸·Î º¯°æ ÇÊ¿ä½Ã
+        // ÇöÀç´Â ±âº»°ªÀ¸·Î ¹Ì¸®º¸±â Ã¢ »ç¿ë
         var printHtml = GeneratePrintHtml();
-        await JSRuntime.InvokeVoidAsync("showPrintPreview", printHtml);
+        await SafeInvokeJSAsync("showPrintPreview", printHtml);
     }
 
-    // ì¸ì‡„ìš© HTML ìƒì„±
+    // ÀÎ¼â¿ë HTML »ı¼º
     private string GeneratePrintHtml()
     {
         var html = new System.Text.StringBuilder();
         
-        // HTML í—¤ë”
+        // HTML Çì´õ
         html.AppendLine("<!DOCTYPE html>");
         html.AppendLine("<html lang='ko'>");
         html.AppendLine("<head>");
         html.AppendLine("<meta charset='UTF-8'>");
         html.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        html.AppendLine("<title>TableClothLite AI ëŒ€í™” ê¸°ë¡</title>");
+        html.AppendLine("<title>TableClothLite AI ´ëÈ­ ±â·Ï</title>");
         html.AppendLine("<style>");
         html.AppendLine(GetPrintStyles());
         html.AppendLine("</style>");
         html.AppendLine("</head>");
         html.AppendLine("<body>");
         
-        // í—¤ë” ì •ë³´
+        // Çì´õ Á¤º¸
         html.AppendLine("<div class='print-header'>");
-        html.AppendLine("<h1>TableClothLite AI ëŒ€í™” ê¸°ë¡</h1>");
-        html.AppendLine($"<p class='print-date'>ìƒì„±ì¼: {DateTime.Now:yyyyë…„ MMì›” ddì¼ HH:mm}</p>");
-        html.AppendLine($"<p class='print-info'>ì´ {_messages.Count}ê°œì˜ ë©”ì‹œì§€</p>");
+        html.AppendLine("<h1>TableClothLite AI ´ëÈ­ ±â·Ï</h1>");
+        html.AppendLine($"<p class='print-date'>»ı¼ºÀÏ: {DateTime.Now:yyyy³â MM¿ù ddÀÏ HH:mm}</p>");
+        html.AppendLine($"<p class='print-info'>ÃÑ {_messages.Count}°³ÀÇ ¸Ş½ÃÁö</p>");
         html.AppendLine("</div>");
         
-        // ëŒ€í™” ë‚´ìš©
+        // ´ëÈ­ ³»¿ë
         html.AppendLine("<div class='conversation'>");
         
         for (int i = 0; i < _messages.Count; i++)
         {
             var message = _messages[i];
             var messageClass = message.IsUser ? "user-message" : "assistant-message";
-            var sender = message.IsUser ? "ì‚¬ìš©ì" : "TableClothLite AI";
+            var sender = message.IsUser ? "»ç¿ëÀÚ" : "TableClothLite AI";
             
             html.AppendLine($"<div class='message {messageClass}'>");
             html.AppendLine($"<div class='message-header'>");
@@ -250,7 +836,7 @@ public partial class Chat : IDisposable
             html.AppendLine("</div>");
             html.AppendLine($"<div class='message-content'>");
             
-            // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜í•˜ë˜ ì¸ì‡„ìš©ìœ¼ë¡œ ì •ë¦¬
+            // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯ÇÏµÇ ÀÎ¼â¿ëÀ¸·Î Á¤¸®
             var content = ConvertMarkdownForPrint(message.Content);
             html.AppendLine(content);
             
@@ -260,9 +846,9 @@ public partial class Chat : IDisposable
         
         html.AppendLine("</div>");
         
-        // í‘¸í„°
+        // ÇªÅÍ
         html.AppendLine("<div class='print-footer'>");
-        html.AppendLine("<p>TableClothLite AI - ê¸ˆìœµê³¼ ê³µê³µ ë¶€ë¬¸ AI ì–´ì‹œìŠ¤í„´íŠ¸</p>");
+        html.AppendLine("<p>TableClothLite AI - ±İÀ¶°ú °ø°ø ºÎ¹® AI ¾î½Ã½ºÅÏÆ®</p>");
         html.AppendLine("<p>https://yourtablecloth.app</p>");
         html.AppendLine("</div>");
         
@@ -272,7 +858,7 @@ public partial class Chat : IDisposable
         return html.ToString();
     }
 
-    // ì¸ì‡„ìš© CSS ìŠ¤íƒ€ì¼
+    // ÀÎ¼â¿ë CSS ½ºÅ¸ÀÏ
     private string GetPrintStyles()
     {
         return @"
@@ -459,7 +1045,7 @@ public partial class Chat : IDisposable
         ";
     }
 
-    // ë§ˆí¬ë‹¤ìš´ì„ ì¸ì‡„ìš© HTMLë¡œ ë³€í™˜
+    // ¸¶Å©´Ù¿îÀ» ÀÎ¼â¿ë HTML·Î º¯È¯
     private string ConvertMarkdownForPrint(string markdown)
     {
         if (string.IsNullOrWhiteSpace(markdown))
@@ -467,14 +1053,14 @@ public partial class Chat : IDisposable
 
         try
         {
-            // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜
+            // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯
             var html = Markdown.ToHtml(markdown, _markdownPipeline);
             var document = _htmlParser.ParseDocument(html);
 
             if (document.Body == null)
                 return WebUtility.HtmlEncode(markdown);
 
-            // ì¸ì‡„ìš©ìœ¼ë¡œ ë§í¬ ì²˜ë¦¬ (href ì œê±°í•˜ê³  í…ìŠ¤íŠ¸ë¡œ í‘œì‹œ)
+            // ÀÎ¼â¿ëÀ¸·Î ¸µÅ© Ã³¸® (href Á¦°ÅÇÏ°í ÅØ½ºÆ®·Î Ç¥½Ã)
             foreach (var anchor in document.QuerySelectorAll("a"))
             {
                 var href = anchor.GetAttribute("href") ?? string.Empty;
@@ -484,7 +1070,7 @@ public partial class Chat : IDisposable
                     anchor.RemoveAttribute("onclick");
                     anchor.SetAttribute("style", "color: #2563eb; text-decoration: underline;");
                     
-                    // ë§í¬ URLì„ í…ìŠ¤íŠ¸ ë’¤ì— ê´„í˜¸ë¡œ ì¶”ê°€
+                    // ¸µÅ© URLÀ» ÅØ½ºÆ® µÚ¿¡ °ıÈ£·Î Ãß°¡
                     if (anchor.TextContent != href)
                     {
                         anchor.InnerHtml = $"{anchor.InnerHtml} ({WebUtility.HtmlEncode(href)})";
@@ -492,15 +1078,15 @@ public partial class Chat : IDisposable
                 }
             }
 
-            // ì´ë¯¸ì§€ ì²˜ë¦¬ (alt í…ìŠ¤íŠ¸ë¡œ ëŒ€ì²´)
+            // ÀÌ¹ÌÁö Ã³¸® (alt ÅØ½ºÆ®·Î ´ëÃ¼)
             foreach (var img in document.QuerySelectorAll("img"))
             {
-                var alt = img.GetAttribute("alt") ?? "ì´ë¯¸ì§€";
+                var alt = img.GetAttribute("alt") ?? "ÀÌ¹ÌÁö";
                 var src = img.GetAttribute("src") ?? "";
                 
                 var replacement = document.CreateElement("span");
                 replacement.SetAttribute("style", "background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-style: italic;");
-                replacement.TextContent = $"[ì´ë¯¸ì§€: {alt}]";
+                replacement.TextContent = $"[ÀÌ¹ÌÁö: {alt}]";
                 
                 img.ParentElement?.ReplaceChild(replacement, img);
             }
@@ -509,434 +1095,18 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ë§ˆí¬ë‹¤ìš´ ë³€í™˜ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
+            Console.WriteLine($"¸¶Å©´Ù¿î º¯È¯ Áß ¿À·ù: {ex.Message}");
             return WebUtility.HtmlEncode(markdown);
         }
     }
 
-    // ì•± ë²„ì „ ì²´í¬ ë° ìºì‹œ ê´€ë¦¬
-    private async Task CheckAppVersionAsync()
-    {
-        try
-        {
-            const string APP_VERSION = "2024.1.0"; // GitHub Actionsì—ì„œ ìë™ ì—…ë°ì´íŠ¸
-            
-            // version.jsonì—ì„œ ì„œë²„ ë²„ì „ í™•ì¸
-            var serverVersionInfo = await GetServerVersionAsync();
-            
-            // ë¡œì»¬ ìŠ¤í† ë¦¬ì§€ì—ì„œ ì €ì¥ëœ ë²„ì „ í™•ì¸
-            var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
-            
-            if (string.IsNullOrEmpty(storedVersion))
-            {
-                // ì²˜ìŒ ë°©ë¬¸ - í˜„ì¬ ë²„ì „ ì €ì¥
-                var versionToStore = serverVersionInfo?.Version ?? APP_VERSION;
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
-            }
-            else if (serverVersionInfo != null && storedVersion != serverVersionInfo.Version)
-            {
-                // ìƒˆ ë²„ì „ ê°ì§€ - gentle reminder í‘œì‹œ
-                _pendingUpdate = serverVersionInfo;
-                await ShowGentleUpdateNotificationAsync();
-            }
-            
-            // ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì‹œì‘
-            StartPeriodicVersionCheck();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ë²„ì „ ì²´í¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
-        }
-    }
-
-    // ì„œë²„ì—ì„œ ë²„ì „ ì •ë³´ ê°€ì ¸ì˜¤ê¸°
-    private async Task<VersionInfo?> GetServerVersionAsync()
-    {
-        try
-        {
-            var cacheBuster = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var response = await JSRuntime.InvokeAsync<string>("fetch", $"/version.json?t={cacheBuster}")
-                .AsTask()
-                .ContinueWith(async task =>
-                {
-                    try
-                    {
-                        return await JSRuntime.InvokeAsync<string>("response.json");
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                });
-
-            var result = await response;
-            if (!string.IsNullOrEmpty(result))
-            {
-                // ê°„ë‹¨í•œ JSON íŒŒì‹± (System.Text.Json ì‚¬ìš©)
-                using var doc = System.Text.Json.JsonDocument.Parse(result);
-                var root = doc.RootElement;
-                
-                return new VersionInfo
-                {
-                    Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
-                    Timestamp = root.TryGetProperty("timestamp", out var timestampProp) ? timestampProp.GetString() : null,
-                    Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null
-                };
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ì„œë²„ ë²„ì „ ì •ë³´ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {ex.Message}");
-        }
-
-        return null;
-    }
-
-    // ë¶€ë“œëŸ¬ìš´ ì—…ë°ì´íŠ¸ ì•Œë¦¼ í‘œì‹œ - confirm ì™„ì „ ì œê±°
-    private async Task ShowGentleUpdateNotificationAsync()
-    {
-        if (_pendingUpdate is null) return;
-
-        // í¬ì»¤ìŠ¤ ë¹¼ì•—ê¹€ ì—†ëŠ” í˜ì´ì§€ í†µí•© ì•Œë¦¼ë§Œ í‘œì‹œ
-        _showUpdateNotification = true;
-        StateHasChanged();
-
-        // 60ì´ˆ í›„ ìë™ ìˆ¨ê¹€ ì²˜ë¦¬ (ì‚¬ìš©ìê°€ ì§ì ‘ ë‹«ì§€ ì•Šì€ ê²½ìš°)
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(TimeSpan.FromSeconds(60));
-            await InvokeAsync(() =>
-            {
-                if (_showUpdateNotification)
-                {
-                    _showUpdateNotification = false;
-                    StateHasChanged();
-                }
-            });
-        });
-    }
-
-    // ì—…ë°ì´íŠ¸ ì•Œë¦¼ ë‹«ê¸°
-    private void DismissUpdateNotification()
-    {
-        _showUpdateNotification = false;
-        StateHasChanged();
-    }
-
-    // ì—…ë°ì´íŠ¸ ì ìš©
-    private async Task ApplyUpdateAsync()
-    {
-        if (_pendingUpdate is null) return;
-
-        // ë²„ì „ ì •ë³´ ì—…ë°ì´íŠ¸
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", _pendingUpdate.Version);
-        
-        // ìŠ¤ë§ˆíŠ¸ ìƒˆë¡œê³ ì¹¨ ì‹¤í–‰
-        await JSRuntime.InvokeVoidAsync("window.forceRefresh");
-    }
-
-    // ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì‹œì‘
-    private void StartPeriodicVersionCheck()
-    {
-        // ê¸°ì¡´ íƒ€ì´ë¨¸ê°€ ìˆë‹¤ë©´ ì •ë¦¬
-        _updateCheckTimer?.Dispose();
-
-        // 30ë¶„ë§ˆë‹¤ ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì²´í¬
-        _updateCheckTimer = new Timer(async _ =>
-        {
-            try
-            {
-                await InvokeAsync(async () =>
-                {
-                    var serverVersionInfo = await GetServerVersionAsync();
-                    var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
-                    
-                    if (serverVersionInfo != null && 
-                        storedVersion != serverVersionInfo.Version && 
-                        !_showUpdateNotification) // ì´ë¯¸ ì•Œë¦¼ì´ í‘œì‹œë˜ì§€ ì•Šì€ ê²½ìš°ë§Œ
-                    {
-                        _pendingUpdate = serverVersionInfo;
-                        await ShowGentleUpdateNotificationAsync();
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
-            }
-        });
-        
-        // 30ë¶„ í›„ ì‹œì‘í•˜ì—¬ 30ë¶„ ê°„ê²©ìœ¼ë¡œ ì‹¤í–‰
-        _updateCheckTimer.Change(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
-    }
-    
-    private async Task InitializeSidebarState()
-    {
-        try
-        {
-            var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
-            
-            // ë°ìŠ¤í¬í†±(768px ì´ˆê³¼)ì—ì„œëŠ” ê¸°ë³¸ì ìœ¼ë¡œ ì—´ë¦° ìƒíƒœ
-            // ëª¨ë°”ì¼(768px ì´í•˜)ì—ì„œëŠ” ê¸°ë³¸ì ìœ¼ë¡œ ë‹«íŒ ìƒíƒœ
-            _isSidebarOpen = windowWidth > 768;
-            _isInitialized = true;
-            
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ì‚¬ì´ë“œë°” ì´ˆê¸° ìƒíƒœ ì„¤ì • ì¤‘ ì˜¤ë¥˜: {ex.Message}");
-            // ì˜¤ë¥˜ ë°œìƒ ì‹œ ë°ìŠ¤í¬í†± ê¸°ë³¸ê°’ìœ¼ë¡œ ì„¤ì •
-            _isSidebarOpen = true;
-            _isInitialized = true;
-            StateHasChanged();
-        }
-    }
-
-    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ (ì°½ í¬ê¸° ë³€ê²½ ì‹œ)
-    [JSInvokable]
-    public Task OnWindowResize(int width)
-    {
-        var isMobile = width <= 768;
-        
-        // ëª¨ë°”ì¼ì—ì„œ ë°ìŠ¤í¬í†±ìœ¼ë¡œ ì „í™˜ ì‹œ ì‚¬ì´ë“œë°” ì—´ê¸°
-        if (!isMobile && !_isSidebarOpen)
-        {
-            _isSidebarOpen = true;
-            StateHasChanged();
-        }
-        // ë°ìŠ¤í¬í†±ì—ì„œ ëª¨ë°”ì¼ë¡œ ì „í™˜ ì‹œ ì‚¬ì´ë“œë°” ë‹«ê¸° (ë‹¨, ì´ë¯¸ ì—´ë ¤ìˆë‹¤ë©´)
-        else if (isMobile && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-            StateHasChanged();
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private async Task HandleLoginAsync()
-    {
-        // ì§ì ‘ ì¸ì¦ í”Œë¡œìš° ì‹œì‘
-        await AuthService.StartAuthFlowAsync();
-    }
-
-    private async Task OpenSettingDialog()
-    {
-        _showSettingsModal = true;
-        StateHasChanged();
-        await Task.CompletedTask;
-    }
-
-    private async Task OpenServicesModalAsync()
-    {
-        _showServicesModal = true;
-        StateHasChanged();
-        await Task.CompletedTask;
-    }
-
-    private void ToggleSidebar()
-    {
-        _isSidebarOpen = !_isSidebarOpen;
-        StateHasChanged();
-    }
-
-    // ì˜ˆì‹œ í”„ë¡¬í”„íŠ¸ ì„¤ì • ë©”ì„œë“œ
-    private async Task SetExamplePrompt(string prompt)
-    {
-        if (!_hasApiKey)
-        {
-            await HandleLoginAsync();
-            return;
-        }
-
-        _userInput = prompt;
-        StateHasChanged();
-        
-        // ë°”ë¡œ ë©”ì‹œì§€ ì „ì†¡
-        await SendMessage();
-    }
-
-    // ì…ë ¥ ë‚´ìš©ì´ ë³€ê²½ë  ë•Œ í˜¸ì¶œë˜ëŠ” ë©”ì„œë“œ
-    private async Task OnInputChange(ChangeEventArgs e)
-    {
-        var newValue = e.Value?.ToString() ?? string.Empty;
-
-        // ìµœëŒ€ ê¸¸ì´ë¥¼ ì´ˆê³¼í•˜ëŠ” ê²½ìš° ì˜ë¼ë‚´ê¸°
-        if (newValue.Length > _maxInputLength)
-            newValue = newValue.Substring(0, _maxInputLength);
-
-        _userInput = newValue;
-        
-        // í…ìŠ¤íŠ¸ ì˜ì—­ ìë™ ë¦¬ì‚¬ì´ì¦ˆ
-        await JSRuntime.InvokeVoidAsync("autoResizeTextarea", "chatTextArea");
-    }
-
-    private async Task SendMessage()
-    {
-        if (!_hasApiKey)
-        {
-            await HandleLoginAsync();
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
-            return;
-
-        // ëª¨ë°”ì¼ì—ì„œ ë©”ì‹œì§€ ì „ì†¡ ì‹œ ì‚¬ì´ë“œë°” ë‹«ê¸°
-        var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
-        if (windowWidth <= 768 && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-        }
-
-        var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
-        _messages.Add(userMessage);
-
-        var input = _userInput;
-        _userInput = string.Empty;
-        _isStreaming = true;
-        _currentStreamedMessage = string.Empty;
-        StateHasChanged();
-
-        try
-        {
-            if (_client == null)
-                throw new InvalidOperationException("Client is not initialized.");
-
-            await JSRuntime.InvokeVoidAsync("scrollToBottom", "messages");
-
-            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId))
-            {
-                _currentStreamedMessage += chunk;
-                StateHasChanged();
-                await Task.Delay(10); // ìì—°ìŠ¤ëŸ¬ìš´ íƒ€ì´í•‘ íš¨ê³¼
-            }
-
-            _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
-        }
-        catch (Exception ex)
-        {
-            _messages.Add(new ChatMessage
-            {
-                Content = $"ì£„ì†¡í•©ë‹ˆë‹¤. ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤: {ex.Message}",
-                IsUser = false
-            });
-        }
-        finally
-        {
-            _isStreaming = false;
-            _currentStreamedMessage = string.Empty;
-            StateHasChanged();
-        }
-    }
-
-    protected async Task Logout()
-    {
-        // ì €ì¥ë˜ì§€ ì•Šì€ ëŒ€í™” ë‚´ìš©ì´ ìˆë‹¤ë©´ ë¶€ë“œëŸ¬ìš´ í™•ì¸ ì²˜ë¦¬
-        if (_hasUnsavedContent)
-        {
-            // confirm ëŒ€ì‹  ì¸ì•± í™•ì¸ ë‹¤ì´ì–¼ë¡œê·¸ ì‚¬ìš© ê¶Œì¥
-            var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
-                "í˜„ì¬ ì§„í–‰ ì¤‘ì¸ ëŒ€í™” ë‚´ìš©ì´ ìˆìŠµë‹ˆë‹¤. ë¡œê·¸ì•„ì›ƒí•˜ë©´ ëŒ€í™” ë‚´ìš©ì´ ì‚¬ë¼ì§‘ë‹ˆë‹¤. ì •ë§ ë¡œê·¸ì•„ì›ƒí•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
-            
-            if (!shouldLogout)
-            {
-                return;
-            }
-        }
-
-        await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
-        
-        // ìƒíƒœ ì—…ë°ì´íŠ¸
-        _hasApiKey = false;
-        _client = null;
-        _messages.Clear();
-        _userInput = string.Empty;
-        _isStreaming = false;
-        _currentStreamedMessage = string.Empty;
-        _sessionId = Guid.NewGuid().ToString();
-        
-        StateHasChanged();
-    }
-
-    private async Task HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && e.ShiftKey == false)
-        {
-            await SendMessage();
-        }
-    }
-
-    private MarkupString FormatMessage(string markdown)
-    {
-        var html = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(markdown))
-            return (MarkupString)html;
-
-        // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜
-        html = Markdown.ToHtml(markdown, _markdownPipeline);
-        var document = _htmlParser.ParseDocument(html);
-
-        if (document.Body == null)
-        {
-            Console.Error.WriteLine("Cannot parse fragment element.");
-            return (MarkupString)html;
-        }
-
-        foreach (var eachAnchorElem in document.QuerySelectorAll("a"))
-        {
-            var currentHref = (eachAnchorElem.GetAttribute("href") ?? string.Empty).Trim();
-            eachAnchorElem.RemoveAttribute("href");
-            eachAnchorElem.SetAttribute("onclick", $"window.Helpers.openSandbox('{currentHref}');");
-            eachAnchorElem.SetAttribute("style", "font-weight: bold; cursor: pointer; color: #2563eb; text-decoration: underline;");
-            eachAnchorElem.InnerHtml = WebUtility.HtmlEncode(currentHref);
-        }
-
-        html = document.Body.InnerHtml;
-
-        return (MarkupString)html;
-    }
-
-    // ëŒ€í™” ì•¡ì…˜ ë“œë¡­ë‹¤ìš´ í† ê¸€
-    private void ToggleConversationActionsDropdown()
-    {
-        _showConversationActionsDropdown = !_showConversationActionsDropdown;
-        StateHasChanged();
-    }
-
-    // ë“œë¡­downsì—ì„œ ì¸ì‡„ í›„ ìˆ¨ê¸°ê¸°
-    private async Task PrintAndHideDropdown()
-    {
-        await PrintConversationAsync();
-        _showConversationActionsDropdown = false;
-        StateHasChanged();
-    }
-
-    // ë“œë¡­downsì—ì„œ ë‚´ë³´ë‚´ê¸° í›„ ìˆ¨ê¸°ê¸°
-    private async Task ExportAndHideDropdown()
-    {
-        await ExportConversationAsTextAsync();
-        _showConversationActionsDropdown = false;
-        StateHasChanged();
-    }
-
-    // ë“œë¡­downì—ì„œ ê³µìœ  í›„ ìˆ¨ê¸°ê¸°
-    private async Task ShareAndHideDropdown()
-    {
-        await ShareConversationAsync();
-        _showConversationActionsDropdown = false;
-        StateHasChanged();
-    }
-
-    // ëŒ€í™” ë‚´ìš©ì„ í…ìŠ¤íŠ¸ íŒŒì¼ë¡œ ë‚´ë³´ë‚´ê¸° - alertë¥¼ í† ìŠ¤íŠ¸ë¡œ ë³€ê²½ ê°€ëŠ¥
+    // ´ëÈ­ ³»¿ëÀ» ÅØ½ºÆ® ÆÄÀÏ·Î ³»º¸³»±â - alert¸¦ Åä½ºÆ®·Î º¯°æ °¡´É
     private async Task ExportConversationAsTextAsync()
     {
         if (!_messages.Any())
         {
-            // confirm ëŒ€ì‹  ë¶€ë“œëŸ¬ìš´ ì•Œë¦¼
-            await JSRuntime.InvokeVoidAsync("showToast", "ë‚´ë³´ë‚¼ ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
+            // confirm ´ë½Å ºÎµå·¯¿î ¾Ë¸²
+            await SafeInvokeJSAsync("showToast", "³»º¸³¾ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
             return;
         }
         
@@ -951,49 +1121,20 @@ public partial class Chat : IDisposable
         };
         
         var jsonData = System.Text.Json.JsonSerializer.Serialize(conversationData);
-        var success = await JSRuntime.InvokeAsync<bool>("exportConversationAsText", jsonData);
+        var success = await SafeInvokeJSWithResultAsync<bool>("exportConversationAsText", jsonData);
         
         if (!success)
         {
-            await JSRuntime.InvokeVoidAsync("showToast", "í…ìŠ¤íŠ¸ íŒŒì¼ ë‚´ë³´ë‚´ê¸°ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", "error");
+            await SafeInvokeJSAsync("showToast", "ÅØ½ºÆ® ÆÄÀÏ ³»º¸³»±â¿¡ ½ÇÆĞÇß½À´Ï´Ù.", "error");
         }
     }
 
-    private async Task ResetConversationAsync()
-    {
-        // ì €ì¥ë˜ì§€ ì•Šì€ ëŒ€í™” ë‚´ìš©ì´ ìˆë‹¤ë©´ ë¶€ë“œëŸ¬ìš´ í™•ì¸ ì²˜ë¦¬
-        if (_hasUnsavedContent)
-        {
-            // confirm ëŒ€ì‹  ì¸ì•± í™•ì¸ ë‹¤ì´ì–¼ë¡œê·¸ ì‚¬ìš© ê¶Œì¥
-            var shouldReset = await JSRuntime.InvokeAsync<bool>("confirm", 
-                "í˜„ì¬ ì§„í–‰ ì¤‘ì¸ ëŒ€í™” ë‚´ìš©ì´ ìˆìŠµë‹ˆë‹¤. ìƒˆë¡œìš´ ì±„íŒ…ì„ ì‹œì‘í•˜ë©´ í˜„ì¬ ëŒ€í™” ë‚´ìš©ì´ ì‚¬ë¼ì§‘ë‹ˆë‹¤. ê³„ì†í•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
-            
-            if (!shouldReset)
-            {
-                return;
-            }
-        }
-
-        _messages.Clear();
-        _sessionId = Guid.NewGuid().ToString();
-        await ChatService.ClearSessionAsync(_sessionId);
-        
-        // ëª¨ë°”ì¼ì—ì„œ ëŒ€í™” ë¦¬ì…‹ ì‹œ ì‚¬ì´ë“œë°” ë‹«ê¸°
-        var windowWidth = await JSRuntime.InvokeAsync<int>("getWindowWidth");
-        if (windowWidth <= 768 && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-        }
-        
-        StateHasChanged();
-    }
-
-    // ëŒ€í™” ë‚´ìš© ê³µìœ  - alertë¥¼ í† ìŠ¤íŠ¸ë¡œ ë³€ê²½
+    // ´ëÈ­ ³»¿ë °øÀ¯ - alert¸¦ Åä½ºÆ®·Î º¯°æ
     private async Task ShareConversationAsync()
     {
         if (!_messages.Any())
         {
-            await JSRuntime.InvokeVoidAsync("showToast", "ê³µìœ í•  ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
+            await SafeInvokeJSAsync("showToast", "°øÀ¯ÇÒ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
             return;
         }
 
@@ -1003,71 +1144,55 @@ public partial class Chat : IDisposable
             
             var shareData = new
             {
-                title = "TableClothLite AI ëŒ€í™” ê¸°ë¡",
+                title = "TableClothLite AI ´ëÈ­ ±â·Ï",
                 text = shareText
             };
             
-            // JavaScriptì˜ shareContent í•¨ìˆ˜ í˜¸ì¶œ
-            var result = await JSRuntime.InvokeAsync<ShareResult>("shareContent", shareData);
+            // JavaScriptÀÇ shareContent ÇÔ¼ö È£Ãâ
+            var result = await SafeInvokeJSWithResultAsync<ShareResult>("shareContent", shareData);
             
-            if (result.Success)
+            if (result?.Success == true)
             {
                 switch (result.Method)
                 {
                     case "webshare":
-                        // Web Share APIë¡œ ì„±ê³µì ìœ¼ë¡œ ê³µìœ ë¨ - ë³„ë„ ì•Œë¦¼ ë¶ˆí•„ìš”
+                        // Web Share API·Î ¼º°øÀûÀ¸·Î °øÀ¯µÊ - º°µµ ¾Ë¸² ºÒÇÊ¿ä
                         break;
                     case "clipboard":
-                        await JSRuntime.InvokeVoidAsync("showToast", 
-                            "ëŒ€í™” ë‚´ìš©ì´ í´ë¦½ë³´ë“œì— ë³µì‚¬ë˜ì—ˆìŠµë‹ˆë‹¤. ë‹¤ë¥¸ ì•±ì—ì„œ ë¶™ì—¬ë„£ê¸°í•˜ì—¬ ê³µìœ í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.", 
+                        await SafeInvokeJSAsync("showToast", 
+                            "´ëÈ­ ³»¿ëÀÌ Å¬¸³º¸µå¿¡ º¹»çµÇ¾ú½À´Ï´Ù. ´Ù¸¥ ¾Û¿¡¼­ ºÙ¿©³Ö±âÇÏ¿© °øÀ¯ÇÒ ¼ö ÀÖ½À´Ï´Ù.", 
                             "success");
                         break;
                 }
             }
             else
             {
-                // ëª¨ë“  ë°©ë²• ì‹¤íŒ¨
-                await JSRuntime.InvokeVoidAsync("showToast", 
-                    "ê³µìœ  ê¸°ëŠ¥ì„ ì‚¬ìš©í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ëŒ€ì‹  í…ìŠ¤íŠ¸ íŒŒì¼ë¡œ ë‚´ë³´ë‚´ê¸°ë¥¼ ì‚¬ìš©í•´ë³´ì„¸ìš”.", 
+                // ¸ğµç ¹æ¹ı ½ÇÆĞ
+                await SafeInvokeJSAsync("showToast", 
+                    "°øÀ¯ ±â´ÉÀ» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù. ´ë½Å ÅØ½ºÆ® ÆÄÀÏ·Î ³»º¸³»±â¸¦ »ç¿ëÇØº¸¼¼¿ä.", 
                     "warning");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ëŒ€í™” ê³µìœ  ì¤‘ ì˜¤ë¥˜: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("showToast", "ëŒ€í™” ê³µìœ ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", "error");
+            Console.WriteLine($"´ëÈ­ °øÀ¯ Áß ¿À·ù: {ex.Message}");
+            await SafeInvokeJSAsync("showToast", "´ëÈ­ °øÀ¯¿¡ ½ÇÆĞÇß½À´Ï´Ù.", "error");
         }
     }
-    
-    // ë²„ì „ ì •ë³´ í´ë˜ìŠ¤
-    private class VersionInfo
-    {
-        public string? Version { get; set; }
-        public string? Timestamp { get; set; }
-        public string? Commit { get; set; }
-    }
 
-    // JavaScriptì—ì„œ ë°˜í™˜í•  ê³µìœ  ê²°ê³¼ í´ë˜ìŠ¤
-    private class ShareResult
-    {
-        public bool Success { get; set; }
-        public string Method { get; set; } = string.Empty;
-        public string? Error { get; set; }
-    }
-
-    // ê³µìœ ìš© í…ìŠ¤íŠ¸ ìƒì„±
+    // °øÀ¯¿ë ÅØ½ºÆ® »ı¼º
     private string GenerateShareText()
     {
         var text = new System.Text.StringBuilder();
-        text.AppendLine("TableClothLite AI ëŒ€í™” ê¸°ë¡");
-        text.AppendLine($"ìƒì„±ì¼: {DateTime.Now:yyyyë…„ MMì›” ddì¼ HH:mm}");
+        text.AppendLine("TableClothLite AI ´ëÈ­ ±â·Ï");
+        text.AppendLine($"»ı¼ºÀÏ: {DateTime.Now:yyyy³â MM¿ù ddÀÏ HH:mm}");
         text.AppendLine(new string('=', 40));
         text.AppendLine();
         
         for (int i = 0; i < _messages.Count; i++)
         {
             var message = _messages[i];
-            var sender = message.IsUser ? "ì‚¬ìš©ì" : "AI";
+            var sender = message.IsUser ? "»ç¿ëÀÚ" : "AI";
             
             text.AppendLine($"[{i + 1}] {sender}:");
             text.AppendLine(message.Content.Trim());
@@ -1080,21 +1205,21 @@ public partial class Chat : IDisposable
         return text.ToString();
     }
 
-    // ëª¨ë‹¬ ë‹«ê¸° ë©”ì„œë“œ
+    // ¸ğ´Ş ´İ±â ¸Ş¼­µå
     private void CloseSandboxGuide()
     {
         _showSandboxGuide = false;
         StateHasChanged();
     }
 
-    // ì„œë¹„ìŠ¤ ëª©ë¡ ëª¨ë‹¬ ë‹«ê¸°
+    // ¼­ºñ½º ¸ñ·Ï ¸ğ´Ş ´İ±â
     private void CloseServicesModal()
     {
         _showServicesModal = false;
         StateHasChanged();
     }
 
-    // ì„¤ì • ëª¨ë‹¬ ë‹«ê¸°
+    // ¼³Á¤ ¸ğ´Ş ´İ±â
     private void CloseSettingsModal()
     {
         _showSettingsModal = false;
@@ -1103,17 +1228,17 @@ public partial class Chat : IDisposable
 
     public void Dispose()
     {
-        // beforeunload í•¸ë“¤ëŸ¬ ì •ë¦¬
+        // beforeunload ÇÚµé·¯ Á¤¸®
         try
         {
             JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
         }
         catch
         {
-            // Disposal ì¤‘ ì˜¤ë¥˜ëŠ” ë¬´ì‹œ
+            // Disposal Áß ¿À·ù´Â ¹«½Ã
         }
 
-        // íƒ€ì´ë¨¸ ì •ë¦¬
+        // Å¸ÀÌ¸Ó Á¤¸®
         _updateCheckTimer?.Dispose();
 
         dotNetHelper?.Dispose();
