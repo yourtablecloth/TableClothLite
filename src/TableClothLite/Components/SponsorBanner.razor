@@ -1,0 +1,207 @@
+﻿@using Microsoft.AspNetCore.Components
+
+<div class="sponsor-banner">
+    <div class="sponsor-content">
+        <div class="sponsor-icon">💝</div>
+        <div class="sponsor-text">
+            <div class="sponsor-title">식탁보 라이트를 후원해주세요!</div>
+            <div class="sponsor-subtitle">오픈소스 개발을 지원하고 더 나은 보안 도구를 만들어가요</div>
+        </div>
+        <div class="sponsor-actions">
+            <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="sponsor-cta">
+                후원하기
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sponsor-banner {
+        position: relative;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 20px;
+        margin: 8px 0;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+        animation: slideInDown 0.5s ease-out;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .sponsor-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: shine 3s infinite;
+    }
+
+    .sponsor-banner.dismissed {
+        opacity: 0;
+        transform: translateY(-100%);
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+        pointer-events: none;
+    }
+
+    .sponsor-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .sponsor-icon {
+        font-size: 32px;
+        flex-shrink: 0;
+        animation: bounce 2s infinite;
+    }
+
+    .sponsor-text {
+        flex: 1;
+    }
+
+    .sponsor-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .sponsor-subtitle {
+        font-size: 13px;
+        opacity: 0.9;
+        line-height: 1.4;
+    }
+
+    .sponsor-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sponsor-cta {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .sponsor-cta:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .dismiss-btn {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dismiss-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    @@keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+
+    @@keyframes shine {
+        0% {
+            left: -100%;
+        }
+        100% {
+            left: 100%;
+        }
+    }
+
+    /* 모바일 최적화 */
+    @@media (max-width: 768px) {
+        .sponsor-banner {
+            margin: 8px 16px;
+            padding: 12px 16px;
+        }
+
+        .sponsor-content {
+            gap: 12px;
+        }
+
+        .sponsor-icon {
+            font-size: 24px;
+        }
+
+        .sponsor-title {
+            font-size: 14px;
+        }
+
+        .sponsor-subtitle {
+            font-size: 12px;
+        }
+
+        .sponsor-cta {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .sponsor-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .sponsor-actions {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnDismiss { get; set; }
+}

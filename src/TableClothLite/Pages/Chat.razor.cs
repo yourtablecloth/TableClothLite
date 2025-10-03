@@ -64,8 +64,11 @@ public partial class Chat : IDisposable
     private VersionInfo? _pendingUpdate = null;
     private Timer? _updateCheckTimer = null;
 
-    // ModelIndicator 참조
+    // ModelIndicator 레퍼런스
     private ModelIndicator? _modelIndicator;
+    
+    // 후원 배너 상태
+    private bool _sponsorBannerDismissed = false;
 
     // 버전 정보 클래스 - 간소화
     private class VersionInfo
@@ -110,6 +113,21 @@ public partial class Chat : IDisposable
     protected override async Task OnInitializedAsync()
     {
         await CheckApiKeyStatus();
+        await LoadSponsorBannerStatus();
+    }
+    
+    private async Task LoadSponsorBannerStatus()
+    {
+        try
+        {
+            var dismissed = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "sponsor-banner-dismissed");
+            _sponsorBannerDismissed = !string.IsNullOrEmpty(dismissed) && dismissed == "true";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"후원 배너 상태 로드 중 오류: {ex.Message}");
+            _sponsorBannerDismissed = false;
+        }
     }
 
     private async Task CheckApiKeyStatus()
@@ -247,6 +265,43 @@ public partial class Chat : IDisposable
         _showConversationActionsDropdown = false;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 - 샌드박스에서 링크 열기
+    [JSInvokable]
+    public async Task OpenSandbox(string url)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                Console.WriteLine("URL이 비어있습니다.");
+                return;
+            }
+
+            Console.WriteLine($"샌드박스에서 URL 열기: {url}");
+            
+            // SandboxViewModel을 통해 샌드박스에서 URL 열기
+            // URL만 있는 경우 기본 서비스 정보 생성
+            var defaultService = new ServiceInfo(
+                ServiceId: "web-browser",
+                DisplayName: "웹 브라우저", 
+                Category: "other",
+                Url: url,
+                CompatNotes: "AI 채팅에서 생성된 링크"
+            );
+            
+            await Model.GenerateSandboxDocumentAsync(url, defaultService);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"샌드박스에서 링크 열기 중 오류: {ex.Message}");
+            
+            // 오류 발생 시 사용자에게 알림
+            await SafeInvokeJSAsync("showToast", 
+                "샌드박스에서 링크를 열 수 없습니다. Windows Sandbox가 설치되어 있는지 확인해주세요.", 
+                "error");
+        }
     }
 
     // JavaScript에서 호출할 수 있는 메서드 - 새 버전 감지 (간소화된 구조)
@@ -1235,6 +1290,23 @@ public partial class Chat : IDisposable
         }
         
         StateHasChanged();
+    }
+
+    // 후원 배너 해제
+    private async Task DismissSponsorBanner()
+    {
+        _sponsorBannerDismissed = true;
+        StateHasChanged();
+        
+        // 로컬 스토리지에 저장하여 다음 방문시에도 기억
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sponsor-banner-dismissed", "true");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"후원 배너 상태 저장 중 오류: {ex.Message}");
+        }
     }
 
     public void Dispose()

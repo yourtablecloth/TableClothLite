@@ -12,6 +12,7 @@
 @using TableClothLite.Components.Guide
 @using TableClothLite.Components
 @using Markdig
+@using TableClothLite.Components.Catalog
 
 @inject OpenAIChatService ChatService
 @inject IJSRuntime JSRuntime
@@ -146,6 +147,9 @@
                             <button @onclick="ShareAndHideDropdown" class="dropdown-item" type="button">
                                 📤 공유하기
                             </button>
+                            <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="dropdown-item sponsor-item" @onclick="HideConversationActionsDropdown">
+                                💝 개발 후원하기
+                            </a>
                         </div>
                     </div>
                 }
@@ -155,6 +159,9 @@
                 <button @onclick="OpenSettingDialog" class="action-btn" title="설정" type="button">
                     ⚙️
                 </button>
+                <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="action-btn sponsor-btn" title="개발 후원하기">
+                    💝
+                </a>
                 <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="action-btn" title="GitHub">
                     💻
                 </a>
@@ -205,6 +212,13 @@
                         <div class="disclaimer">
                             ⚠️ AI가 생성한 정보는 부정확할 수 있습니다. 중요한 결정은 전문가와 상담하세요.
                         </div>
+                        
+                        @if (!_sponsorBannerDismissed)
+                        {
+                            <div style="margin-top: 24px;">
+                                <SponsorBanner OnDismiss="DismissSponsorBanner" />
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -563,6 +577,16 @@
     .action-btn:hover {
         background: var(--hover-bg);
         border-color: var(--chat-border);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    .sponsor-btn {
+    }
+
+    .sponsor-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
     }
 
     /* 모바일에서의 대화 액션 드롭다운 */
@@ -616,6 +640,17 @@
         
         .dropdown-item:only-child {
             border-radius: 8px;
+        }
+        
+        .sponsor-item {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white !important;
+            font-weight: 600;
+        }
+        
+        .sponsor-item:hover {
+            background: linear-gradient(135deg, #ee5a24 0%, #d63031 100%) !important;
+            color: white !important;
         }
     }
 
