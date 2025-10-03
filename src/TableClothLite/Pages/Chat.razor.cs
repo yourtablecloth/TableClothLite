@@ -55,8 +55,13 @@ public partial class Chat : IDisposable
     // 설정 모달 상태 관리
     private bool _showSettingsModal = false;
 
-    // 대화 액션 드롭다운 상태 관리
+    // 대화 액션 드롭downs 상태 관리
     private bool _showConversationActionsDropdown = false;
+
+    // 새 버전 알림 상태 관리
+    private bool _showUpdateNotification = false;
+    private VersionInfo? _pendingUpdate = null;
+    private Timer? _updateCheckTimer = null;
 
     protected override void OnInitialized()
     {
@@ -159,6 +164,32 @@ public partial class Chat : IDisposable
         _showConversationActionsDropdown = false;
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 - 새 버전 감지
+    [JSInvokable]
+    public async Task OnNewVersionDetected(string versionInfoJson)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(versionInfoJson)) return;
+            
+            using var doc = System.Text.Json.JsonDocument.Parse(versionInfoJson);
+            var root = doc.RootElement;
+            
+            _pendingUpdate = new VersionInfo
+            {
+                Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
+                Timestamp = root.TryGetProperty("timestamp", out var timestamp) ? timestamp.GetString() : null,
+                Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null
+            };
+            
+            await ShowGentleUpdateNotificationAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"새 버전 감지 처리 중 오류: {ex.Message}");
+        }
     }
 
     // 대화 내용 인쇄 메서드
@@ -515,39 +546,13 @@ public partial class Chat : IDisposable
             }
             else if (serverVersionInfo != null && storedVersion != serverVersionInfo.Version)
             {
-                // 버전이 다름 - 캐시 클리어 필요
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", serverVersionInfo.Version);
-                
-                // 사용자에게 알림 (선택사항)
-                var shouldRefresh = await JSRuntime.InvokeAsync<bool>("confirm", 
-                    $"새 버전 {serverVersionInfo.Version}이 감지되었습니다. 최신 기능을 사용하려면 새로고침이 필요합니다. 새로고침하시겠습니까?");
-                
-                if (shouldRefresh)
-                {
-                    await JSRuntime.InvokeVoidAsync("window.forceRefresh");
-                }
+                // 새 버전 감지 - gentle reminder 표시
+                _pendingUpdate = serverVersionInfo;
+                await ShowGentleUpdateNotificationAsync();
             }
             
             // 백그라운드에서 주기적 버전 체크 시작
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(TimeSpan.FromMinutes(10)); // 10분 후 시작
-                while (true)
-                {
-                    try
-                    {
-                        await InvokeAsync(async () =>
-                        {
-                            await JSRuntime.InvokeVoidAsync("checkForUpdates");
-                        });
-                        await Task.Delay(TimeSpan.FromMinutes(30)); // 30분마다 체크
-                    }
-                    catch
-                    {
-                        await Task.Delay(TimeSpan.FromMinutes(60)); // 오류 시 1시간 후 재시도
-                    }
-                }
-            });
+            StartPeriodicVersionCheck();
         }
         catch (Exception ex)
         {
@@ -598,14 +603,84 @@ public partial class Chat : IDisposable
         return null;
     }
 
-    // 버전 정보 클래스
-    private class VersionInfo
+    // 부드러운 업데이트 알림 표시
+    private async Task ShowGentleUpdateNotificationAsync()
     {
-        public string? Version { get; set; }
-        public string? Timestamp { get; set; }
-        public string? Commit { get; set; }
+        if (_pendingUpdate is null) return;
+
+        // 즉시 팝업 대신 페이지에 통합된 알림 표시
+        _showUpdateNotification = true;
+        StateHasChanged();
+
+        // 30초 후 자동 숨김 처리 (사용자가 직접 닫지 않은 경우)
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            await InvokeAsync(() =>
+            {
+                if (_showUpdateNotification)
+                {
+                    _showUpdateNotification = false;
+                    StateHasChanged();
+                }
+            });
+        });
     }
 
+    // 업데이트 알림 닫기
+    private void DismissUpdateNotification()
+    {
+        _showUpdateNotification = false;
+        StateHasChanged();
+    }
+
+    // 업데이트 적용
+    private async Task ApplyUpdateAsync()
+    {
+        if (_pendingUpdate is null) return;
+
+        // 버전 정보 업데이트
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", _pendingUpdate.Version);
+        
+        // 스마트 새로고침 실행
+        await JSRuntime.InvokeVoidAsync("window.forceRefresh");
+    }
+
+    // 주기적 버전 체크 시작
+    private void StartPeriodicVersionCheck()
+    {
+        // 기존 타이머가 있다면 정리
+        _updateCheckTimer?.Dispose();
+
+        // 30분마다 백그라운드에서 체크
+        _updateCheckTimer = new Timer(async _ =>
+        {
+            try
+            {
+                await InvokeAsync(async () =>
+                {
+                    var serverVersionInfo = await GetServerVersionAsync();
+                    var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
+                    
+                    if (serverVersionInfo != null && 
+                        storedVersion != serverVersionInfo.Version && 
+                        !_showUpdateNotification) // 이미 알림이 표시되지 않은 경우만
+                    {
+                        _pendingUpdate = serverVersionInfo;
+                        await ShowGentleUpdateNotificationAsync();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"주기적 버전 체크 중 오류: {ex.Message}");
+            }
+        });
+        
+        // 30분 후 시작하여 30분 간격으로 실행
+        _updateCheckTimer.Change(TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
+    }
+    
     private async Task InitializeSidebarState()
     {
         try
@@ -841,7 +916,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭다운에서 인쇄 후 숨기기
+    // 드롭downs에서 인쇄 후 숨기기
     private async Task PrintAndHideDropdown()
     {
         await PrintConversationAsync();
@@ -849,7 +924,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭다운에서 내보내기 후 숨기기
+    // 드롭downs에서 내보내기 후 숨기기
     private async Task ExportAndHideDropdown()
     {
         await ExportConversationAsTextAsync();
@@ -857,7 +932,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭다운에서 공유 후 숨기기
+    // 드롭down에서 공유 후 숨기기
     private async Task ShareAndHideDropdown()
     {
         await ShareConversationAsync();
@@ -972,6 +1047,14 @@ public partial class Chat : IDisposable
         }
     }
     
+    // 버전 정보 클래스
+    private class VersionInfo
+    {
+        public string? Version { get; set; }
+        public string? Timestamp { get; set; }
+        public string? Commit { get; set; }
+    }
+
     // JavaScript에서 반환할 공유 결과 클래스
     private class ShareResult
     {
@@ -1037,6 +1120,9 @@ public partial class Chat : IDisposable
         {
             // Disposal 중 오류는 무시
         }
+
+        // 타이머 정리
+        _updateCheckTimer?.Dispose();
 
         dotNetHelper?.Dispose();
     }

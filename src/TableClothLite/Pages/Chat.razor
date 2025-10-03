@@ -79,6 +79,30 @@
 
     <!-- 메인 채팅 영역 -->
     <div class="chat-main">
+        <!-- Gentle Update Notification -->
+        @if (_showUpdateNotification && _pendingUpdate is not null)
+        {
+            <div class="update-notification">
+                <div class="update-notification-content">
+                    <div class="update-info">
+                        <span class="update-icon">🎉</span>
+                        <div class="update-text">
+                            <strong>새 버전이 있습니다!</strong>
+                            <div class="version-details">@_pendingUpdate.Version</div>
+                        </div>
+                    </div>
+                    <div class="update-actions">
+                        <button @onclick="ApplyUpdateAsync" class="update-btn primary" type="button">
+                            업데이트
+                        </button>
+                        <button @onclick="DismissUpdateNotification" class="update-btn secondary" type="button">
+                            나중에
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- 상단 헤더 -->
         <div class="chat-header">
             <div class="header-left">
@@ -914,6 +938,109 @@
 
         .example-prompts {
             grid-template-columns: 1fr;
+        }
+    }
+
+    /* Update Notification Styles */
+    .update-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 320px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #0ea5e9;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(14, 165, 233, 0.15);
+        z-index: 1000;
+        animation: slideInFromRight 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        backdrop-filter: blur(8px);
+    }
+
+    .update-notification-content {
+        padding: 16px;
+    }
+
+    .update-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .update-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .update-text strong {
+        display: block;
+        color: #0369a1;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .version-details {
+        font-size: 12px;
+        color: #0284c7;
+        font-weight: 500;
+    }
+
+    .update-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .update-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .update-btn.primary {
+        background: #0ea5e9;
+        color: white;
+    }
+
+    .update-btn.primary:hover {
+        background: #0284c7;
+        transform: translateY(-1px);
+    }
+
+    .update-btn.secondary {
+        background: transparent;
+        color: #0369a1;
+        border: 1px solid #0ea5e9;
+    }
+
+    .update-btn.secondary:hover {
+        background: #f0f9ff;
+    }
+
+    @@keyframes slideInFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* 모바일에서 알림 위치 조정 */
+    @@media (max-width: 480px) {
+        .update-notification {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
         }
     }
 

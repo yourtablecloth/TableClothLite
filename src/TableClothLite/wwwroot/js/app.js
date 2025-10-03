@@ -334,30 +334,18 @@ window.checkForUpdates = async function() {
     }
 };
 
-// 스마트 업데이트 알림
+// 스마트 업데이트 알림 - gentle notification으로 변경
 function showSmartUpdateNotification(serverInfo) {
-    const currentVersion = localStorage.getItem('app-version');
-    const newVersion = serverInfo.version;
+    console.log('새 버전 감지:', serverInfo);
     
-    // 더 상세하고 친화적인 메시지
-    const message = 
-        `🎉 새 버전이 있습니다!\n\n` +
-        `현재: ${currentVersion}\n` +
-        `최신: ${newVersion}\n\n` +
-        `✨ 새로운 기능과 개선사항이 포함되어 있습니다.\n` +
-        `📱 변경된 파일만 다운로드하여 빠르게 업데이트됩니다.\n` +
-        `💾 설정과 데이터는 안전하게 보존됩니다.\n\n` +
-        `지금 업데이트하시겠습니까?`;
-        
-    if (confirm(message)) {
-        window.forceRefresh();
-    } else {
-        // 나중에 알림 (1시간 후)
-        setTimeout(() => {
-            if (confirm('새 버전 업데이트를 건너뛰셨습니다.\n더 나은 경험을 위해 업데이트를 권장합니다.\n\n지금 업데이트하시겠습니까?')) {
-                window.forceRefresh();
-            }
-        }, 60 * 60 * 1000);
+    // Blazor 컴포넌트에 새 버전 정보 전달 (gentle notification으로 처리)
+    if (Helpers.dotNetHelper) {
+        try {
+            const versionInfoJson = JSON.stringify(serverInfo);
+            Helpers.dotNetHelper.invokeMethodAsync('OnNewVersionDetected', versionInfoJson);
+        } catch (error) {
+            console.log('새 버전 알림 전달 실패:', error);
+        }
     }
 }
 
