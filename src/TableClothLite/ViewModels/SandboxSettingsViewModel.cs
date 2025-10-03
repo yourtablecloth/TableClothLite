@@ -20,6 +20,9 @@ public sealed partial class SandboxSettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _enableClipboardRedirection = true;
 
+    [ObservableProperty]
+    private string _openRouterModel = "meta-llama/llama-3.1-70b-instruct";
+
     public SandboxConfig ExportToSandboxConfig()
     {
         return new SandboxConfig
@@ -28,7 +31,8 @@ public sealed partial class SandboxSettingsViewModel : ObservableObject
             EnableAudioInput = EnableAudioInput,
             EnableVideoInput = EnableVideoInput,
             EnablePrinterRedirection = EnablePrinterRedirection,
-            EnableClipboardRedirection = EnableClipboardRedirection
+            EnableClipboardRedirection = EnableClipboardRedirection,
+            OpenRouterModel = OpenRouterModel
         };
     }
 
@@ -39,5 +43,6 @@ public sealed partial class SandboxSettingsViewModel : ObservableObject
         EnableVideoInput = config.EnableVideoInput;
         EnablePrinterRedirection = config.EnablePrinterRedirection;
         EnableClipboardRedirection = config.EnableClipboardRedirection;
+        OpenRouterModel = config.OpenRouterModel;
     }
 }

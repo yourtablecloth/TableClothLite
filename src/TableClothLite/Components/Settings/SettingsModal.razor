@@ -10,65 +10,108 @@
         </div>
         
         <div class="modal-body">
-            <div class="settings-info">
-                <p><strong>Windows Sandbox 설정</strong></p>
-                <p>WSB 파일 생성 시 적용될 설정을 관리합니다.</p>
+            <!-- OpenRouter AI 모델 설정 섹션 -->
+            <div class="settings-section">
+                <div class="settings-info">
+                    <p><strong>🤖 AI 모델 설정</strong></p>
+                    <p>채팅에 사용할 OpenRouter AI 모델을 선택합니다.</p>
+                </div>
+                
+                <div class="setting-item model-selection">
+                    <div class="setting-info">
+                        <div class="setting-name">AI 모델</div>
+                        <div class="setting-description">대화에 사용할 AI 모델을 선택하세요</div>
+                    </div>
+                    <div class="model-selector">
+                        <select class="model-select" @bind="SettingsModel.OpenRouterModel">
+                            <optgroup label="🔸 추천 모델 (기본)">
+                                <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B (추천) ⭐</option>
+                            </optgroup>
+                            <optgroup label="🏆 고성능 모델">
+                                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                <option value="openai/gpt-4o">GPT-4o</option>
+                                <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+                            </optgroup>
+                            <optgroup label="💰 경제적인 모델">
+                                <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B (빠름)</option>
+                                <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                            </optgroup>
+                            <optgroup label="🚀 최신 모델">
+                                <option value="meta-llama/llama-3.2-90b-vision-instruct">Llama 3.2 90B Vision</option>
+                                <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
+                                <option value="microsoft/wizardlm-2-8x22b">WizardLM-2 8x22B</option>
+                            </optgroup>
+                        </select>
+                        <div class="model-info">
+                            <span class="model-note">💡 모델 변경 후 새로운 채팅에서 적용됩니다</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="settings-list">
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-name">네트워크 사용</div>
-                        <div class="setting-description">인터넷 연결을 허용합니다</div>
-                    </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
-                        <span class="slider"></span>
-                    </label>
+
+            <!-- Windows Sandbox 설정 섹션 -->
+            <div class="settings-section">
+                <div class="settings-info">
+                    <p><strong>🪟 Windows Sandbox 설정</strong></p>
+                    <p>WSB 파일 생성 시 적용될 설정을 관리합니다.</p>
                 </div>
                 
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-name">오디오 녹음 사용</div>
-                        <div class="setting-description">마이크 사용을 허용합니다</div>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">네트워크 사용</div>
+                            <div class="setting-description">인터넷 연결을 허용합니다</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" @bind="SettingsModel.EnableAudioInput" />
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-name">비디오 녹화 사용</div>
-                        <div class="setting-description">카메라 사용을 허용합니다</div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">오디오 녹음 사용</div>
+                            <div class="setting-description">마이크 사용을 허용합니다</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" @bind="SettingsModel.EnableAudioInput" />
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" @bind="SettingsModel.EnableVideoInput" />
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-name">프린터 공유 사용</div>
-                        <div class="setting-description">호스트 PC의 프린터를 공유합니다</div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">비디오 녹화 사용</div>
+                            <div class="setting-description">카메라 사용을 허용합니다</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" @bind="SettingsModel.EnableVideoInput" />
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" @bind="SettingsModel.EnablePrinterRedirection" />
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-name">복사/붙여넣기 사용</div>
-                        <div class="setting-description">클립보드 공유를 허용합니다</div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">프린터 공유 사용</div>
+                            <div class="setting-description">호스트 PC의 프린터를 공유합니다</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" @bind="SettingsModel.EnablePrinterRedirection" />
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="toggle-switch">
-                        <input type="checkbox" @bind="SettingsModel.EnableClipboardRedirection" />
-                        <span class="slider"></span>
-                    </label>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-name">복사/붙여넣기 사용</div>
+                            <div class="setting-description">클립보드 공유를 허용합니다</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" @bind="SettingsModel.EnableClipboardRedirection" />
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
             
@@ -126,7 +169,7 @@
     .modal-content {
         background: white;
         border-radius: 12px;
-        max-width: 600px;
+        max-width: 700px;
         width: 100%;
         max-height: 90vh;
         display: flex;
@@ -172,8 +215,16 @@
         overflow-y: auto;
     }
 
+    .settings-section {
+        margin-bottom: 32px;
+    }
+
+    .settings-section:last-child {
+        margin-bottom: 0;
+    }
+
     .settings-info {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
         padding: 16px;
         background: #f8f9fa;
         border: 1px solid #e9ecef;
@@ -207,9 +258,19 @@
         border-bottom: none;
     }
 
+    .setting-item.model-selection {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
     .setting-info {
         flex: 1;
         margin-right: 16px;
+    }
+
+    .setting-item.model-selection .setting-info {
+        margin-right: 0;
     }
 
     .setting-name {
@@ -222,6 +283,47 @@
     .setting-description {
         font-size: 14px;
         color: #6c757d;
+    }
+
+    .model-selector {
+        width: 100%;
+    }
+
+    .model-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+    }
+
+    .model-select:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    .model-select optgroup {
+        font-weight: bold;
+        color: #495057;
+        padding: 8px 0;
+    }
+
+    .model-select option {
+        padding: 8px 16px;
+        font-weight: normal;
+    }
+
+    .model-info {
+        margin-top: 8px;
+    }
+
+    .model-note {
+        font-size: 12px;
+        color: #6c757d;
+        font-style: italic;
     }
 
     .toggle-switch {
@@ -518,6 +620,7 @@
             SettingsModel.EnableVideoInput = true;   // 기존 Setting.razor와 동일
             SettingsModel.EnablePrinterRedirection = true;
             SettingsModel.EnableClipboardRedirection = true;
+            SettingsModel.OpenRouterModel = "meta-llama/llama-3.1-70b-instruct"; // 기본 추천 모델
             
             _statusMessage = "설정이 기본값으로 복원되었습니다.";
             _isError = false;

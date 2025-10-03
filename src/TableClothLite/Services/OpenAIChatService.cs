@@ -9,12 +9,14 @@ namespace TableClothLite.Services;
 
 public sealed class OpenAIChatService
 {
-    public OpenAIChatService(IHttpClientFactory httpClientFactory)
+    public OpenAIChatService(IHttpClientFactory httpClientFactory, ConfigService configService)
     {
         _httpClientFactory = httpClientFactory;
+        _configService = configService;
     }
 
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ConfigService _configService;
     private readonly Dictionary<string, List<ChatMessage>> _conversationHistory = new();
 
     public OpenAIClient CreateOpenAIClient(string apiKey)
@@ -53,7 +55,10 @@ public sealed class OpenAIChatService
         // 사용자 메시지 추가
         _conversationHistory[sessionId].Add(ChatMessage.CreateUserMessage(message));
 
-        var chatClient = client.GetChatClient("meta-llama/llama-4-maverick");
+        // 설정에서 모델 가져오기
+        var config = await _configService.LoadAsync(cancellationToken).ConfigureAwait(false);
+        var chatClient = client.GetChatClient(config.OpenRouterModel);
+        Console.WriteLine(config.OpenRouterModel);
 
         // 대화 기록 전체를 넘겨 컨텍스트 유지
         var responseBuilder = new StringBuilder();

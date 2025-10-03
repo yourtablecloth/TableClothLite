@@ -1,10 +1,11 @@
 ﻿namespace TableClothLite.Shared.Models;
 
-public sealed record class SandboxConfig(
-    bool EnableNetworking = true,
-    bool EnableAudioInput = true,
-    bool EnableVideoInput = true,
-    bool EnablePrinterRedirection = true,
-    bool EnableClipboardRedirection = true)
+public sealed record class SandboxConfig
 {
+    public bool EnableNetworking { get; init; } = true;
+    public bool EnableAudioInput { get; init; } = true;
+    public bool EnableVideoInput { get; init; } = true;
+    public bool EnablePrinterRedirection { get; init; } = true;
+    public bool EnableClipboardRedirection { get; init; } = true;
+    public string OpenRouterModel { get; init; } = "meta-llama/llama-3.1-70b-instruct";
 }
