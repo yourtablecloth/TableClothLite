@@ -21,7 +21,7 @@ public sealed partial class SandboxSettingsViewModel : ObservableObject
     private bool _enableClipboardRedirection = true;
 
     [ObservableProperty]
-    private string _openRouterModel = "meta-llama/llama-3.1-70b-instruct";
+    private string _openRouterModel = Constants.DefaultOpenRouterModel;
 
     public SandboxConfig ExportToSandboxConfig()
     {

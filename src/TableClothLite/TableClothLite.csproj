@@ -29,31 +29,29 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
-  <!-- ºôµå ½Ã °£¼ÒÈ­µÈ version.json ÀÚµ¿ »ý¼º -->
+  <ItemGroup>
+    <Folder Include="wwwroot\data\" />
+  </ItemGroup>
+
+  <!-- ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ version.json ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ -->
   <Target Name="GenerateVersionJson" BeforeTargets="Build">
-    <!-- Git Á¤º¸ °¡Á®¿À±â -->
+    <!-- Git ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -->
     <PropertyGroup>
       <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</BuildTimestamp>
       <VersionString>$([System.DateTime]::UtcNow.ToString("yyyy.MM.dd.HHmm"))</VersionString>
     </PropertyGroup>
     
-    <!-- Git commit hash °¡Á®¿À±â -->
-    <Exec Command="git rev-parse HEAD" 
-          ContinueOnError="true" 
-          ConsoleToMSBuild="true"
-          Condition="Exists('.git')">
+    <!-- Git commit hash ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -->
+    <Exec Command="git rev-parse HEAD" ContinueOnError="true" ConsoleToMSBuild="true" Condition="Exists('.git')">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
     </Exec>
     
-    <!-- Git branch °¡Á®¿À±â -->
-    <Exec Command="git rev-parse --abbrev-ref HEAD" 
-          ContinueOnError="true" 
-          ConsoleToMSBuild="true"
-          Condition="Exists('.git')">
+    <!-- Git branch ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ -->
+    <Exec Command="git rev-parse --abbrev-ref HEAD" ContinueOnError="true" ConsoleToMSBuild="true" Condition="Exists('.git')">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitBranchName" />
     </Exec>
     
-    <!-- CI È¯°æ¿¡¼­ÀÇ °ª »ç¿ë (GitHub Actions, Azure DevOps µî) -->
+    <!-- CI È¯ï¿½æ¿¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ (GitHub Actions, Azure DevOps ï¿½ï¿½) -->
     <PropertyGroup>
       <GitCommit Condition="'$(GitCommitHash)' != ''">$(GitCommitHash)</GitCommit>
       <GitCommit Condition="'$(GitCommit)' == '' AND '$(BUILD_SOURCEVERSION)' != ''">$(BUILD_SOURCEVERSION)</GitCommit>
@@ -66,7 +64,7 @@
       <GitBranch Condition="'$(GitBranch)' == ''">main</GitBranch>
     </PropertyGroup>
     
-    <!-- °£¼ÒÈ­µÈ JSON ³»¿ë »ý¼º -->
+    <!-- ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ JSON ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ -->
     <PropertyGroup>
       <VersionJsonContent>
 {
@@ -78,10 +76,7 @@
       </VersionJsonContent>
     </PropertyGroup>
     
-    <WriteLinesToFile
-      File="$(MSBuildProjectDirectory)\wwwroot\version.json"
-      Lines="$(VersionJsonContent)"
-      Overwrite="true" />
+    <WriteLinesToFile File="$(MSBuildProjectDirectory)\wwwroot\version.json" Lines="$(VersionJsonContent)" Overwrite="true" />
     
     <Message Text="Generated simplified version.json with version $(VersionString)" Importance="high" />
   </Target>

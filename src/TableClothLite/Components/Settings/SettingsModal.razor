@@ -45,23 +45,13 @@
                             </div>
                             <div class="model-selector">
                                 <select class="model-select" @bind="SettingsModel.OpenRouterModel">
-                                    <optgroup label="🔸 추천 모델 (기본)">
-                                        <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B (추천) ⭐</option>
+                                    <optgroup label="기본 모델">
+                                        <option value="google/gemma-3n-e2b-it:free">google/gemma-3n-e2b-it:free</option>
                                     </optgroup>
-                                    <optgroup label="🏆 고성능 모델">
-                                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                                        <option value="openai/gpt-4o">GPT-4o</option>
-                                        <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
-                                    </optgroup>
-                                    <optgroup label="💰 경제적인 모델">
-                                        <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B (빠름)</option>
-                                        <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                                        <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
-                                    </optgroup>
-                                    <optgroup label="🚀 최신 모델">
-                                        <option value="meta-llama/llama-3.2-90b-vision-instruct">Llama 3.2 90B Vision</option>
-                                        <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
-                                        <option value="microsoft/wizardlm-2-8x22b">WizardLM-2 8x22B</option>
+                                    <optgroup label="다른 모델">
+                                        <option value="anthropic/claude-sonnet-4.5">anthropic/claude-sonnet-4.5</option>
+                                        <option value="openai/gpt-5-mini">openai/gpt-5-mini</option>
+                                        <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
                                     </optgroup>
                                 </select>
                                 <div class="model-info">
@@ -828,7 +818,7 @@
             SettingsModel.EnableVideoInput = true;   // 기존 Setting.razor와 동일
             SettingsModel.EnablePrinterRedirection = true;
             SettingsModel.EnableClipboardRedirection = true;
-            SettingsModel.OpenRouterModel = "meta-llama/llama-3.1-70b-instruct"; // 기본 추천 모델
+            SettingsModel.OpenRouterModel = Constants.DefaultOpenRouterModel; // 기본 추천 모델
             
             _statusMessage = "설정이 기본값으로 복원되었습니다.";
             _isError = false;

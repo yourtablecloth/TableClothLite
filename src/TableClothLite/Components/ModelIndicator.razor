@@ -141,34 +141,7 @@
         }
 
         // 모델 이름을 사용자 친화적으로 변환 (더 짧게)
-        return _currentConfig.OpenRouterModel switch
-        {
-            "meta-llama/llama-3.1-70b-instruct" => "Llama 3.1 70B",
-            "meta-llama/llama-3.1-8b-instruct" => "Llama 3.1 8B",
-            "anthropic/claude-3.5-sonnet" => "Claude 3.5",
-            "openai/gpt-4o" => "GPT-4o",
-            "openai/gpt-3.5-turbo" => "GPT-3.5",
-            "google/gemini-pro-1.5" => "Gemini Pro",
-            "anthropic/claude-3-haiku" => "Claude 3",
-            "meta-llama/llama-3.2-90b-vision-instruct" => "Llama 3.2 90B",
-            "qwen/qwen-2.5-72b-instruct" => "Qwen 2.5",
-            "microsoft/wizardlm-2-8x22b" => "WizardLM-2",
-            _ => ExtractModelName(_currentConfig.OpenRouterModel)
-        };
-    }
-
-    private string ExtractModelName(string fullModelName)
-    {
-        // "provider/model-name" 형식에서 모델명만 추출
-        var parts = fullModelName.Split('/');
-        if (parts.Length > 1)
-        {
-            var modelPart = parts[1];
-            // 대문자로 시작하도록 변환하고 길이 제한
-            var name = char.ToUpper(modelPart[0]) + modelPart.Substring(1);
-            return name.Length > 15 ? name.Substring(0, 15) + "..." : name;
-        }
-        return fullModelName.Length > 15 ? fullModelName.Substring(0, 15) + "..." : fullModelName;
+        return _currentConfig.OpenRouterModel;
     }
 
     private async Task OnModelClick()
