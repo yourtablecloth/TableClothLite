@@ -45,8 +45,8 @@
                             </div>
                             <div class="model-selector">
                                 <select class="model-select" @bind="SettingsModel.OpenRouterModel">
-                                    <optgroup label="기본 모델">
-                                        <option value="google/gemma-3n-e2b-it:free">google/gemma-3n-e2b-it:free</option>
+                                    <optgroup label="무료 모델">
+                                        <option value="@(Constants.DefaultOpenRouterModel)">@(Constants.DefaultOpenRouterModel)</option>
                                     </optgroup>
                                     <optgroup label="다른 모델">
                                         <option value="anthropic/claude-sonnet-4.5">anthropic/claude-sonnet-4.5</option>
