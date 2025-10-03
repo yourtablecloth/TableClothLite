@@ -16,7 +16,6 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     <script src="_content/TG.Blazor.IndexedDB/indexedDb.Blazor.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2663279019983483" crossorigin="anonymous"></script>
     
     <!-- HTML만 캐시 방지 - 리소스는 조건부 캐시 허용 -->
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
@@ -37,6 +36,9 @@
         <a href="." class="reload">새로 고침</a>
         <span class="dismiss">&#x1F5D9;</span>
     </div>
+
+    <!-- app.js를 먼저 로드 -->
+    <script src="js/app.js" type="text/javascript"></script>
 
     <!-- 스마트 캐시 관리 스크립트 -->
     <script>
@@ -130,7 +132,13 @@
                         const localVersion = localStorage.getItem('app-version');
                         
                         if (localVersion && serverInfo.version && localVersion !== serverInfo.version) {
-                            showUpdateNotification(serverInfo.version);
+                            // Blazor 컴포넌트의 OnNewVersionDetected 호출 (포커스 빼앗김 없음)
+                            if (window.DotNet && window.dotNetHelper) {
+                                window.dotNetHelper.invokeMethodAsync('OnNewVersionDetected', JSON.stringify(serverInfo));
+                            } else {
+                                // Blazor가 로드되지 않은 경우만 조용한 콘솔 로그
+                                console.log('새 버전 감지됨:', serverInfo.version);
+                            }
                         }
                         
                         if (serverInfo.version) {
@@ -142,16 +150,10 @@
                 }
             }
             
-            // 업데이트 알림 - 더 상세한 정보 제공
+            // confirm 제거 - Blazor 컴포넌트에서 처리하도록 변경
             function showUpdateNotification(newVersion) {
-                const message = `새 버전 ${newVersion}이 있습니다.\n\n` +
-                              `• 새 기능과 버그 수정이 포함되어 있습니다.\n` +
-                              `• 변경된 파일만 다운로드됩니다.\n\n` +
-                              `지금 업데이트하시겠습니까?`;
-                              
-                if (confirm(message)) {
-                    smartRefresh();
-                }
+                // 더 이상 confirm 사용하지 않음
+                console.log('업데이트 알림을 Blazor 컴포넌트로 전달:', newVersion);
             }
             
             // 스마트 새로고침 - 선택적 캐시 클리어
@@ -180,7 +182,7 @@
 
     <script src="_framework/blazor.webassembly.js"></script>
     <script>
-        // Service Worker 등록 - 더 스마트한 업데이트 처리
+        // Service Worker 등록 - 포커스 빼앗김 없는 업데이트 처리
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
                 .then(function(registration) {
@@ -191,15 +193,24 @@
                         const newWorker = registration.installing;
                         newWorker.addEventListener('statechange', function() {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 백그라운드에서 조용히 업데이트하거나 사용자에게 알림
+                                // 백그라운드에서 조용히 업데이트 - confirm 제거
                                 console.log('새 Service Worker가 설치되었습니다.');
                                 
-                                // 5초 후 조용한 알림
-                                setTimeout(() => {
-                                    if (confirm('앱이 백그라운드에서 업데이트되었습니다.\n새 기능을 사용하려면 새로고침이 필요합니다.\n\n지금 새로고침하시겠습니까?')) {
-                                        window.location.reload();
-                                    }
-                                }, 5000);
+                                // Blazor 컴포넌트로 알림 전달 (포커스 빼앗김 없음)
+                                if (window.DotNet && window.dotNetHelper) {
+                                    const updateInfo = {
+                                        type: 'serviceWorker',
+                                        message: '앱이 백그라운드에서 업데이트되었습니다.'
+                                    };
+                                    
+                                    // 5초 후 부드러운 알림
+                                    setTimeout(() => {
+                                        window.dotNetHelper.invokeMethodAsync('OnNewVersionDetected', JSON.stringify(updateInfo));
+                                    }, 5000);
+                                } else {
+                                    // Blazor가 준비되지 않은 경우 조용히 로그만
+                                    console.log('Service Worker 업데이트 완료 - Blazor 로드 대기 중');
+                                }
                             }
                         });
                     });
@@ -215,8 +226,6 @@
         }
     </script>
 
-    <script src="js/app.js" type="text/javascript"></script>
-
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HBJP4P0EBY"></script>
     <script type="text/javascript">
@@ -227,4 +236,4 @@
     </script>
 </body>
 
-</html>
+</html></html>

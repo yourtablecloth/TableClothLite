@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TableClothLite",
   "resources": {
-    "hash": "sha256-Uyrfv0fp1f8Fmf4dvD42luNYAD2/LgFxGmx5yZlkdeY=",
+    "hash": "sha256-++TiwMWbJWL1iNOsyFYjI/koTIs2HWJxA8iSlQgVl4c=",
     "fingerprinting": {
       "AngleSharp.up7648hgwu.wasm": "AngleSharp.wasm",
       "Blazored.LocalStorage.12n6dz54qr.wasm": "Blazored.LocalStorage.wasm",
@@ -63,13 +63,13 @@
       "System.Net.WebSockets.Client.yofi8okmp1.wasm": "System.Net.WebSockets.Client.wasm",
       "System.Net.WebSockets.pp5tnicwhl.wasm": "System.Net.WebSockets.wasm",
       "System.ObjectModel.9xb8b1fzzq.wasm": "System.ObjectModel.wasm",
-      "System.Private.CoreLib.um0gwfqe57.wasm": "System.Private.CoreLib.wasm",
+      "System.Private.CoreLib.xul4t1v175.wasm": "System.Private.CoreLib.wasm",
       "System.Private.Uri.vjmt3ci8qw.wasm": "System.Private.Uri.wasm",
       "System.Private.Xml.rcb06fk0m4.wasm": "System.Private.Xml.wasm",
       "System.Runtime.InteropServices.JavaScript.7p7wh7ew2r.wasm": "System.Runtime.InteropServices.JavaScript.wasm",
       "System.Runtime.InteropServices.RuntimeInformation.3yfmpmhkai.wasm": "System.Runtime.InteropServices.RuntimeInformation.wasm",
       "System.Runtime.InteropServices.t4gipi9sfm.wasm": "System.Runtime.InteropServices.wasm",
-      "System.Runtime.n7o6rw11ym.wasm": "System.Runtime.wasm",
+      "System.Runtime.gicl6zaar9.wasm": "System.Runtime.wasm",
       "System.Security.Cryptography.4yom5q7sg1.wasm": "System.Security.Cryptography.wasm",
       "System.Text.Encoding.CodePages.i4itnbvow5.wasm": "System.Text.Encoding.CodePages.wasm",
       "System.Text.Encoding.Extensions.oqztlhw6l1.wasm": "System.Text.Encoding.Extensions.wasm",
@@ -81,8 +81,8 @@
       "System.Threading.82acoiyymq.wasm": "System.Threading.wasm",
       "System.Web.HttpUtility.h1htfqt019.wasm": "System.Web.HttpUtility.wasm",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "System.Xml.ReaderWriter.wasm",
-      "TableClothLite.Shared.momp7w0fu8.wasm": "TableClothLite.Shared.wasm",
-      "TableClothLite.buq0eb6x9p.wasm": "TableClothLite.wasm",
+      "TableClothLite.Shared.2rv95ivzod.wasm": "TableClothLite.Shared.wasm",
+      "TableClothLite.m93mw528vn.wasm": "TableClothLite.wasm",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "TG.Blazor.IndexedDB.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.9ih887ebfz.js": "dotnet.native.js",
@@ -107,7 +107,7 @@
       "icudt_no_CJK.lfu7j35m59.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
     },
     "coreAssembly": {
-      "System.Private.CoreLib.um0gwfqe57.wasm": "sha256-NkNfFhZREEZT7TQ5UmBVgpfep5CNT2OYj1wOjfrKC0E=",
+      "System.Private.CoreLib.xul4t1v175.wasm": "sha256-V6dO7IELwG+dtdcRK7vPDVJv4DXAdG+rzn0crtru++I=",
       "System.Runtime.InteropServices.JavaScript.7p7wh7ew2r.wasm": "sha256-+/uNVQu/ULMwSnn1LviIWo1xHAV+nuORcVn7tHX52Sc="
     },
     "assembly": {
@@ -175,7 +175,7 @@
       "System.Private.Xml.rcb06fk0m4.wasm": "sha256-e9uMazy9hAhdr01+otTIhrgVqpsIIJfY0i1PfurL5t0=",
       "System.Runtime.InteropServices.RuntimeInformation.3yfmpmhkai.wasm": "sha256-xSQWXZYLJTmae3uZowZZOmJqyZemUc1QXGLzAXfhbx4=",
       "System.Runtime.InteropServices.t4gipi9sfm.wasm": "sha256-LfM6BypmGux3PI4QlIFNgVImNiJP2cT2bRxIdmr+NEc=",
-      "System.Runtime.n7o6rw11ym.wasm": "sha256-7XQrMaDFZIyLmL/0g6D0AmzvqtWPhAKLhfQsxJT2Log=",
+      "System.Runtime.gicl6zaar9.wasm": "sha256-mIShUDRlvXd3M3MmeDSYhdvsYbGqk9ynqaA9ac3NiOA=",
       "System.Security.Cryptography.4yom5q7sg1.wasm": "sha256-zGSRZNUVHasjEJUFiUiRRt3Y8PIGW96ZbrVWclB0snk=",
       "System.Text.Encoding.CodePages.i4itnbvow5.wasm": "sha256-/ovLmaR8UO/QsvxSTjgrjK0BgsPFDN78kFZij6KTLjc=",
       "System.Text.Encoding.Extensions.oqztlhw6l1.wasm": "sha256-MPM0NHK0FzpVpCdBDJQOXU4mKhQkpXdsk8gF06iNP+Q=",
@@ -187,8 +187,8 @@
       "System.Threading.82acoiyymq.wasm": "sha256-8P2hHDMhWmFasTjydp596prdpBK7XM8QOkUCY/ZBx+k=",
       "System.Web.HttpUtility.h1htfqt019.wasm": "sha256-heJjIS0TxXlTOzoQF5/OcGGEsa8zaQLoOJWyssZdj1U=",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "sha256-o/aGLZlaugH+0+JJg2HH0YxQ0ZrgpS4EGtufa8qkGOs=",
-      "TableClothLite.Shared.momp7w0fu8.wasm": "sha256-FuZ9r+aNiEJkr2QHl1GLU+6aDl0ffwBDUCTaImIM7zE=",
-      "TableClothLite.buq0eb6x9p.wasm": "sha256-Hf4lAemO7Qux70CfNeb46e3DQ8/o8XhEJOmrgSOxQbE=",
+      "TableClothLite.Shared.2rv95ivzod.wasm": "sha256-/mWo8v5FGqh8xROmpCotxYdK7v8CI2gkhuQLdRXViTY=",
+      "TableClothLite.m93mw528vn.wasm": "sha256-9tF7r+FC4KyfDUV6KDyOdJ1T5DEZLsPOwPoRZJ5gSpI=",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "sha256-4u3DzThxux9K9sTeHhZyBhid/AlxJKAaouBiayJ/n5Y="
     },
     "libraryInitializers": {

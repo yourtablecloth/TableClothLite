@@ -12,6 +12,96 @@
 
 window.Helpers = Helpers;
 
+// beforeunload 이벤트 핸들러 관련 함수들
+let dotNetHelperRef = null;
+let beforeUnloadHandler = null;
+
+// DotNet helper 참조 설정 및 beforeunload 핸들러 등록
+window.setupBeforeUnloadHandler = function (dotNetHelper) {
+    dotNetHelperRef = dotNetHelper;
+    
+    // 기존 핸들러가 있다면 제거
+    if (beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
+    
+    // 새로운 beforeunload 핸들러 등록
+    beforeUnloadHandler = function (e) {
+        try {
+            // DotNet 메서드 호출하여 unsaved content 확인
+            const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+            
+            if (hasUnsavedContent) {
+                // 표준 메시지 설정
+                const message = '현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다.';
+                
+                // Chrome 34+
+                e.returnValue = message;
+                
+                // Safari, Firefox
+                e.preventDefault();
+                
+                // 일부 구형 브라우저
+                return message;
+            }
+        } catch (error) {
+            console.warn('beforeunload 핸들러에서 오류 발생:', error);
+        }
+    };
+    
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+};
+
+// beforeunload 핸들러 정리
+window.cleanupBeforeUnloadHandler = function () {
+    if (beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        beforeUnloadHandler = null;
+    }
+    dotNetHelperRef = null;
+};
+
+// 페이지 네비게이션 시에도 확인 (SPA 라우팅용)
+window.setupNavigationGuard = function () {
+    // Blazor의 NavigationManager를 위한 추가 보호
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function (...args) {
+        if (dotNetHelperRef) {
+            try {
+                const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+                if (hasUnsavedContent) {
+                    const shouldNavigate = confirm('현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다. 계속하시겠습니까?');
+                    if (!shouldNavigate) {
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Navigation guard에서 오류 발생:', error);
+            }
+        }
+        originalPushState.apply(history, args);
+    };
+    
+    history.replaceState = function (...args) {
+        if (dotNetHelperRef) {
+            try {
+                const hasUnsavedContent = dotNetHelperRef.invokeMethod('HasUnsavedContent');
+                if (hasUnsavedContent) {
+                    const shouldNavigate = confirm('현재 진행 중인 대화 내용이 있습니다. 페이지를 떠나면 대화 내용이 사라집니다. 계속하시겠습니까?');
+                    if (!shouldNavigate) {
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn('Navigation guard에서 오류 발생:', error);
+            }
+        }
+        originalReplaceState.apply(history, args);
+    };
+};
+
 window.scrollToBottom = function (elementId) {
     const element = document.getElementById(elementId);
     if (element) {
@@ -244,30 +334,18 @@ window.checkForUpdates = async function() {
     }
 };
 
-// 스마트 업데이트 알림
+// 스마트 업데이트 알림 - gentle notification으로 변경
 function showSmartUpdateNotification(serverInfo) {
-    const currentVersion = localStorage.getItem('app-version');
-    const newVersion = serverInfo.version;
+    console.log('새 버전 감지:', serverInfo);
     
-    // 더 상세하고 친화적인 메시지
-    const message = 
-        `🎉 새 버전이 있습니다!\n\n` +
-        `현재: ${currentVersion}\n` +
-        `최신: ${newVersion}\n\n` +
-        `✨ 새로운 기능과 개선사항이 포함되어 있습니다.\n` +
-        `📱 변경된 파일만 다운로드하여 빠르게 업데이트됩니다.\n` +
-        `💾 설정과 데이터는 안전하게 보존됩니다.\n\n` +
-        `지금 업데이트하시겠습니까?`;
-        
-    if (confirm(message)) {
-        window.forceRefresh();
-    } else {
-        // 나중에 알림 (1시간 후)
-        setTimeout(() => {
-            if (confirm('새 버전 업데이트를 건너뛰셨습니다.\n더 나은 경험을 위해 업데이트를 권장합니다.\n\n지금 업데이트하시겠습니까?')) {
-                window.forceRefresh();
-            }
-        }, 60 * 60 * 1000);
+    // Blazor 컴포넌트에 새 버전 정보 전달 (gentle notification으로 처리)
+    if (Helpers.dotNetHelper) {
+        try {
+            const versionInfoJson = JSON.stringify(serverInfo);
+            Helpers.dotNetHelper.invokeMethodAsync('OnNewVersionDetected', versionInfoJson);
+        } catch (error) {
+            console.log('새 버전 알림 전달 실패:', error);
+        }
     }
 }
 
@@ -314,7 +392,7 @@ if ('serviceWorker' in navigator) {
             setTimeout(() => {
                 const message = 
                     `🔄 백그라운드 업데이트 완료\n\n` +
-                    `앱이 조용히 업데이트되었습니다.\n` +
+                    `앱이 조용히 업데이트 되었습니다.\n` +
                     `최신 기능을 사용하려면 새로고침을 권장합니다.\n\n` +
                     `지금 새로고침하시겠습니까?`;
                     
@@ -328,6 +406,11 @@ if ('serviceWorker' in navigator) {
 
 // DOM 로드 후 최적화된 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM 로드 완료 - JavaScript 초기화 시작');
+    
+    // 네비게이션 가드 설정
+    window.setupNavigationGuard();
+    
     // 캐시 상태 로깅 (개발용)
     if (window.location.hostname === 'localhost') {
         setTimeout(() => window.getCacheStatus(), 2000);
@@ -395,6 +478,8 @@ if (window.location.hostname === 'localhost') {
 
 // 채팅 입력 초기화 함수
 window.initChatInput = function () {
+    console.log('채팅 입력 초기화 시작');
+    
     const textarea = document.getElementById('chatTextArea');
     if (textarea) {
         // 초기 높이 설정
@@ -414,6 +499,10 @@ window.initChatInput = function () {
                 this.scrollTop = 0;
             }, 0);
         });
+        
+        console.log('채팅 입력 필드 초기화 완료');
+    } else {
+        console.warn('채팅 입력 필드를 찾을 수 없습니다');
     }
 
     // 모바일 기능 초기화
@@ -460,6 +549,8 @@ window.initChatInput = function () {
             isPageVisible = false;
         }
     });
+    
+    console.log('채팅 입력 초기화 완료');
 };
 
 // 창 크기 변경 리스너 설정
@@ -579,20 +670,58 @@ window.downloadFileStream = async (fileName, contentType, dotNetStreamReference)
     URL.revokeObjectURL(url);
 };
 
-// 복사 기능
+// 복사 기능 (개선된 버전)
 window.copyToClipboard = async function (text) {
+    if (typeof text !== 'string') text = String(text ?? '');
+
+    // 방법 1: 최신 Clipboard API 시도
     try {
-        await navigator.clipboard.writeText(text);
-        return true;
-    } catch (err) {
-        // 대체 방법
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return success;
+        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (error) {
+        console.warn('Clipboard API 실패:', error);
+    }
+
+    // 방법 2: execCommand 방식 시도 (구형 브라우저 지원)
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        
+        // 화면에 보이지 않도록 설정
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        textArea.style.tabIndex = '-1';
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            return true;
+        }
+    } catch (error) {
+        console.warn('execCommand 복사 실패:', error);
+    }
+
+    // 방법 3: 사용자에게 수동 복사 요청 (최후의 수단)
+    try {
+        const userResponse = window.prompt(
+            '자동 복사가 지원되지 않습니다.\n아래 내용을 수동으로 선택하여 복사해주세요.\n\n복사하려면 Ctrl+A (전체선택) 후 Ctrl+C (복사)를 눌러주세요.',
+            text
+        );
+        // 사용자가 취소하지 않았다면 성공으로 간주
+        return userResponse !== null;
+    } catch (error) {
+        console.error('수동 복사 요청 실패:', error);
+        return false;
     }
 };
 
@@ -621,41 +750,17 @@ window.showInstallPrompt = function() {
 };
 
 // OS 감지 함수
-window.detectOS = function() {
+window.detectOS = function () {
     const userAgent = navigator.userAgent;
-    const platform = navigator.platform;
-    
     const osInfo = {
-        isWindows: false,
-        isMac: false,
-        isLinux: false,
-        isAndroid: false,
-        isIOS: false,
-        userAgent: userAgent,
-        platform: platform
+        isWindows: /Windows/i.test(userAgent),
+        isMac: /Mac/i.test(userAgent) && !/iPhone|iPad|iPod/i.test(userAgent),
+        isLinux: /Linux/i.test(userAgent) && !/Android/i.test(userAgent),
+        isAndroid: /Android/i.test(userAgent),
+        isIOS: /iPhone|iPad|iPod/i.test(userAgent),
+        userAgent: userAgent
     };
-    
-    // Windows 감지
-    if (/Windows/i.test(userAgent) || /Win/i.test(platform)) {
-        osInfo.isWindows = true;
-    }
-    // macOS 감지
-    else if (/Mac/i.test(userAgent) || /Mac/i.test(platform)) {
-        osInfo.isMac = true;
-    }
-    // iOS 감지
-    else if (/iPhone|iPad|iPod/i.test(userAgent)) {
-        osInfo.isIOS = true;
-    }
-    // Android 감지
-    else if (/Android/i.test(userAgent)) {
-        osInfo.isAndroid = true;
-    }
-    // Linux 감지
-    else if (/Linux/i.test(userAgent) || /Linux/i.test(platform)) {
-        osInfo.isLinux = true;
-    }
-    
+
     console.log('OS Detection Result:', osInfo);
     return osInfo;
 };
@@ -726,3 +831,325 @@ window.getScrollInfo = function(selector) {
         clientHeight: element.clientHeight
     };
 };
+
+// 대화 내용 인쇄 함수
+window.printConversation = function(htmlContent) {
+    // 새 창에서 인쇄 페이지 생성
+    const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!printWindow) {
+        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
+        return;
+    }
+    
+    // HTML 내용 작성
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // 이미지 및 스타일 로드 대기
+    printWindow.onload = function() {
+        setTimeout(function() {
+            // 인쇄 다이얼로그 표시
+            printWindow.print();
+            
+            // 인쇄 후 창 닫기 (사용자가 인쇄를 취소하거나 완료한 후)
+            printWindow.onafterprint = function() {
+                printWindow.close();
+            };
+            
+            // 일정 시간 후 자동으로 닫기 (인쇄 다이얼로그가 닫힌 경우를 대비)
+            setTimeout(function() {
+                if (!printWindow.closed) {
+                    printWindow.close();
+                }
+            }, 1000);
+        }, 500);
+    };
+};
+
+// 드롭다운 메뉴 외부 클릭 시 닫기 기능
+window.setupDropdownClickOutside = function(dotNetHelper) {
+    document.addEventListener('click', function(event) {
+        const dropdown = document.querySelector('.conversation-actions-dropdown');
+        const toggleButton = document.querySelector('.mobile-actions .action-btn');
+        
+        if (dropdown && dropdown.classList.contains('show')) {
+            // 드롭다운이나 토글 버튼을 클릭한 게 아닌 경우
+            if (!dropdown.contains(event.target) && !toggleButton.contains(event.target)) {
+                if (dotNetHelper) {
+                    try {
+                        dotNetHelper.invokeMethodAsync('HideConversationActionsDropdown');
+                    } catch (error) {
+                        console.warn('드롭다운 닫기 중 오류:', error);
+                    }
+                }
+            }
+        }
+    });
+};
+
+// 인쇄 미리보기 함수 (선택사항)
+window.showPrintPreview = function(htmlContent) {
+    const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+    
+    if (!previewWindow) {
+        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
+        return;
+    }
+    
+    // 미리보기용 HTML 생성 (인쇄 버튼 포함)
+    const previewHtml = htmlContent.replace(
+        '</body>',
+        `
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+            <button onclick="window.print()" style="
+                padding: 10px 20px;
+                background: #2563eb;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            ">🖨️ 인쇄하기</button>
+            <button onclick="window.close()" style="
+                padding: 10px 20px;
+                background: #6b7280;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                margin-left: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            ">✕ 닫기</button>
+        </div>
+        </body>`
+    );
+    
+    previewWindow.document.write(previewHtml);
+    previewWindow.document.close();
+    
+    // 인쇄 후 창 닫기 처리
+    previewWindow.onafterprint = function() {
+        previewWindow.close();
+    };
+};
+
+// Web Share API 지원 여부 확인
+window.isWebShareSupported = function() {
+    return typeof navigator.share !== 'undefined' && navigator.share !== null;
+};
+
+// Web Share API를 사용한 공유
+window.shareContent = async function(shareData) {
+    try {
+        if (window.isWebShareSupported()) {
+            await navigator.share(shareData);
+            return { success: true, method: 'webshare' };
+        } else {
+            // Web Share API를 지원하지 않는 경우 클립보드에 복사
+            const copied = await window.copyToClipboard(shareData.text);
+            if (copied) {
+                return { success: true, method: 'clipboard' };
+            } else {
+                return { success: false, method: 'none' };
+            }
+        }
+    } catch (error) {
+        console.error('공유 중 오류:', error);
+        
+        // Web Share API 실패 시 클립보드로 fallback
+        try {
+            const copied = await window.copyToClipboard(shareData.text);
+            if (copied) {
+                return { success: true, method: 'clipboard' };
+            } else {
+                return { success: false, method: 'fallback', error: error.message };
+            }
+        } catch (clipboardError) {
+            return { success: false, method: 'none', error: clipboardError.message };
+        }
+    }
+};
+
+// 대화 내용을 텍스트 파일로 저장하는 함수
+window.exportConversationAsText = function(conversationData) {
+    try {
+        const data = JSON.parse(conversationData);
+        let textContent = `TableClothLite AI 대화 기록\n`;
+        textContent += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
+        textContent += `총 ${data.messages.length}개의 메시지\n`;
+        textContent += `${'='.repeat(50)}\n\n`;
+        
+        data.messages.forEach((message, index) => {
+            const sender = message.isUser ? '사용자' : 'TableClothLite AI';
+            textContent += `[${index + 1}] ${sender}\n`;
+            textContent += `${'-'.repeat(20)}\n`;
+            textContent += `${message.content}\n\n`;
+        });
+        
+        textContent += `${'='.repeat(50)}\n`;
+        textContent += `TableClothLite AI - https://yourtablecloth.app`;
+        
+        // 텍스트 파일 다운로드
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TableClothLite_대화기록_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        return true;
+    } catch (error) {
+        console.error('텍스트 파일 내보내기 오류:', error);
+        return false;
+    }
+};
+
+// 안전한 version.json 가져오기 함수
+window.fetchVersionJson = async function(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache',
+            headers: {
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log('version.json 파일을 찾을 수 없습니다.');
+                return null;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.warn('version.json이 JSON 형식이 아닐 수 있습니다.');
+        }
+
+        const jsonText = await response.text();
+        
+        // JSON 유효성 검사
+        try {
+            JSON.parse(jsonText);
+            return jsonText;
+        } catch (parseError) {
+            console.error('version.json JSON 파싱 오류:', parseError);
+            return null;
+        }
+        
+    } catch (error) {
+        console.log('version.json 가져오기 실패:', error.message);
+        return null;
+    }
+};
+
+// 토스트 알림 표시 함수 (간단한 구현)
+window.showToast = function(message, type = 'info') {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    
+    // 기존 토스트가 있다면 제거
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // 토스트 엘리먼트 생성
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 300px;
+        padding: 12px 16px;
+        background: ${getToastColor(type)};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10001;
+        font-size: 14px;
+        line-height: 1.4;
+        animation: slideInFromRight 0.3s ease-out;
+        word-wrap: break-word;
+    `;
+    
+    // 아이콘 추가
+    const icon = getToastIcon(type);
+    toast.innerHTML = `${icon} ${message}`;
+    
+    // 애니메이션 CSS 추가 (한 번만)
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes slideInFromRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes slideOutToRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(toast);
+    
+    // 클릭 시 닫기
+    toast.addEventListener('click', () => {
+        toast.style.animation = 'slideOutToRight 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+    });
+    
+    // 자동 삭제
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.animation = 'slideOutToRight 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, type === 'error' ? 5000 : 3000); // 에러는 5초, 나머지는 3초
+};
+
+function getToastColor(type) {
+    switch (type) {
+        case 'success': return '#10b981';
+        case 'error': return '#ef4444';
+        case 'warning': return '#f59e0b';
+        default: return '#3b82f6';
+    }
+}
+
+function getToastIcon(type) {
+    switch (type) {
+        case 'success': return '✅';
+        case 'error': return '❌';
+        case 'warning': return '⚠️';
+        default: return 'ℹ️';
+    }
+}
+
+// 초기화 완료 로그
+console.log('TableClothLite JavaScript 모듈 로드 완료 ✅');
