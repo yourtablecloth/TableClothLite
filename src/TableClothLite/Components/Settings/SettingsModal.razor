@@ -9,117 +9,164 @@
             <button class="close-btn" @onclick="Close" type="button">✕</button>
         </div>
         
+        <!-- 탭 네비게이션 -->
+        <div class="tab-navigation">
+            <button class="tab-button @(_activeTab == "ai" ? "active" : "")" 
+                    @onclick="@(() => SetActiveTab("ai"))" type="button">
+                <span class="tab-icon">🤖</span>
+                <span class="tab-label">AI 모델</span>
+            </button>
+            <button class="tab-button @(_activeTab == "sandbox" ? "active" : "")" 
+                    @onclick="@(() => SetActiveTab("sandbox"))" type="button">
+                <span class="tab-icon">🪟</span>
+                <span class="tab-label">Sandbox</span>
+            </button>
+        </div>
+        
         <div class="modal-body">
-            <!-- OpenRouter AI 모델 설정 섹션 -->
-            <div class="settings-section">
-                <div class="settings-info">
-                    <p><strong>🤖 AI 모델 설정</strong></p>
-                    <p>채팅에 사용할 OpenRouter AI 모델을 선택합니다.</p>
-                </div>
-                
-                <div class="setting-item model-selection">
-                    <div class="setting-info">
-                        <div class="setting-name">AI 모델</div>
-                        <div class="setting-description">대화에 사용할 AI 모델을 선택하세요</div>
+            <!-- AI 모델 설정 탭 -->
+            <div class="tab-content @(_activeTab == "ai" ? "active" : "")">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">🤖</span>
+                            <h4>AI 모델 설정</h4>
+                        </div>
+                        <div class="section-description">
+                            채팅에 사용할 OpenRouter AI 모델을 선택합니다.
+                        </div>
                     </div>
-                    <div class="model-selector">
-                        <select class="model-select" @bind="SettingsModel.OpenRouterModel">
-                            <optgroup label="🔸 추천 모델 (기본)">
-                                <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B (추천) ⭐</option>
-                            </optgroup>
-                            <optgroup label="🏆 고성능 모델">
-                                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                                <option value="openai/gpt-4o">GPT-4o</option>
-                                <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
-                            </optgroup>
-                            <optgroup label="💰 경제적인 모델">
-                                <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B (빠름)</option>
-                                <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                                <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
-                            </optgroup>
-                            <optgroup label="🚀 최신 모델">
-                                <option value="meta-llama/llama-3.2-90b-vision-instruct">Llama 3.2 90B Vision</option>
-                                <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
-                                <option value="microsoft/wizardlm-2-8x22b">WizardLM-2 8x22B</option>
-                            </optgroup>
-                        </select>
-                        <div class="model-info">
-                            <span class="model-note">💡 모델 변경 후 새로운 채팅에서 적용됩니다</span>
+                    
+                    <div class="setting-card">
+                        <div class="setting-item model-selection">
+                            <div class="setting-info">
+                                <div class="setting-name">AI 모델</div>
+                                <div class="setting-description">대화에 사용할 AI 모델을 선택하세요</div>
+                            </div>
+                            <div class="model-selector">
+                                <select class="model-select" @bind="SettingsModel.OpenRouterModel">
+                                    <optgroup label="🔸 추천 모델 (기본)">
+                                        <option value="meta-llama/llama-3.1-70b-instruct">Llama 3.1 70B (추천) ⭐</option>
+                                    </optgroup>
+                                    <optgroup label="🏆 고성능 모델">
+                                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                                        <option value="openai/gpt-4o">GPT-4o</option>
+                                        <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+                                    </optgroup>
+                                    <optgroup label="💰 경제적인 모델">
+                                        <option value="meta-llama/llama-3.1-8b-instruct">Llama 3.1 8B (빠름)</option>
+                                        <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                                    </optgroup>
+                                    <optgroup label="🚀 최신 모델">
+                                        <option value="meta-llama/llama-3.2-90b-vision-instruct">Llama 3.2 90B Vision</option>
+                                        <option value="qwen/qwen-2.5-72b-instruct">Qwen 2.5 72B</option>
+                                        <option value="microsoft/wizardlm-2-8x22b">WizardLM-2 8x22B</option>
+                                    </optgroup>
+                                </select>
+                                <div class="model-info">
+                                    <span class="model-note">💡 모델 변경 후 새로운 채팅에서 적용됩니다</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Windows Sandbox 설정 섹션 -->
-            <div class="settings-section">
-                <div class="settings-info">
-                    <p><strong>🪟 Windows Sandbox 설정</strong></p>
-                    <p>WSB 파일 생성 시 적용될 설정을 관리합니다.</p>
-                </div>
-                
-                <div class="settings-list">
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-name">네트워크 사용</div>
-                            <div class="setting-description">인터넷 연결을 허용합니다</div>
+            <!-- Windows Sandbox 설정 탭 -->
+            <div class="tab-content @(_activeTab == "sandbox" ? "active" : "")">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">🪟</span>
+                            <h4>Windows Sandbox 설정</h4>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
-                            <span class="slider"></span>
-                        </label>
+                        <div class="section-description">
+                            WSB 파일 생성 시 적용될 설정을 관리합니다.
+                        </div>
                     </div>
                     
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-name">오디오 녹음 사용</div>
-                            <div class="setting-description">마이크 사용을 허용합니다</div>
+                    <div class="setting-card">
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">🌐</span>
+                                        네트워크 사용
+                                    </div>
+                                    <div class="setting-description">인터넷 연결을 허용합니다</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">🎤</span>
+                                        오디오 녹음 사용
+                                    </div>
+                                    <div class="setting-description">마이크 사용을 허용합니다</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="SettingsModel.EnableAudioInput" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">📹</span>
+                                        비디오 녹화 사용
+                                    </div>
+                                    <div class="setting-description">카메라 사용을 허용합니다</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="SettingsModel.EnableVideoInput" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">🖨️</span>
+                                        프린터 공유 사용
+                                    </div>
+                                    <div class="setting-description">호스트 PC의 프린터를 공유합니다</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="SettingsModel.EnablePrinterRedirection" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">📋</span>
+                                        복사/붙여넣기 사용
+                                    </div>
+                                    <div class="setting-description">클립보드 공유를 허용합니다</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="SettingsModel.EnableClipboardRedirection" />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" @bind="SettingsModel.EnableAudioInput" />
-                            <span class="slider"></span>
-                        </label>
                     </div>
                     
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-name">비디오 녹화 사용</div>
-                            <div class="setting-description">카메라 사용을 허용합니다</div>
+                    <div class="settings-note">
+                        <div class="note-icon">💡</div>
+                        <div class="note-text">
+                            설정은 다음에 생성되는 WSB 파일부터 적용됩니다.
+                            보안을 위해 필요한 기능만 활성화하는 것을 권장합니다.
                         </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" @bind="SettingsModel.EnableVideoInput" />
-                            <span class="slider"></span>
-                        </label>
                     </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-name">프린터 공유 사용</div>
-                            <div class="setting-description">호스트 PC의 프린터를 공유합니다</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" @bind="SettingsModel.EnablePrinterRedirection" />
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-name">복사/붙여넣기 사용</div>
-                            <div class="setting-description">클립보드 공유를 허용합니다</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" @bind="SettingsModel.EnableClipboardRedirection" />
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-note">
-                <div class="note-icon">💡</div>
-                <div class="note-text">
-                    설정은 다음에 생성되는 WSB 파일부터 적용됩니다.
-                    보안을 위해 필요한 기능만 활성화하는 것을 권장합니다.
                 </div>
             </div>
             
@@ -168,18 +215,20 @@
 
     .modal-content {
         background: white;
-        border-radius: 12px;
-        max-width: 700px;
+        border-radius: 16px;
+        max-width: 800px;
         width: 100%;
         max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
     }
 
     .modal-header {
         padding: 24px 24px 16px;
-        border-bottom: 1px solid #e9ecef;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -190,29 +239,98 @@
         margin: 0;
         font-size: 1.5rem;
         font-weight: 600;
-        color: #2c3e50;
     }
 
     .close-btn {
-        background: none;
+        background: rgba(255, 255, 255, 0.2);
         border: none;
-        font-size: 24px;
+        font-size: 20px;
         cursor: pointer;
-        color: #6c757d;
-        padding: 4px;
-        border-radius: 4px;
+        color: white;
+        padding: 8px;
+        border-radius: 8px;
         transition: all 0.2s ease;
+        backdrop-filter: blur(10px);
     }
 
     .close-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+    }
+
+    /* 탭 네비게이션 */
+    .tab-navigation {
+        display: flex;
         background: #f8f9fa;
-        color: #495057;
+        border-bottom: 1px solid #e9ecef;
+        flex-shrink: 0;
+    }
+
+    .tab-button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px 24px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+        position: relative;
+    }
+
+    .tab-button:hover {
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+    }
+
+    .tab-button.active {
+        background: white;
+        color: #007bff;
+        box-shadow: 0 -2px 0 #007bff inset;
+    }
+
+    .tab-button.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #007bff;
+    }
+
+    .tab-icon {
+        font-size: 16px;
+    }
+
+    .tab-label {
+        font-weight: 600;
     }
 
     .modal-body {
-        padding: 24px;
         flex: 1;
         overflow-y: auto;
+    }
+
+    /* 탭 콘텐츠 */
+    .tab-content {
+        display: none;
+        padding: 24px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .settings-section {
@@ -223,45 +341,76 @@
         margin-bottom: 0;
     }
 
-    .settings-info {
-        margin-bottom: 20px;
-        padding: 16px;
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
+    /* 섹션 헤더 */
+    .section-header {
+        margin-bottom: 24px;
     }
 
-    .settings-info p {
-        margin: 0 0 8px 0;
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .section-icon {
+        font-size: 24px;
+    }
+
+    .section-title h4 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
         color: #2c3e50;
     }
 
-    .settings-info p:last-child {
-        margin-bottom: 0;
+    .section-description {
         color: #6c757d;
         font-size: 14px;
+        line-height: 1.5;
+        margin-left: 36px;
     }
 
-    .settings-list {
-        margin-bottom: 24px;
+    /* 설정 카드 */
+    .setting-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .setting-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 설정 그리드 */
+    .settings-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
     .setting-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 20px 0;
-        border-bottom: 1px solid #e9ecef;
+        padding: 16px 0;
+        border-bottom: 1px solid #f1f3f4;
     }
 
     .setting-item:last-child {
         border-bottom: none;
+        padding-bottom: 0;
     }
 
     .setting-item.model-selection {
         flex-direction: column;
         align-items: stretch;
         gap: 16px;
+        border-bottom: none;
+        padding: 0;
     }
 
     .setting-info {
@@ -274,10 +423,17 @@
     }
 
     .setting-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: 16px;
         font-weight: 600;
         color: #2c3e50;
         margin-bottom: 4px;
+    }
+
+    .setting-icon {
+        font-size: 16px;
     }
 
     .setting-description {
@@ -285,24 +441,26 @@
         color: #6c757d;
     }
 
+    /* 모델 선택기 */
     .model-selector {
         width: 100%;
     }
 
     .model-select {
         width: 100%;
-        padding: 12px 16px;
+        padding: 16px 20px;
         border: 2px solid #e9ecef;
-        border-radius: 8px;
+        border-radius: 12px;
         font-size: 14px;
         background: white;
         cursor: pointer;
-        transition: border-color 0.2s ease;
+        transition: all 0.2s ease;
     }
 
     .model-select:focus {
         outline: none;
         border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
     .model-select optgroup {
@@ -317,7 +475,7 @@
     }
 
     .model-info {
-        margin-top: 8px;
+        margin-top: 12px;
     }
 
     .model-note {
@@ -326,11 +484,12 @@
         font-style: italic;
     }
 
+    /* 토글 스위치 */
     .toggle-switch {
         position: relative;
         display: inline-block;
-        width: 50px;
-        height: 24px;
+        width: 54px;
+        height: 28px;
     }
 
     .toggle-switch input {
@@ -347,43 +506,46 @@
         right: 0;
         bottom: 0;
         background-color: #ccc;
-        transition: .4s;
-        border-radius: 24px;
+        transition: .3s;
+        border-radius: 28px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .slider:before {
         position: absolute;
         content: "";
-        height: 18px;
-        width: 18px;
+        height: 22px;
+        width: 22px;
         left: 3px;
         bottom: 3px;
         background-color: white;
-        transition: .4s;
+        transition: .3s;
         border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     input:checked + .slider {
-        background-color: #007bff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     input:focus + .slider {
-        box-shadow: 0 0 1px #007bff;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
     }
 
     input:checked + .slider:before {
         transform: translateX(26px);
     }
 
+    /* 설정 노트 */
     .settings-note {
         display: flex;
         align-items: flex-start;
         gap: 12px;
         padding: 16px;
-        background: #fff3cd;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
         border: 1px solid #ffeaa7;
-        border-radius: 8px;
-        margin-bottom: 16px;
+        border-radius: 12px;
+        margin-top: 24px;
     }
 
     .note-icon {
@@ -397,19 +559,26 @@
         line-height: 1.5;
     }
 
+    /* 로딩 및 상태 메시지 */
     .loading-indicator {
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 16px;
-        background: #e3f2fd;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
         border: 1px solid #90caf9;
-        border-radius: 8px;
-        margin-bottom: 16px;
+        border-radius: 12px;
+        margin: 16px 24px;
     }
 
     .loading-spinner {
         font-size: 16px;
+        animation: spin 2s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     .loading-text {
@@ -422,18 +591,24 @@
         align-items: center;
         gap: 12px;
         padding: 16px;
-        border-radius: 8px;
-        margin-bottom: 16px;
+        border-radius: 12px;
+        margin: 16px 24px;
+        animation: slideIn 0.3s ease;
+    }
+
+    @@keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .status-message.success {
-        background: #d4edda;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
         border: 1px solid #c3e6cb;
         color: #155724;
     }
 
     .status-message.error {
-        background: #f8d7da;
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
         border: 1px solid #f5c6cb;
         color: #721c24;
     }
@@ -447,8 +622,10 @@
         font-size: 14px;
     }
 
+    /* 모달 푸터 */
     .modal-footer {
-        padding: 16px 24px 24px;
+        padding: 20px 24px;
+        background: #f8f9fa;
         border-top: 1px solid #e9ecef;
         display: flex;
         justify-content: space-between;
@@ -456,13 +633,15 @@
     }
 
     .btn {
-        padding: 10px 20px;
-        border-radius: 6px;
+        padding: 12px 24px;
+        border-radius: 8px;
         border: 1px solid;
         cursor: pointer;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
     }
 
     .btn:disabled {
@@ -479,55 +658,77 @@
     .btn-secondary:hover:not(:disabled) {
         background: #5a6268;
         border-color: #545b62;
+        transform: translateY(-1px);
     }
 
     .btn-primary {
-        background: #007bff;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
         border-color: #007bff;
         color: white;
     }
 
     .btn-primary:hover:not(:disabled) {
-        background: #0056b3;
+        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
         border-color: #004085;
+        transform: translateY(-1px);
     }
 
     /* 반응형 디자인 */
-    .settings-modal {
-        /* 모바일 대응 기본 스타일은 이미 적용됨 */
-    }
+    @@media (max-width: 768px) {
+        .settings-modal {
+            padding: 10px;
+        }
 
-    /* 모바일 스타일 */
-    .settings-modal.mobile .modal-content {
-        max-height: 95vh;
-    }
+        .modal-content {
+            max-width: 100%;
+            max-height: 95vh;
+            border-radius: 12px;
+        }
 
-    .settings-modal.mobile .modal-header,
-    .settings-modal.mobile .modal-body,
-    .settings-modal.mobile .modal-footer {
-        padding-left: 16px;
-        padding-right: 16px;
-    }
+        .modal-header,
+        .tab-content,
+        .modal-footer {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
 
-    .settings-modal.mobile .setting-item {
-        padding: 16px 0;
-    }
+        .tab-button {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
 
-    .settings-modal.mobile .setting-name {
-        font-size: 14px;
-    }
+        .tab-icon {
+            font-size: 14px;
+        }
 
-    .settings-modal.mobile .setting-description {
-        font-size: 12px;
-    }
+        .setting-item {
+            padding: 12px 0;
+        }
 
-    .settings-modal.mobile .modal-footer {
-        flex-direction: column-reverse;
-        gap: 8px;
-    }
+        .setting-name {
+            font-size: 14px;
+        }
 
-    .settings-modal.mobile .btn {
-        width: 100%;
+        .setting-description {
+            font-size: 12px;
+        }
+
+        .modal-footer {
+            flex-direction: column-reverse;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .section-title h4 {
+            font-size: 1.1rem;
+        }
+
+        .section-description {
+            margin-left: 28px;
+        }
     }
 </style>
 
@@ -540,10 +741,17 @@
     private bool _isLoading = false;
     private string _statusMessage = string.Empty;
     private bool _isError = false;
+    private string _activeTab = "ai"; // 기본 탭은 AI 모델
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentSettings();
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        _activeTab = tab;
+        StateHasChanged();
     }
 
     private async Task LoadCurrentSettings()
