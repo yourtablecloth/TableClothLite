@@ -1,6 +1,6 @@
 {
-  "name": "TableClothLite",
-  "short_name": "TableClothLite",
+  "name": "식탁보 AI",
+  "short_name": "식탁보 AI",
   "id": "./",
   "start_url": "./",
   "display": "standalone",

@@ -977,27 +977,27 @@ window.shareContent = async function(shareData) {
 window.exportConversationAsText = function(conversationData) {
     try {
         const data = JSON.parse(conversationData);
-        let textContent = `TableClothLite AI 대화 기록\n`;
+        let textContent = `식탁보 AI 대화 기록\n`;
         textContent += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
         textContent += `총 ${data.messages.length}개의 메시지\n`;
         textContent += `${'='.repeat(50)}\n\n`;
         
         data.messages.forEach((message, index) => {
-            const sender = message.isUser ? '사용자' : 'TableClothLite AI';
+            const sender = message.isUser ? '사용자' : '식탁보 AI';
             textContent += `[${index + 1}] ${sender}\n`;
             textContent += `${'-'.repeat(20)}\n`;
             textContent += `${message.content}\n\n`;
         });
         
         textContent += `${'='.repeat(50)}\n`;
-        textContent += `TableClothLite AI - https://yourtablecloth.app`;
+        textContent += `식탁보 AI - https://yourtablecloth.app`;
         
         // 텍스트 파일 다운로드
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `TableClothLite_대화기록_${new Date().toISOString().split('T')[0]}.txt`;
+        a.download = `식탁보_AI_대화기록_${new Date().toISOString().split('T')[0]}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1152,4 +1152,4 @@ function getToastIcon(type) {
 }
 
 // 초기화 완료 로그
-console.log('TableClothLite JavaScript 모듈 로드 완료 ✅');
+console.log('식탁보 AI JavaScript 모듈 로드 완료 ✅');
