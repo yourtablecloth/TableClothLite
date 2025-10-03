@@ -1,4 +1,4 @@
-﻿@page "/auth-callback"
+@page "/auth-callback"
 @using TableClothLite.Services
 @inject OpenRouterAuthService AuthService
 @inject OpenAIChatService ChatService
@@ -7,12 +7,14 @@
 
 <PageTitle>식탁보 라이트 Preview</PageTitle>
 
-<h3>인증 처리 중입니다.</h3>
+<div>
+    <h3>인증 처리 중입니다.</h3>
 
-@if (_error != null)
-{
-    <div class="alert alert-danger">
-        @_error
-    </div>
-    <button class="btn btn-primary" @onclick="RetryAuthentication">다시 시도</button>
-}
+    @if (_error != null)
+    {
+        <div class="alert alert-danger">
+            @_error
+        </div>
+        <button class="btn btn-primary" @onclick="RetryAuthentication">다시 시도</button>
+    }
+</div>

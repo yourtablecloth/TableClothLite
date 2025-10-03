@@ -27,46 +27,46 @@ public partial class Chat : IDisposable
     private MarkdownPipeline? _markdownPipeline;
     private HtmlParser _htmlParser = new HtmlParser();
     
-    // API Å° »óÅÂ °ü¸®
+    // API í‚¤ ìƒíƒœ ê´€ë¦¬
     private bool _hasApiKey = false;
     private bool _isCheckingApiKey = true;
 
-    // ±ÛÀÚ ¼ö Á¦ÇÑ °ü·Ã º¯¼ö
-    private readonly int _maxInputLength = 1000; // ÃÖ´ë ±ÛÀÚ ¼ö Á¦ÇÑ
-    private readonly int _warningThreshold = 100; // Á¦ÇÑ¿¡ ±ÙÁ¢Çß´Ù°í °æ°íÇÒ ÀÜ¿© ±ÛÀÚ ¼ö ±âÁØ
+    // ê¸€ì ìˆ˜ ì œí•œ ê´€ë ¨ ë³€ìˆ˜
+    private readonly int _maxInputLength = 1000; // ìµœëŒ€ ê¸€ì ìˆ˜ ì œí•œ
+    private readonly int _warningThreshold = 100; // ì œí•œì— ê·¼ì ‘í–ˆë‹¤ê³  ê²½ê³ í•  ì”ì—¬ ê¸€ì ìˆ˜ ê¸°ì¤€
     private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
 
-    // Dirty state °ü¸® - ´ëÈ­ ³»¿ëÀÌ ÀÖ´ÂÁö ÃßÀû
+    // Dirty state ê´€ë¦¬ - ëŒ€í™” ë‚´ìš©ì´ ìˆëŠ”ì§€ ì¶”ì 
     private bool _hasUnsavedContent => _messages.Any() || !string.IsNullOrWhiteSpace(_userInput);
 
-    // ÇÊ¿äÇÑ ¼­ºñ½ºµé inject
+    // í•„ìš”í•œ ì„œë¹„ìŠ¤ë“¤ inject
     [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
 
-    // Windows Sandbox °¡ÀÌµå ¸ğ´Ş »óÅÂ °ü¸®
+    // Windows Sandbox ê°€ì´ë“œ ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
     private bool _showSandboxGuide = false;
     private bool _isWindowsOS = true;
 
-    // ¼­ºñ½º ¸ñ·Ï ¸ğ´Ş »óÅÂ °ü¸®
+    // ì„œë¹„ìŠ¤ ëª©ë¡ ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
     private bool _showServicesModal = false;
     
-    // ¼³Á¤ ¸ğ´Ş »óÅÂ °ü¸®
+    // ì„¤ì • ëª¨ë‹¬ ìƒíƒœ ê´€ë¦¬
     private bool _showSettingsModal = false;
 
-    // ´ëÈ­ ¾×¼Ç µå·Ó´Ù¿î »óÅÂ °ü¸®
+    // ëŒ€í™” ì•¡ì…˜ ë“œë¡­ë‹¤ìš´ ìƒíƒœ ê´€ë¦¬
     private bool _showConversationActionsDropdown = false;
 
-    // »õ ¹öÀü ¾Ë¸² »óÅÂ °ü¸® - confirm ´ë½Å ÀÎ¾Û ¾Ë¸² »ç¿ë
+    // ìƒˆ ë²„ì „ ì•Œë¦¼ ìƒíƒœ ê´€ë¦¬ - confirm ëŒ€ì‹  ì¸ì•± ì•Œë¦¼ ì‚¬ìš©
     private bool _showUpdateNotification = false;
     private VersionInfo? _pendingUpdate = null;
     private Timer? _updateCheckTimer = null;
 
-    // ModelIndicator ·¹ÆÛ·±½º
+    // ModelIndicator ë ˆí¼ëŸ°ìŠ¤
     private ModelIndicator? _modelIndicator;
     
-    // ÈÄ¿ø ¹è³Ê »óÅÂ
+    // í›„ì› ë°°ë„ˆ ìƒíƒœ
     private bool _sponsorBannerDismissed = false;
 
-    // ¹öÀü Á¤º¸ Å¬·¡½º - °£¼ÒÈ­
+    // ë²„ì „ ì •ë³´ í´ë˜ìŠ¤ - ê°„ì†Œí™”
     private class VersionInfo
     {
         public string? Version { get; set; }
@@ -75,7 +75,7 @@ public partial class Chat : IDisposable
         public string? Branch { get; set; }
     }
 
-    // JavaScript¿¡¼­ ¹İÈ¯ÇÒ °øÀ¯ °á°ú Å¬·¡½º
+    // JavaScriptì—ì„œ ë°˜í™˜í•  ê³µìœ  ê²°ê³¼ í´ë˜ìŠ¤
     private class ShareResult
     {
         public bool Success { get; set; }
@@ -85,7 +85,7 @@ public partial class Chat : IDisposable
 
     protected override void OnInitialized()
     {
-        // È£È¯¼ºÀ» À§ÇÑ /Chat °æ·Î ¸®´ÙÀÌ·ºÆ® Ã³¸®
+        // í˜¸í™˜ì„±ì„ ìœ„í•œ /Chat ê²½ë¡œ ë¦¬ë‹¤ì´ë ‰íŠ¸ ì²˜ë¦¬
         var uri = new Uri(NavigationManager.Uri);
         if (uri.AbsolutePath.Equals("/Chat", StringComparison.OrdinalIgnoreCase))
         {
@@ -121,7 +121,7 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ÈÄ¿ø ¹è³Ê »óÅÂ ·Îµå Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"í›„ì› ë°°ë„ˆ ìƒíƒœ ë¡œë“œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             _sponsorBannerDismissed = false;
         }
     }
@@ -149,7 +149,7 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"API Å° »óÅÂ È®ÀÎ Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"API í‚¤ ìƒíƒœ í™•ì¸ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             _hasApiKey = false;
         }
         finally
@@ -165,40 +165,40 @@ public partial class Chat : IDisposable
         {
             dotNetHelper = DotNetObjectReference.Create(this);
             
-            // JavaScript ÇÔ¼öµéÀ» ¾ÈÀüÇÏ°Ô ÃÊ±âÈ­
+            // JavaScript í•¨ìˆ˜ë“¤ì„ ì•ˆì „í•˜ê²Œ ì´ˆê¸°í™”
             await InitializeJavaScriptAsync();
             
-            // Ä³½Ã ¹«È¿È­ ¹× ¹öÀü Ã¼Å©
+            // ìºì‹œ ë¬´íš¨í™” ë° ë²„ì „ ì²´í¬
             await CheckAppVersionAsync();
         }
 
         await SafeInvokeJSAsync("scrollToBottom", "messages");
     }
 
-    // JavaScript ÃÊ±âÈ­¸¦ ¾ÈÀüÇÏ°Ô Ã³¸®
+    // JavaScript ì´ˆê¸°í™”ë¥¼ ì•ˆì „í•˜ê²Œ ì²˜ë¦¬
     private async Task InitializeJavaScriptAsync()
     {
         try
         {
-            // ±âº» JavaScript ÇÔ¼öµéÀÌ ·ÎµåµÉ ¶§±îÁö ´ë±â
-            var maxAttempts = 50; // 5ÃÊ ´ë±â (100ms * 50)
+            // ê¸°ë³¸ JavaScript í•¨ìˆ˜ë“¤ì´ ë¡œë“œë  ë•Œê¹Œì§€ ëŒ€ê¸°
+            var maxAttempts = 50; // 5ì´ˆ ëŒ€ê¸° (100ms * 50)
             var attempts = 0;
             
             while (attempts < maxAttempts)
             {
                 try
                 {
-                    // Helpers °´Ã¼°¡ Á¸ÀçÇÏ´ÂÁö È®ÀÎ
+                    // Helpers ê°ì²´ê°€ ì¡´ì¬í•˜ëŠ”ì§€ í™•ì¸
                     var helpersExists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.Helpers !== 'undefined'");
                     if (helpersExists)
                     {
-                        Console.WriteLine("JavaScript Helpers °´Ã¼°¡ ÁØºñµÇ¾ú½À´Ï´Ù.");
+                        Console.WriteLine("JavaScript Helpers ê°ì²´ê°€ ì¤€ë¹„ë˜ì—ˆìŠµë‹ˆë‹¤.");
                         break;
                     }
                 }
                 catch
                 {
-                    // °è¼Ó ½Ãµµ
+                    // ê³„ì† ì‹œë„
                 }
                 
                 attempts++;
@@ -207,11 +207,11 @@ public partial class Chat : IDisposable
 
             if (attempts >= maxAttempts)
             {
-                Console.WriteLine("Warning: JavaScript Helpers °´Ã¼¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù. ±âº» ±â´É¸¸ »ç¿ëµË´Ï´Ù.");
+                Console.WriteLine("Warning: JavaScript Helpers ê°ì²´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ê¸°ë³¸ ê¸°ëŠ¥ë§Œ ì‚¬ìš©ë©ë‹ˆë‹¤.");
                 return;
             }
 
-            // Helpers°¡ ÁØºñµÇ¸é ÃÊ±âÈ­ ÁøÇà
+            // Helpersê°€ ì¤€ë¹„ë˜ë©´ ì´ˆê¸°í™” ì§„í–‰
             await SafeInvokeJSAsync("Helpers.setDotNetHelper", dotNetHelper);
             await SafeInvokeJSAsync("setupBeforeUnloadHandler", dotNetHelper);
             await SafeInvokeJSAsync("setupDropdownClickOutside", dotNetHelper);
@@ -219,11 +219,11 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"JavaScript ÃÊ±âÈ­ Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"JavaScript ì´ˆê¸°í™” ì¤‘ ì˜¤ë¥˜: {ex.Message}");
         }
     }
 
-    // ¾ÈÀüÇÑ JavaScript È£Ãâ
+    // ì•ˆì „í•œ JavaScript í˜¸ì¶œ
     private async Task SafeInvokeJSAsync(string identifier, params object?[] args)
     {
         try
@@ -232,26 +232,26 @@ public partial class Chat : IDisposable
         }
         catch (JSException ex) when (ex.Message.Contains("undefined"))
         {
-            Console.WriteLine($"JavaScript ÇÔ¼ö '{identifier}'°¡ Á¤ÀÇµÇÁö ¾ÊÀ½: {ex.Message}");
+            Console.WriteLine($"JavaScript í•¨ìˆ˜ '{identifier}'ê°€ ì •ì˜ë˜ì§€ ì•ŠìŒ: {ex.Message}");
         }
         catch (JSException ex)
         {
-            Console.WriteLine($"JavaScript È£Ãâ ½ÇÆĞ '{identifier}': {ex.Message}");
+            Console.WriteLine($"JavaScript í˜¸ì¶œ ì‹¤íŒ¨ '{identifier}': {ex.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"¿¹»óÄ¡ ¸øÇÑ ¿À·ù '{identifier}': {ex.Message}");
+            Console.WriteLine($"ì˜ˆìƒì¹˜ ëª»í•œ ì˜¤ë¥˜ '{identifier}': {ex.Message}");
         }
     }
 
-    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - beforeunload ½Ã unsaved content È®ÀÎ
+    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - beforeunload ì‹œ unsaved content í™•ì¸
     [JSInvokable]
     public bool HasUnsavedContent()
     {
         return _hasUnsavedContent;
     }
 
-    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - µå·Ó´Ù¿î ¼û±â±â
+    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - ë“œë¡­ë‹¤ìš´ ìˆ¨ê¸°ê¸°
     [JSInvokable]
     public Task HideConversationActionsDropdown()
     {
@@ -260,7 +260,7 @@ public partial class Chat : IDisposable
         return Task.CompletedTask;
     }
 
-    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - »÷µå¹Ú½º¿¡¼­ ¸µÅ© ¿­±â
+    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - ìƒŒë“œë°•ìŠ¤ì—ì„œ ë§í¬ ì—´ê¸°
     [JSInvokable]
     public async Task OpenSandbox(string url)
     {
@@ -268,36 +268,36 @@ public partial class Chat : IDisposable
         {
             if (string.IsNullOrWhiteSpace(url))
             {
-                Console.WriteLine("URLÀÌ ºñ¾îÀÖ½À´Ï´Ù.");
+                Console.WriteLine("URLì´ ë¹„ì–´ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            Console.WriteLine($"»÷µå¹Ú½º¿¡¼­ URL ¿­±â: {url}");
+            Console.WriteLine($"ìƒŒë“œë°•ìŠ¤ì—ì„œ URL ì—´ê¸°: {url}");
             
-            // SandboxViewModelÀ» ÅëÇØ »÷µå¹Ú½º¿¡¼­ URL ¿­±â
-            // URL¸¸ ÀÖ´Â °æ¿ì ±âº» ¼­ºñ½º Á¤º¸ »ı¼º
+            // SandboxViewModelì„ í†µí•´ ìƒŒë“œë°•ìŠ¤ì—ì„œ URL ì—´ê¸°
+            // URLë§Œ ìˆëŠ” ê²½ìš° ê¸°ë³¸ ì„œë¹„ìŠ¤ ì •ë³´ ìƒì„±
             var defaultService = new ServiceInfo(
                 ServiceId: "web-browser",
-                DisplayName: "À¥ ºê¶ó¿ìÀú", 
+                DisplayName: "ì›¹ ë¸Œë¼ìš°ì €", 
                 Category: "other",
                 Url: url,
-                CompatNotes: "AI Ã¤ÆÃ¿¡¼­ »ı¼ºµÈ ¸µÅ©"
+                CompatNotes: "AI ì±„íŒ…ì—ì„œ ìƒì„±ëœ ë§í¬"
             );
             
             await Model.GenerateSandboxDocumentAsync(url, defaultService);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"»÷µå¹Ú½º¿¡¼­ ¸µÅ© ¿­±â Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"ìƒŒë“œë°•ìŠ¤ì—ì„œ ë§í¬ ì—´ê¸° ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             
-            // ¿À·ù ¹ß»ı ½Ã »ç¿ëÀÚ¿¡°Ô ¾Ë¸²
+            // ì˜¤ë¥˜ ë°œìƒ ì‹œ ì‚¬ìš©ìì—ê²Œ ì•Œë¦¼
             await SafeInvokeJSAsync("showToast", 
-                "»÷µå¹Ú½º¿¡¼­ ¸µÅ©¸¦ ¿­ ¼ö ¾ø½À´Ï´Ù. Windows Sandbox°¡ ¼³Ä¡µÇ¾î ÀÖ´ÂÁö È®ÀÎÇØÁÖ¼¼¿ä.", 
+                "ìƒŒë“œë°•ìŠ¤ì—ì„œ ë§í¬ë¥¼ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤. Windows Sandboxê°€ ì„¤ì¹˜ë˜ì–´ ìˆëŠ”ì§€ í™•ì¸í•´ì£¼ì„¸ìš”.", 
                 "error");
         }
     }
 
-    // JavaScript¿¡¼­ È£ÃâÇÒ ¼ö ÀÖ´Â ¸Ş¼­µå - »õ ¹öÀü °¨Áö (°£¼ÒÈ­µÈ ±¸Á¶)
+    // JavaScriptì—ì„œ í˜¸ì¶œí•  ìˆ˜ ìˆëŠ” ë©”ì„œë“œ - ìƒˆ ë²„ì „ ê°ì§€ (ê°„ì†Œí™”ëœ êµ¬ì¡°)
     [JSInvokable]
     public async Task OnNewVersionDetected(string versionInfoJson)
     {
@@ -316,27 +316,27 @@ public partial class Chat : IDisposable
                 Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
             };
             
-            // Æ÷Ä¿½º »©¾Ñ±è ¾øÀÌ ºÎµå·¯¿î ÀÎ¾Û ¾Ë¸²¸¸ Ç¥½Ã
+            // í¬ì»¤ìŠ¤ ë¹¼ì•—ê¹€ ì—†ì´ ë¶€ë“œëŸ¬ìš´ ì¸ì•± ì•Œë¦¼ë§Œ í‘œì‹œ
             await ShowGentleUpdateNotificationAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"»õ ¹öÀü °¨Áö Ã³¸® Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"ìƒˆ ë²„ì „ ê°ì§€ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
         }
     }
 
-    // ¾Û ¹öÀü Ã¼Å© ¹× Ä³½Ã °ü¸®
+    // ì•± ë²„ì „ ì²´í¬ ë° ìºì‹œ ê´€ë¦¬
     private async Task CheckAppVersionAsync()
     {
         try
         {
-            // ÇöÀç ¾Û ¹öÀü (fallback¿ë)
+            // í˜„ì¬ ì•± ë²„ì „ (fallbackìš©)
             const string FALLBACK_VERSION = "2024.12.17.1";
             
-            // version.json¿¡¼­ ¼­¹ö ¹öÀü È®ÀÎ
+            // version.jsonì—ì„œ ì„œë²„ ë²„ì „ í™•ì¸
             var serverVersionInfo = await GetServerVersionAsync();
             
-            // ·ÎÄÃ ½ºÅä¸®Áö¿¡¼­ ÀúÀåµÈ Á¤º¸ È®ÀÎ
+            // ë¡œì»¬ ìŠ¤í† ë¦¬ì§€ì—ì„œ ì €ì¥ëœ ì •ë³´ í™•ì¸
             var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
             var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
             var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
@@ -345,42 +345,42 @@ public partial class Chat : IDisposable
             
             if (string.IsNullOrEmpty(storedVersion))
             {
-                // Ã³À½ ¹æ¹® - ÇöÀç ¹öÀü ÀúÀå
+                // ì²˜ìŒ ë°©ë¬¸ - í˜„ì¬ ë²„ì „ ì €ì¥
                 var versionToStore = serverVersionInfo?.Version ?? FALLBACK_VERSION;
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
-                Console.WriteLine($"Ã¹ ¹æ¹®: ¹öÀü {versionToStore} ÀúÀå");
+                Console.WriteLine($"ì²« ë°©ë¬¸: ë²„ì „ {versionToStore} ì €ì¥");
             }
             else if (serverVersionInfo?.Version != null && 
                      storedVersion != serverVersionInfo.Version &&
                      !dismissedVersionsList.Contains(serverVersionInfo.Version))
             {
-                // »õ ¹öÀü °¨ÁöÇÏ°í, »ç¿ëÀÚ°¡ ÀÌÀü¿¡ "³ªÁß¿¡"¸¦ ¼±ÅÃÇÏÁö ¾ÊÀº °æ¿ì¸¸ ¾Ë¸²
+                // ìƒˆ ë²„ì „ ê°ì§€í•˜ê³ , ì‚¬ìš©ìê°€ ì´ì „ì— "ë‚˜ì¤‘ì—"ë¥¼ ì„ íƒí•˜ì§€ ì•Šì€ ê²½ìš°ë§Œ ì•Œë¦¼
                 _pendingUpdate = serverVersionInfo;
                 await ShowGentleUpdateNotificationAsync();
-                Console.WriteLine($"»õ ¹öÀü °¨Áö: {serverVersionInfo.Version} (ÇöÀç: {storedVersion})");
+                Console.WriteLine($"ìƒˆ ë²„ì „ ê°ì§€: {serverVersionInfo.Version} (í˜„ì¬: {storedVersion})");
             }
             else if (serverVersionInfo?.Version != null && dismissedVersionsList.Contains(serverVersionInfo.Version))
             {
-                Console.WriteLine($"¹öÀü {serverVersionInfo.Version}´Â »ç¿ëÀÚ°¡ ÀÌÀü¿¡ ¹«½ÃÇÔ");
+                Console.WriteLine($"ë²„ì „ {serverVersionInfo.Version}ëŠ” ì‚¬ìš©ìê°€ ì´ì „ì— ë¬´ì‹œí•¨");
             }
             
-            // ¹é±×¶ó¿îµå¿¡¼­ ÁÖ±âÀû ¹öÀü Ã¼Å© ½ÃÀÛ
+            // ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì‹œì‘
             StartPeriodicVersionCheck();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"¹öÀü Ã¼Å© Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"ë²„ì „ ì²´í¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
         }
     }
 
-    // ¼­¹ö¿¡¼­ ¹öÀü Á¤º¸ °¡Á®¿À±â - °£¼ÒÈ­µÈ ±¸Á¶
+    // ì„œë²„ì—ì„œ ë²„ì „ ì •ë³´ ê°€ì ¸ì˜¤ê¸° - ê°„ì†Œí™”ëœ êµ¬ì¡°
     private async Task<VersionInfo?> GetServerVersionAsync()
     {
         try
         {
             var cacheBuster = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             
-            // JavaScript fetch API Á÷Á¢ »ç¿ëÇÏ¿© ´õ ³ªÀº ¿¡·¯ ÇÚµé¸µ
+            // JavaScript fetch API ì§ì ‘ ì‚¬ìš©í•˜ì—¬ ë” ë‚˜ì€ ì—ëŸ¬ í•¸ë“¤ë§
             var fetchResult = await SafeInvokeJSWithResultAsync<string>("fetchVersionJson", $"/version.json?t={cacheBuster}");
             
             if (!string.IsNullOrEmpty(fetchResult))
@@ -396,20 +396,20 @@ public partial class Chat : IDisposable
                     Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
                 };
                 
-                Console.WriteLine($"¼­¹ö ¹öÀü Á¤º¸ ·Îµå ¼º°ø: {versionInfo.Version} (ºôµå: {versionInfo.BuildDate})");
+                Console.WriteLine($"ì„œë²„ ë²„ì „ ì •ë³´ ë¡œë“œ ì„±ê³µ: {versionInfo.Version} (ë¹Œë“œ: {versionInfo.BuildDate})");
                 return versionInfo;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"¼­¹ö ¹öÀü Á¤º¸ °¡Á®¿À±â ½ÇÆĞ: {ex.Message}");
-            // 404³ª ³×Æ®¿öÅ© ¿À·ù ½Ã Á¶¿ëÈ÷ Ã³¸®
+            Console.WriteLine($"ì„œë²„ ë²„ì „ ì •ë³´ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {ex.Message}");
+            // 404ë‚˜ ë„¤íŠ¸ì›Œí¬ ì˜¤ë¥˜ ì‹œ ì¡°ìš©íˆ ì²˜ë¦¬
         }
 
         return null;
     }
 
-    // °á°ú¸¦ ¹İÈ¯ÇÏ´Â ¾ÈÀüÇÑ JavaScript È£Ãâ
+    // ê²°ê³¼ë¥¼ ë°˜í™˜í•˜ëŠ” ì•ˆì „í•œ JavaScript í˜¸ì¶œ
     private async Task<T?> SafeInvokeJSWithResultAsync<T>(string identifier, params object[] args)
     {
         try
@@ -418,27 +418,27 @@ public partial class Chat : IDisposable
         }
         catch (JSException ex) when (ex.Message.Contains("undefined"))
         {
-            Console.WriteLine($"JavaScript ÇÔ¼ö '{identifier}'°¡ Á¤ÀÇµÇÁö ¾ÊÀ½: {ex.Message}");
+            Console.WriteLine($"JavaScript í•¨ìˆ˜ '{identifier}'ê°€ ì •ì˜ë˜ì§€ ì•ŠìŒ: {ex.Message}");
             return default;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"JavaScript È£Ãâ ½ÇÆĞ '{identifier}': {ex.Message}");
+            Console.WriteLine($"JavaScript í˜¸ì¶œ ì‹¤íŒ¨ '{identifier}': {ex.Message}");
             return default;
         }
     }
 
-    // ºÎµå·¯¿î ¾÷µ¥ÀÌÆ® ¾Ë¸² Ç¥½Ã - confirm ¿ÏÀü Á¦°Å
+    // ë¶€ë“œëŸ¬ìš´ ì—…ë°ì´íŠ¸ ì•Œë¦¼ í‘œì‹œ - confirm ì™„ì „ ì œê±°
     private Task ShowGentleUpdateNotificationAsync()
     {
         if (_pendingUpdate is null)
             return Task.CompletedTask;
 
-        // Æ÷Ä¿½º »©¾Ñ±è ¾ø´Â ÆäÀÌÁö ÅëÇÕ ¾Ë¸²¸¸ Ç¥½Ã
+        // í¬ì»¤ìŠ¤ ë¹¼ì•—ê¹€ ì—†ëŠ” í˜ì´ì§€ í†µí•© ì•Œë¦¼ë§Œ í‘œì‹œ
         _showUpdateNotification = true;
         StateHasChanged();
 
-        // 5ºĞ ÈÄ ÀÚµ¿ ¼û±è Ã³¸® (»ç¿ëÀÚ°¡ Á÷Á¢ ´İÁö ¾ÊÀº °æ¿ì)
+        // 5ë¶„ í›„ ìë™ ìˆ¨ê¹€ ì²˜ë¦¬ (ì‚¬ìš©ìê°€ ì§ì ‘ ë‹«ì§€ ì•Šì€ ê²½ìš°)
         return Task.Run(async () =>
         {
             await Task.Delay(TimeSpan.FromMinutes(5));
@@ -453,12 +453,12 @@ public partial class Chat : IDisposable
         });
     }
 
-    // ¾÷µ¥ÀÌÆ® ¾Ë¸² ´İ±â - »ç¿ëÀÚ°¡ "³ªÁß¿¡" ¼±ÅÃ ½Ã ±â¾ï
+    // ì—…ë°ì´íŠ¸ ì•Œë¦¼ ë‹«ê¸° - ì‚¬ìš©ìê°€ "ë‚˜ì¤‘ì—" ì„ íƒ ì‹œ ê¸°ì–µ
     private async Task DismissUpdateNotification()
     {
         if (_pendingUpdate is not null)
         {
-            // ÇöÀç ¹öÀüÀ» "¹«½ÃµÈ ¹öÀü" ¸ñ·Ï¿¡ Ãß°¡
+            // í˜„ì¬ ë²„ì „ì„ "ë¬´ì‹œëœ ë²„ì „" ëª©ë¡ì— ì¶”ê°€
             var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
             var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
                 ? new List<string>() 
@@ -468,7 +468,7 @@ public partial class Chat : IDisposable
             {
                 dismissedVersionsList.Add(_pendingUpdate.Version ?? "");
                 
-                // ÃÖ´ë 5°³ ¹öÀü¸¸ ±â¾ï (³Ê¹« ¸¹ÀÌ ½×ÀÌÁö ¾Êµµ·Ï)
+                // ìµœëŒ€ 5ê°œ ë²„ì „ë§Œ ê¸°ì–µ (ë„ˆë¬´ ë§ì´ ìŒ“ì´ì§€ ì•Šë„ë¡)
                 if (dismissedVersionsList.Count > 5)
                 {
                     dismissedVersionsList.RemoveRange(0, dismissedVersionsList.Count - 5);
@@ -477,7 +477,7 @@ public partial class Chat : IDisposable
                 var dismissedVersionsJson = System.Text.Json.JsonSerializer.Serialize(dismissedVersionsList);
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-dismissed-versions", dismissedVersionsJson);
                 
-                Console.WriteLine($"¹öÀü {_pendingUpdate.Version}À» ¹«½Ã ¸ñ·Ï¿¡ Ãß°¡");
+                Console.WriteLine($"ë²„ì „ {_pendingUpdate.Version}ì„ ë¬´ì‹œ ëª©ë¡ì— ì¶”ê°€");
             }
         }
         
@@ -485,30 +485,30 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // ¾÷µ¥ÀÌÆ® Àû¿ë - ¹«½Ã ¸ñ·Ï Á¤¸®
+    // ì—…ë°ì´íŠ¸ ì ìš© - ë¬´ì‹œ ëª©ë¡ ì •ë¦¬
     private async Task ApplyUpdateAsync()
     {
         if (_pendingUpdate is null) return;
 
-        // »õ ¹öÀüÀ» ÇöÀç ¹öÀüÀ¸·Î ¼³Á¤
+        // ìƒˆ ë²„ì „ì„ í˜„ì¬ ë²„ì „ìœ¼ë¡œ ì„¤ì •
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", _pendingUpdate.Version);
         
-        // ¹«½Ã ¸ñ·Ï¿¡¼­ ÀÌÀü ¹öÀüµé Á¦°Å (»õ ¹öÀü Àû¿ë ½Ã ÃÊ±âÈ­)
+        // ë¬´ì‹œ ëª©ë¡ì—ì„œ ì´ì „ ë²„ì „ë“¤ ì œê±° (ìƒˆ ë²„ì „ ì ìš© ì‹œ ì´ˆê¸°í™”)
         await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "tablecloth-dismissed-versions");
         
-        Console.WriteLine($"¹öÀü {_pendingUpdate.Version}·Î ¾÷µ¥ÀÌÆ® Àû¿ë");
+        Console.WriteLine($"ë²„ì „ {_pendingUpdate.Version}ë¡œ ì—…ë°ì´íŠ¸ ì ìš©");
         
-        // ½º¸¶Æ® »õ·Î°íÄ§ ½ÇÇà
+        // ìŠ¤ë§ˆíŠ¸ ìƒˆë¡œê³ ì¹¨ ì‹¤í–‰
         await SafeInvokeJSAsync("window.forceRefresh");
     }
 
-    // ÁÖ±âÀû ¹öÀü Ã¼Å© ½ÃÀÛ - ºóµµ Á¶Á¤
+    // ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì‹œì‘ - ë¹ˆë„ ì¡°ì •
     private void StartPeriodicVersionCheck()
     {
-        // ±âÁ¸ Å¸ÀÌ¸Ó°¡ ÀÖ´Ù¸é Á¤¸®
+        // ê¸°ì¡´ íƒ€ì´ë¨¸ê°€ ìˆë‹¤ë©´ ì •ë¦¬
         _updateCheckTimer?.Dispose();
 
-        // 1½Ã°£¸¶´Ù ¹é±×¶ó¿îµå¿¡¼­ Ã¼Å© (30ºĞ¿¡¼­ Áõ°¡)
+        // 1ì‹œê°„ë§ˆë‹¤ ë°±ê·¸ë¼ìš´ë“œì—ì„œ ì²´í¬ (30ë¶„ì—ì„œ ì¦ê°€)
         _updateCheckTimer = new Timer(async _ =>
         {
             try
@@ -525,27 +525,27 @@ public partial class Chat : IDisposable
                     if (serverVersionInfo?.Version != null && 
                         storedVersion != serverVersionInfo.Version && 
                         !dismissedVersionsList.Contains(serverVersionInfo.Version) &&
-                        !_showUpdateNotification) // ÀÌ¹Ì ¾Ë¸²ÀÌ Ç¥½ÃµÇÁö ¾ÊÀº °æ¿ì¸¸
+                        !_showUpdateNotification) // ì´ë¯¸ ì•Œë¦¼ì´ í‘œì‹œë˜ì§€ ì•Šì€ ê²½ìš°ë§Œ
                     {
                         _pendingUpdate = serverVersionInfo;
                         await ShowGentleUpdateNotificationAsync();
-                        Console.WriteLine($"ÁÖ±âÀû Ã¼Å©: »õ ¹öÀü {serverVersionInfo.Version} °¨Áö");
+                        Console.WriteLine($"ì£¼ê¸°ì  ì²´í¬: ìƒˆ ë²„ì „ {serverVersionInfo.Version} ê°ì§€");
                     }
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ÁÖ±âÀû ¹öÀü Ã¼Å© Áß ¿À·ù: {ex.Message}");
+                Console.WriteLine($"ì£¼ê¸°ì  ë²„ì „ ì²´í¬ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         });
         
-        // 1½Ã°£ ÈÄ ½ÃÀÛÇÏ¿© 1½Ã°£ °£°İÀ¸·Î ½ÇÇà
+        // 1ì‹œê°„ í›„ ì‹œì‘í•˜ì—¬ 1ì‹œê°„ ê°„ê²©ìœ¼ë¡œ ì‹¤í–‰
         _updateCheckTimer.Change(TimeSpan.FromHours(1), TimeSpan.FromHours(1));
     }
 
     private async Task HandleLoginAsync()
     {
-        // Á÷Á¢ ÀÎÁõ ÇÃ·Î¿ì ½ÃÀÛ
+        // ì§ì ‘ ì¸ì¦ í”Œë¡œìš° ì‹œì‘
         await AuthService.StartAuthFlowAsync();
     }
 
@@ -563,15 +563,15 @@ public partial class Chat : IDisposable
         await Task.CompletedTask;
     }
 
-    // ·Î±×¾Æ¿ô ¸Ş¼­µå Ãß°¡
+    // ë¡œê·¸ì•„ì›ƒ ë©”ì„œë“œ ì¶”ê°€
     private async Task Logout()
     {
-        // ÀúÀåµÇÁö ¾ÊÀº ´ëÈ­ ³»¿ëÀÌ ÀÖ´Ù¸é ºÎµå·¯¿î È®ÀÎ Ã³¸®
+        // ì €ì¥ë˜ì§€ ì•Šì€ ëŒ€í™” ë‚´ìš©ì´ ìˆë‹¤ë©´ ë¶€ë“œëŸ¬ìš´ í™•ì¸ ì²˜ë¦¬
         if (_hasUnsavedContent)
         {
-            // confirm ´ë½Å ÀÎ¾Û È®ÀÎ ´ÙÀÌ¾ó·Î±× »ç¿ë ±ÇÀå
+            // confirm ëŒ€ì‹  ì¸ì•± í™•ì¸ ë‹¤ì´ì–¼ë¡œê·¸ ì‚¬ìš© ê¶Œì¥
             var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
-                "ÇöÀç ÁøÇà ÁßÀÎ ´ëÈ­ ³»¿ëÀÌ ÀÖ½À´Ï´Ù. ·Î±×¾Æ¿ôÇÏ¸é ´ëÈ­ ³»¿ëÀÌ »ç¶óÁı´Ï´Ù. Á¤¸» ·Î±×¾Æ¿ôÇÏ½Ã°Ú½À´Ï±î?");
+                "í˜„ì¬ ì§„í–‰ ì¤‘ì¸ ëŒ€í™” ë‚´ìš©ì´ ìˆìŠµë‹ˆë‹¤. ë¡œê·¸ì•„ì›ƒí•˜ë©´ ëŒ€í™” ë‚´ìš©ì´ ì‚¬ë¼ì§‘ë‹ˆë‹¤. ì •ë§ ë¡œê·¸ì•„ì›ƒí•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
             
             if (!shouldLogout)
             {
@@ -581,7 +581,7 @@ public partial class Chat : IDisposable
 
         await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
         
-        // »óÅÂ ¾÷µ¥ÀÌÆ®
+        // ìƒíƒœ ì—…ë°ì´íŠ¸
         _hasApiKey = false;
         _client = null;
         _messages.Clear();
@@ -593,7 +593,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // ¿¹½Ã ÇÁ·ÒÇÁÆ® ¼³Á¤ ¸Ş¼­µå
+    // ì˜ˆì‹œ í”„ë¡¬í”„íŠ¸ ì„¤ì • ë©”ì„œë“œ
     private async Task SetExamplePrompt(string prompt)
     {
         if (!_hasApiKey)
@@ -605,22 +605,22 @@ public partial class Chat : IDisposable
         _userInput = prompt;
         StateHasChanged();
         
-        // ¹Ù·Î ¸Ş½ÃÁö Àü¼Û
+        // ë°”ë¡œ ë©”ì‹œì§€ ì „ì†¡
         await SendMessage();
     }
 
-    // ÀÔ·Â ³»¿ëÀÌ º¯°æµÉ ¶§ È£ÃâµÇ´Â ¸Ş¼­µå
+    // ì…ë ¥ ë‚´ìš©ì´ ë³€ê²½ë  ë•Œ í˜¸ì¶œë˜ëŠ” ë©”ì„œë“œ
     private async Task OnInputChange(ChangeEventArgs e)
     {
         var newValue = e.Value?.ToString() ?? string.Empty;
 
-        // ÃÖ´ë ±æÀÌ¸¦ ÃÊ°úÇÏ´Â °æ¿ì Àß¶ó³»±â
+        // ìµœëŒ€ ê¸¸ì´ë¥¼ ì´ˆê³¼í•˜ëŠ” ê²½ìš° ì˜ë¼ë‚´ê¸°
         if (newValue.Length > _maxInputLength)
             newValue = newValue.Substring(0, _maxInputLength);
 
         _userInput = newValue;
         
-        // ÅØ½ºÆ® ¿µ¿ª ÀÚµ¿ ¸®»çÀÌÁî
+        // í…ìŠ¤íŠ¸ ì˜ì—­ ìë™ ë¦¬ì‚¬ì´ì¦ˆ
         await SafeInvokeJSAsync("autoResizeTextarea", "chatTextArea");
     }
 
@@ -655,7 +655,7 @@ public partial class Chat : IDisposable
             {
                 _currentStreamedMessage += chunk;
                 StateHasChanged();
-                await Task.Delay(10); // ÀÚ¿¬½º·¯¿î Å¸ÀÌÇÎ È¿°ú
+                await Task.Delay(10); // ìì—°ìŠ¤ëŸ¬ìš´ íƒ€ì´í•‘ íš¨ê³¼
             }
 
             _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
@@ -664,7 +664,7 @@ public partial class Chat : IDisposable
         {
             _messages.Add(new ChatMessage
             {
-                Content = $"ÁË¼ÛÇÕ´Ï´Ù. ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù: {ex.Message}",
+                Content = $"ì£„ì†¡í•©ë‹ˆë‹¤. ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤: {ex.Message}",
                 IsUser = false
             });
         }
@@ -691,7 +691,7 @@ public partial class Chat : IDisposable
         if (string.IsNullOrWhiteSpace(markdown))
             return (MarkupString)html;
 
-        // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯
+        // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜
         html = Markdown.ToHtml(markdown, _markdownPipeline);
         var document = _htmlParser.ParseDocument(html);
 
@@ -717,12 +717,12 @@ public partial class Chat : IDisposable
 
     private async Task ResetConversationAsync()
     {
-        // ÀúÀåµÇÁö ¾ÊÀº ´ëÈ­ ³»¿ëÀÌ ÀÖ´Ù¸é ºÎµå·¯¿î È®ÀÎ Ã³¸®
+        // ì €ì¥ë˜ì§€ ì•Šì€ ëŒ€í™” ë‚´ìš©ì´ ìˆë‹¤ë©´ ë¶€ë“œëŸ¬ìš´ í™•ì¸ ì²˜ë¦¬
         if (_hasUnsavedContent)
         {
-            // confirm ´ë½Å ÀÎ¾Û È®ÀÎ ´ÙÀÌ¾ó·Î±× »ç¿ë ±ÇÀå
+            // confirm ëŒ€ì‹  ì¸ì•± í™•ì¸ ë‹¤ì´ì–¼ë¡œê·¸ ì‚¬ìš© ê¶Œì¥
             var shouldReset = await JSRuntime.InvokeAsync<bool>("confirm", 
-                "ÇöÀç ÁøÇà ÁßÀÎ ´ëÈ­ ³»¿ëÀÌ ÀÖ½À´Ï´Ù. »õ·Î¿î Ã¤ÆÃÀ» ½ÃÀÛÇÏ¸é ÇöÀç ´ëÈ­ ³»¿ëÀÌ »ç¶óÁı´Ï´Ù. °è¼ÓÇÏ½Ã°Ú½À´Ï±î?");
+                "í˜„ì¬ ì§„í–‰ ì¤‘ì¸ ëŒ€í™” ë‚´ìš©ì´ ìˆìŠµë‹ˆë‹¤. ìƒˆë¡œìš´ ì±„íŒ…ì„ ì‹œì‘í•˜ë©´ í˜„ì¬ ëŒ€í™” ë‚´ìš©ì´ ì‚¬ë¼ì§‘ë‹ˆë‹¤. ê³„ì†í•˜ì‹œê² ìŠµë‹ˆê¹Œ?");
             
             if (!shouldReset)
             {
@@ -737,14 +737,14 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // ´ëÈ­ ¾×¼Ç µå·Ó´Ù¿î Åä±Û
+    // ëŒ€í™” ì•¡ì…˜ ë“œë¡­ë‹¤ìš´ í† ê¸€
     private void ToggleConversationActionsDropdown()
     {
         _showConversationActionsDropdown = !_showConversationActionsDropdown;
         StateHasChanged();
     }
 
-    // µå·Ó´Ù¿î¿¡¼­ ÀÎ¼â ÈÄ ¼û±â±â
+    // ë“œë¡­ë‹¤ìš´ì—ì„œ ì¸ì‡„ í›„ ìˆ¨ê¸°ê¸°
     private async Task PrintAndHideDropdown()
     {
         await PrintConversationAsync();
@@ -752,7 +752,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // µå·Ó´Ù¿î¿¡¼­ ³»º¸³»±â ÈÄ ¼û±â±â
+    // ë“œë¡­ë‹¤ìš´ì—ì„œ ë‚´ë³´ë‚´ê¸° í›„ ìˆ¨ê¸°ê¸°
     private async Task ExportAndHideDropdown()
     {
         await ExportConversationAsTextAsync();
@@ -760,7 +760,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // µå·Ó´Ù¿î¿¡¼­ °øÀ¯ ÈÄ ¼û±â±â
+    // ë“œë¡­ë‹¤ìš´ì—ì„œ ê³µìœ  í›„ ìˆ¨ê¸°ê¸°
     private async Task ShareAndHideDropdown()
     {
         await ShareConversationAsync();
@@ -768,55 +768,55 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // ´ëÈ­ ³»¿ë ÀÎ¼â ¸Ş¼­µå - confirmÀ» Á» ´õ ºÎµå·¯¿î ¾Ë¸²À¸·Î º¯°æ
+    // ëŒ€í™” ë‚´ìš© ì¸ì‡„ ë©”ì„œë“œ - confirmì„ ì¢€ ë” ë¶€ë“œëŸ¬ìš´ ì•Œë¦¼ìœ¼ë¡œ ë³€ê²½
     private async Task PrintConversationAsync()
     {
         if (!_messages.Any())
         {
-            // confirm ´ë½Å ´Ü¼ø alert »ç¿ëÇÏ°Å³ª Åä½ºÆ® ¾Ë¸²À¸·Î º¯°æ °¡´É
-            await SafeInvokeJSAsync("showToast", "ÀÎ¼âÇÒ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
+            // confirm ëŒ€ì‹  ë‹¨ìˆœ alert ì‚¬ìš©í•˜ê±°ë‚˜ í† ìŠ¤íŠ¸ ì•Œë¦¼ìœ¼ë¡œ ë³€ê²½ ê°€ëŠ¥
+            await SafeInvokeJSAsync("showToast", "ì¸ì‡„í•  ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
             return;
         }
 
-        // »ç¿ëÀÚ¿¡°Ô ÀÎ¼â ¹æ½Ä ¼±ÅÃ ¿É¼Ç Á¦°ø - ´õ ºÎµå·¯¿î ¹æ½ÄÀ¸·Î º¯°æ ÇÊ¿ä½Ã
-        // ÇöÀç´Â ±âº»°ªÀ¸·Î ¹Ì¸®º¸±â Ã¢ »ç¿ë
+        // ì‚¬ìš©ìì—ê²Œ ì¸ì‡„ ë°©ì‹ ì„ íƒ ì˜µì…˜ ì œê³µ - ë” ë¶€ë“œëŸ¬ìš´ ë°©ì‹ìœ¼ë¡œ ë³€ê²½ í•„ìš”ì‹œ
+        // í˜„ì¬ëŠ” ê¸°ë³¸ê°’ìœ¼ë¡œ ë¯¸ë¦¬ë³´ê¸° ì°½ ì‚¬ìš©
         var printHtml = GeneratePrintHtml();
         await SafeInvokeJSAsync("showPrintPreview", printHtml);
     }
 
-    // ÀÎ¼â¿ë HTML »ı¼º
+    // ì¸ì‡„ìš© HTML ìƒì„±
     private string GeneratePrintHtml()
     {
         var html = new System.Text.StringBuilder();
         
-        // HTML Çì´õ
+        // HTML í—¤ë”
         html.AppendLine("<!DOCTYPE html>");
         html.AppendLine("<html lang='ko'>");
         html.AppendLine("<head>");
         html.AppendLine("<meta charset='UTF-8'>");
         html.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        html.AppendLine("<title>TableClothLite AI ´ëÈ­ ±â·Ï</title>");
+        html.AppendLine("<title>TableClothLite AI ëŒ€í™” ê¸°ë¡</title>");
         html.AppendLine("<style>");
         html.AppendLine(GetPrintStyles());
         html.AppendLine("</style>");
         html.AppendLine("</head>");
         html.AppendLine("<body>");
         
-        // Çì´õ Á¤º¸
+        // í—¤ë” ì •ë³´
         html.AppendLine("<div class='print-header'>");
-        html.AppendLine("<h1>TableClothLite AI ´ëÈ­ ±â·Ï</h1>");
-        html.AppendLine($"<p class='print-date'>»ı¼ºÀÏ: {DateTime.Now:yyyy³â MM¿ù ddÀÏ HH:mm}</p>");
-        html.AppendLine($"<p class='print-info'>ÃÑ {_messages.Count}°³ÀÇ ¸Ş½ÃÁö</p>");
+        html.AppendLine("<h1>TableClothLite AI ëŒ€í™” ê¸°ë¡</h1>");
+        html.AppendLine($"<p class='print-date'>ìƒì„±ì¼: {DateTime.Now:yyyyë…„ MMì›” ddì¼ HH:mm}</p>");
+        html.AppendLine($"<p class='print-info'>ì´ {_messages.Count}ê°œì˜ ë©”ì‹œì§€</p>");
         html.AppendLine("</div>");
         
-        // ´ëÈ­ ³»¿ë
+        // ëŒ€í™” ë‚´ìš©
         html.AppendLine("<div class='conversation'>");
         
         for (int i = 0; i < _messages.Count; i++)
         {
             var message = _messages[i];
             var messageClass = message.IsUser ? "user-message" : "assistant-message";
-            var sender = message.IsUser ? "»ç¿ëÀÚ" : "TableClothLite AI";
+            var sender = message.IsUser ? "ì‚¬ìš©ì" : "TableClothLite AI";
             
             html.AppendLine($"<div class='message {messageClass}'>");
             html.AppendLine($"<div class='message-header'>");
@@ -825,7 +825,7 @@ public partial class Chat : IDisposable
             html.AppendLine("</div>");
             html.AppendLine($"<div class='message-content'>");
             
-            // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯ÇÏµÇ ÀÎ¼â¿ëÀ¸·Î Á¤¸®
+            // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜í•˜ë˜ ì¸ì‡„ìš©ìœ¼ë¡œ ì •ë¦¬
             var content = ConvertMarkdownForPrint(message.Content);
             html.AppendLine(content);
             
@@ -835,9 +835,9 @@ public partial class Chat : IDisposable
         
         html.AppendLine("</div>");
         
-        // ÇªÅÍ
+        // í‘¸í„°
         html.AppendLine("<div class='print-footer'>");
-        html.AppendLine("<p>TableClothLite AI - ±İÀ¶°ú °ø°ø ºÎ¹® AI ¾î½Ã½ºÅÏÆ®</p>");
+        html.AppendLine("<p>TableClothLite AI - ê¸ˆìœµê³¼ ê³µê³µ ë¶€ë¬¸ AI ì–´ì‹œìŠ¤í„´íŠ¸</p>");
         html.AppendLine("<p>https://yourtablecloth.app</p>");
         html.AppendLine("</div>");
         
@@ -847,7 +847,7 @@ public partial class Chat : IDisposable
         return html.ToString();
     }
 
-    // ÀÎ¼â¿ë CSS ½ºÅ¸ÀÏ
+    // ì¸ì‡„ìš© CSS ìŠ¤íƒ€ì¼
     private string GetPrintStyles()
     {
         return @"
@@ -1034,7 +1034,7 @@ public partial class Chat : IDisposable
         ";
     }
 
-    // ¸¶Å©´Ù¿îÀ» ÀÎ¼â¿ë HTML·Î º¯È¯
+    // ë§ˆí¬ë‹¤ìš´ì„ ì¸ì‡„ìš© HTMLë¡œ ë³€í™˜
     private string ConvertMarkdownForPrint(string markdown)
     {
         if (string.IsNullOrWhiteSpace(markdown))
@@ -1042,14 +1042,14 @@ public partial class Chat : IDisposable
 
         try
         {
-            // ¸¶Å©´Ù¿îÀ» HTML·Î º¯È¯
+            // ë§ˆí¬ë‹¤ìš´ì„ HTMLë¡œ ë³€í™˜
             var html = Markdown.ToHtml(markdown, _markdownPipeline);
             var document = _htmlParser.ParseDocument(html);
 
             if (document.Body == null)
                 return WebUtility.HtmlEncode(markdown);
 
-            // ÀÎ¼â¿ëÀ¸·Î ¸µÅ© Ã³¸® (href Á¦°ÅÇÏ°í ÅØ½ºÆ®·Î Ç¥½Ã)
+            // ì¸ì‡„ìš©ìœ¼ë¡œ ë§í¬ ì²˜ë¦¬ (href ì œê±°í•˜ê³  í…ìŠ¤íŠ¸ë¡œ í‘œì‹œ)
             foreach (var anchor in document.QuerySelectorAll("a"))
             {
                 var href = anchor.GetAttribute("href") ?? string.Empty;
@@ -1059,7 +1059,7 @@ public partial class Chat : IDisposable
                     anchor.RemoveAttribute("onclick");
                     anchor.SetAttribute("style", "color: #2563eb; text-decoration: underline;");
                     
-                    // ¸µÅ© URLÀ» ÅØ½ºÆ® µÚ¿¡ °ıÈ£·Î Ãß°¡
+                    // ë§í¬ URLì„ í…ìŠ¤íŠ¸ ë’¤ì— ê´„í˜¸ë¡œ ì¶”ê°€
                     if (anchor.TextContent != href)
                     {
                         anchor.InnerHtml = $"{anchor.InnerHtml} ({WebUtility.HtmlEncode(href)})";
@@ -1067,15 +1067,15 @@ public partial class Chat : IDisposable
                 }
             }
 
-            // ÀÌ¹ÌÁö Ã³¸® (alt ÅØ½ºÆ®·Î ´ëÃ¼)
+            // ì´ë¯¸ì§€ ì²˜ë¦¬ (alt í…ìŠ¤íŠ¸ë¡œ ëŒ€ì²´)
             foreach (var img in document.QuerySelectorAll("img"))
             {
-                var alt = img.GetAttribute("alt") ?? "ÀÌ¹ÌÁö";
+                var alt = img.GetAttribute("alt") ?? "ì´ë¯¸ì§€";
                 var src = img.GetAttribute("src") ?? "";
                 
                 var replacement = document.CreateElement("span");
                 replacement.SetAttribute("style", "background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-style: italic;");
-                replacement.TextContent = $"[ÀÌ¹ÌÁö: {alt}]";
+                replacement.TextContent = $"[ì´ë¯¸ì§€: {alt}]";
                 
                 img.ParentElement?.ReplaceChild(replacement, img);
             }
@@ -1084,18 +1084,18 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"¸¶Å©´Ù¿î º¯È¯ Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"ë§ˆí¬ë‹¤ìš´ ë³€í™˜ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             return WebUtility.HtmlEncode(markdown);
         }
     }
 
-    // ´ëÈ­ ³»¿ëÀ» ÅØ½ºÆ® ÆÄÀÏ·Î ³»º¸³»±â - alert¸¦ Åä½ºÆ®·Î º¯°æ °¡´É
+    // ëŒ€í™” ë‚´ìš©ì„ í…ìŠ¤íŠ¸ íŒŒì¼ë¡œ ë‚´ë³´ë‚´ê¸° - alertë¥¼ í† ìŠ¤íŠ¸ë¡œ ë³€ê²½ ê°€ëŠ¥
     private async Task ExportConversationAsTextAsync()
     {
         if (!_messages.Any())
         {
-            // confirm ´ë½Å ºÎµå·¯¿î ¾Ë¸²
-            await SafeInvokeJSAsync("showToast", "³»º¸³¾ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
+            // confirm ëŒ€ì‹  ë¶€ë“œëŸ¬ìš´ ì•Œë¦¼
+            await SafeInvokeJSAsync("showToast", "ë‚´ë³´ë‚¼ ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
             return;
         }
         
@@ -1114,16 +1114,16 @@ public partial class Chat : IDisposable
         
         if (!success)
         {
-            await SafeInvokeJSAsync("showToast", "ÅØ½ºÆ® ÆÄÀÏ ³»º¸³»±â¿¡ ½ÇÆĞÇß½À´Ï´Ù.", "error");
+            await SafeInvokeJSAsync("showToast", "í…ìŠ¤íŠ¸ íŒŒì¼ ë‚´ë³´ë‚´ê¸°ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", "error");
         }
     }
 
-    // ´ëÈ­ ³»¿ë °øÀ¯ - alert¸¦ Åä½ºÆ®·Î º¯°æ
+    // ëŒ€í™” ë‚´ìš© ê³µìœ  - alertë¥¼ í† ìŠ¤íŠ¸ë¡œ ë³€ê²½
     private async Task ShareConversationAsync()
     {
         if (!_messages.Any())
         {
-            await SafeInvokeJSAsync("showToast", "°øÀ¯ÇÒ ´ëÈ­ ³»¿ëÀÌ ¾ø½À´Ï´Ù.", "info");
+            await SafeInvokeJSAsync("showToast", "ê³µìœ í•  ëŒ€í™” ë‚´ìš©ì´ ì—†ìŠµë‹ˆë‹¤.", "info");
             return;
         }
 
@@ -1133,11 +1133,11 @@ public partial class Chat : IDisposable
             
             var shareData = new
             {
-                title = "TableClothLite AI ´ëÈ­ ±â·Ï",
+                title = "TableClothLite AI ëŒ€í™” ê¸°ë¡",
                 text = shareText
             };
             
-            // JavaScriptÀÇ shareContent ÇÔ¼ö È£Ãâ
+            // JavaScriptì˜ shareContent í•¨ìˆ˜ í˜¸ì¶œ
             var result = await SafeInvokeJSWithResultAsync<ShareResult>("shareContent", shareData);
             
             if (result?.Success == true)
@@ -1145,43 +1145,43 @@ public partial class Chat : IDisposable
                 switch (result.Method)
                 {
                     case "webshare":
-                        // Web Share API·Î ¼º°øÀûÀ¸·Î °øÀ¯µÊ - º°µµ ¾Ë¸² ºÒÇÊ¿ä
+                        // Web Share APIë¡œ ì„±ê³µì ìœ¼ë¡œ ê³µìœ ë¨ - ë³„ë„ ì•Œë¦¼ ë¶ˆí•„ìš”
                         break;
                     case "clipboard":
                         await SafeInvokeJSAsync("showToast", 
-                            "´ëÈ­ ³»¿ëÀÌ Å¬¸³º¸µå¿¡ º¹»çµÇ¾ú½À´Ï´Ù. ´Ù¸¥ ¾Û¿¡¼­ ºÙ¿©³Ö±âÇÏ¿© °øÀ¯ÇÒ ¼ö ÀÖ½À´Ï´Ù.", 
+                            "ëŒ€í™” ë‚´ìš©ì´ í´ë¦½ë³´ë“œì— ë³µì‚¬ë˜ì—ˆìŠµë‹ˆë‹¤. ë‹¤ë¥¸ ì•±ì—ì„œ ë¶™ì—¬ë„£ê¸°í•˜ì—¬ ê³µìœ í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.", 
                             "success");
                         break;
                 }
             }
             else
             {
-                // ¸ğµç ¹æ¹ı ½ÇÆĞ
+                // ëª¨ë“  ë°©ë²• ì‹¤íŒ¨
                 await SafeInvokeJSAsync("showToast", 
-                    "°øÀ¯ ±â´ÉÀ» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù. ´ë½Å ÅØ½ºÆ® ÆÄÀÏ·Î ³»º¸³»±â¸¦ »ç¿ëÇØº¸¼¼¿ä.", 
+                    "ê³µìœ  ê¸°ëŠ¥ì„ ì‚¬ìš©í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤. ëŒ€ì‹  í…ìŠ¤íŠ¸ íŒŒì¼ë¡œ ë‚´ë³´ë‚´ê¸°ë¥¼ ì‚¬ìš©í•´ë³´ì„¸ìš”.", 
                     "warning");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"´ëÈ­ °øÀ¯ Áß ¿À·ù: {ex.Message}");
-            await SafeInvokeJSAsync("showToast", "´ëÈ­ °øÀ¯¿¡ ½ÇÆĞÇß½À´Ï´Ù.", "error");
+            Console.WriteLine($"ëŒ€í™” ê³µìœ  ì¤‘ ì˜¤ë¥˜: {ex.Message}");
+            await SafeInvokeJSAsync("showToast", "ëŒ€í™” ê³µìœ ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.", "error");
         }
     }
 
-    // °øÀ¯¿ë ÅØ½ºÆ® »ı¼º
+    // ê³µìœ ìš© í…ìŠ¤íŠ¸ ìƒì„±
     private string GenerateShareText()
     {
         var text = new System.Text.StringBuilder();
-        text.AppendLine("TableClothLite AI ´ëÈ­ ±â·Ï");
-        text.AppendLine($"»ı¼ºÀÏ: {DateTime.Now:yyyy³â MM¿ù ddÀÏ HH:mm}");
+        text.AppendLine("TableClothLite AI ëŒ€í™” ê¸°ë¡");
+        text.AppendLine($"ìƒì„±ì¼: {DateTime.Now:yyyyë…„ MMì›” ddì¼ HH:mm}");
         text.AppendLine(new string('=', 40));
         text.AppendLine();
         
         for (int i = 0; i < _messages.Count; i++)
         {
             var message = _messages[i];
-            var sender = message.IsUser ? "»ç¿ëÀÚ" : "AI";
+            var sender = message.IsUser ? "ì‚¬ìš©ì" : "AI";
             
             text.AppendLine($"[{i + 1}] {sender}:");
             text.AppendLine(message.Content.Trim());
@@ -1194,26 +1194,26 @@ public partial class Chat : IDisposable
         return text.ToString();
     }
 
-    // ¸ğ´Ş ´İ±â ¸Ş¼­µå
+    // ëª¨ë‹¬ ë‹«ê¸° ë©”ì„œë“œ
     private void CloseSandboxGuide()
     {
         _showSandboxGuide = false;
         StateHasChanged();
     }
 
-    // ¼­ºñ½º ¸ñ·Ï ¸ğ´Ş ´İ±â
+    // ì„œë¹„ìŠ¤ ëª©ë¡ ëª¨ë‹¬ ë‹«ê¸°
     private void CloseServicesModal()
     {
         _showServicesModal = false;
         StateHasChanged();
     }
 
-    // ¼³Á¤ ¸ğ´Ş ´İ±â - ¸ğµ¨ ÀÎµğÄÉÀÌÅÍ »õ·Î°íÄ§ Ãß°¡
+    // ì„¤ì • ëª¨ë‹¬ ë‹«ê¸° - ëª¨ë¸ ì¸ë””ì¼€ì´í„° ìƒˆë¡œê³ ì¹¨ ì¶”ê°€
     private async Task CloseSettingsModal()
     {
         _showSettingsModal = false;
         
-        // ¸ğµ¨ ¼³Á¤ÀÌ º¯°æµÇ¾úÀ» ¼ö ÀÖÀ¸¹Ç·Î ModelIndicator »õ·Î°íÄ§
+        // ëª¨ë¸ ì„¤ì •ì´ ë³€ê²½ë˜ì—ˆì„ ìˆ˜ ìˆìœ¼ë¯€ë¡œ ModelIndicator ìƒˆë¡œê³ ì¹¨
         if (_modelIndicator is not null)
         {
             await _modelIndicator.RefreshConfig();
@@ -1222,36 +1222,36 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // ÈÄ¿ø ¹è³Ê ÇØÁ¦
+    // í›„ì› ë°°ë„ˆ í•´ì œ
     private async Task DismissSponsorBanner()
     {
         _sponsorBannerDismissed = true;
         StateHasChanged();
         
-        // ·ÎÄÃ ½ºÅä¸®Áö¿¡ ÀúÀåÇÏ¿© ´ÙÀ½ ¹æ¹®½Ã¿¡µµ ±â¾ï
+        // ë¡œì»¬ ìŠ¤í† ë¦¬ì§€ì— ì €ì¥í•˜ì—¬ ë‹¤ìŒ ë°©ë¬¸ì‹œì—ë„ ê¸°ì–µ
         try
         {
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "sponsor-banner-dismissed", "true");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ÈÄ¿ø ¹è³Ê »óÅÂ ÀúÀå Áß ¿À·ù: {ex.Message}");
+            Console.WriteLine($"í›„ì› ë°°ë„ˆ ìƒíƒœ ì €ì¥ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
         }
     }
 
     public void Dispose()
     {
-        // beforeunload ÇÚµé·¯ Á¤¸®
+        // beforeunload í•¸ë“¤ëŸ¬ ì •ë¦¬
         try
         {
             JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
         }
         catch
         {
-            // Disposal Áß ¿À·ù´Â ¹«½Ã
+            // Disposal ì¤‘ ì˜¤ë¥˜ëŠ” ë¬´ì‹œ
         }
 
-        // Å¸ÀÌ¸Ó Á¤¸®
+        // íƒ€ì´ë¨¸ ì •ë¦¬
         _updateCheckTimer?.Dispose();
 
         dotNetHelper?.Dispose();
