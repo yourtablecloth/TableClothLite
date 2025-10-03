@@ -12,7 +12,6 @@
 @using TableClothLite.Components.Guide
 @using TableClothLite.Components
 @using Markdig
-@using TableClothLite.Components.Catalog
 
 @inject OpenAIChatService ChatService
 @inject IJSRuntime JSRuntime
@@ -24,61 +23,6 @@
 <PageTitle>TableClothLite AI</PageTitle>
 
 <div class="chat-app">
-    <!-- 모바일 오버레이 -->
-    <div class="mobile-overlay @(_isSidebarOpen ? "open" : "")" @onclick="ToggleSidebar"></div>
-
-    <!-- 사이드바 -->
-    @if (_isInitialized)
-    {
-        <div class="sidebar @(!_isSidebarOpen ? "closed" : "")">
-            <div class="sidebar-header">
-                <div class="app-title">
-                    <img src="/favicon.png" alt="식탁보 라이트" class="app-icon">
-                    <span>식탁보 라이트 AI</span>
-                </div>
-                <button @onclick="ToggleSidebar" class="sidebar-close-btn" title="사이드바 닫기" type="button">
-                    ✕
-                </button>
-            </div>
-            
-            <div class="sidebar-content">
-                @if (_hasApiKey)
-                {
-                    <button @onclick="ResetConversationAsync" class="new-chat-btn" type="button">
-                        + 새로운 채팅
-                    </button>
-                }
-                else
-                {
-                    <div class="login-notice">
-                        ℹ️ 채팅을 시작하려면 로그인이 필요합니다
-                    </div>
-                }
-            </div>
-            
-            <div class="sidebar-footer">
-                @if (_isCheckingApiKey)
-                {
-                    <button class="auth-btn" disabled type="button">
-                        ⏳ 확인 중...
-                    </button>
-                }
-                else if (_hasApiKey)
-                {
-                    <button @onclick="Logout" class="auth-btn logout-btn" type="button">
-                        🚪 로그아웃
-                    </button>
-                }
-                else
-                {
-                    <button @onclick="HandleLoginAsync" class="auth-btn login-btn" type="button">
-                        👤 로그인
-                    </button>
-                }
-            </div>
-        </div>
-    }
-
     <!-- 메인 채팅 영역 -->
     <div class="chat-main">
         <!-- Gentle Update Notification -->
@@ -108,13 +52,16 @@
         <!-- 상단 헤더 -->
         <div class="chat-header">
             <div class="header-left">
-                <button @onclick="ToggleSidebar" class="sidebar-toggle-btn" title="@(_isSidebarOpen ? "사이드바 닫기" : "사이드바 열기")" type="button">
-                    <span>☰</span>
-                </button>
                 <div class="app-title-header">
                     <img src="/favicon.png" alt="식탁보 라이트" class="header-app-icon">
                     <span class="app-name">식탁보 라이트 AI</span>
                 </div>
+                @if (_hasApiKey && _messages.Any())
+                {
+                    <button @onclick="ResetConversationAsync" class="new-chat-btn-header" type="button" title="새로운 채팅 시작">
+                        + 새 채팅
+                    </button>
+                }
             </div>
             <div class="header-actions">
                 @if (_messages.Any())
@@ -153,8 +100,29 @@
                         </div>
                     </div>
                 }
+                
+                <!-- 로그인/로그아웃 버튼 -->
+                @if (_isCheckingApiKey)
+                {
+                    <button class="auth-btn-header checking" disabled type="button" title="로그인 상태 확인 중">
+                        ⏳
+                    </button>
+                }
+                else if (_hasApiKey)
+                {
+                    <button @onclick="Logout" class="auth-btn-header logout" type="button" title="로그아웃">
+                        ⏻
+                    </button>
+                }
+                else
+                {
+                    <button @onclick="HandleLoginAsync" class="auth-btn-header login" type="button" title="로그인">
+                        👤
+                    </button>
+                }
+                
                 <button @onclick="OpenServicesModalAsync" class="action-btn" title="서비스 목록" type="button">
-                    📋
+                    🛒
                 </button>
                 <button @onclick="OpenSettingDialog" class="action-btn" title="설정" type="button">
                     ⚙️
@@ -163,7 +131,7 @@
                     💝
                 </a>
                 <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="action-btn" title="GitHub">
-                    💻
+                    <strong>{;}</strong>
                 </a>
                 <a href="https://yourtablecloth.app/" target="_blank" class="action-btn" title="식탁보 홈페이지">
                     🏠
@@ -322,7 +290,6 @@
     :root {
         --chat-bg: #ffffff;
         --chat-border: #e5e7eb;
-        --sidebar-bg: #f9fafb;
         --message-user-bg: #f3f4f6;
         --text-primary: #111827;
         --text-secondary: #6b7280;
@@ -330,168 +297,17 @@
         --hover-bg: #f3f4f6;
         --border-radius: 12px;
         --error-color: #dc2626;
-        --sidebar-width: 280px;
     }
 
     .chat-app {
-        display: flex;
         height: 100vh;
         background: var(--chat-bg);
         color: var(--text-primary);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        position: relative;
         overflow: hidden;
-    }
-
-    .mobile-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 99;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-
-    .mobile-overlay.open {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    .sidebar {
-        width: var(--sidebar-width);
-        background: var(--sidebar-bg);
-        border-right: 1px solid var(--chat-border);
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        transition: width 0.3s ease, opacity 0.2s ease, visibility 0.2s ease;
-        z-index: 100;
-        overflow: hidden;
-    }
-
-    .sidebar.closed {
-        width: 0;
-        opacity: 0;
-        visibility: hidden;
-        border-right: none;
-    }
-
-    .sidebar-header {
-        padding: 16px;
-        border-bottom: 1px solid var(--chat-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .app-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        flex: 1;
-    }
-
-    .app-icon {
-        width: 20px;
-        height: 20px;
-    }
-
-    .sidebar-close-btn {
-        width: 36px;
-        height: 36px;
-        border: none;
-        background: none;
-        cursor: pointer;
-        border-radius: 6px;
-        font-size: 18px;
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .sidebar-close-btn:hover {
-        background: var(--hover-bg);
-        color: var(--text-primary);
-    }
-
-    .sidebar-content {
-        flex: 1;
-        padding: 16px;
-        overflow-y: auto;
-    }
-
-    .new-chat-btn {
-        width: 100%;
-        height: 40px;
-        border: 1px solid var(--chat-border);
-        background: var(--chat-bg);
-        color: var(--text-primary);
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .new-chat-btn:hover {
-        background: var(--hover-bg);
-    }
-
-    .login-notice {
-        padding: 12px;
-        background: var(--hover-bg);
-        border: 1px solid var(--chat-border);
-        border-radius: 8px;
-        font-size: 14px;
-        color: var(--text-secondary);
-    }
-
-    .sidebar-footer {
-        padding: 16px;
-        border-top: 1px solid var(--chat-border);
-    }
-
-    .auth-btn {
-        width: 100%;
-        height: 40px;
-        border: none;
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .login-btn {
-        background: var(--accent-color);
-        color: white;
-    }
-
-    .logout-btn {
-        background: transparent;
-        color: var(--text-secondary);
-        border: 1px solid var(--chat-border);
-    }
-
-    .logout-btn:hover {
-        color: var(--error-color);
-        background: var(--hover-bg);
-    }
-
-    .auth-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        background: var(--hover-bg);
-        color: var(--text-secondary);
     }
 
     .chat-main {
-        flex: 1;
         display: flex;
         flex-direction: column;
         height: 100vh;
@@ -509,27 +325,7 @@
     .header-left {
         display: flex;
         align-items: center;
-        gap: 12px;
-    }
-
-    .sidebar-toggle-btn {
-        width: 40px;
-        height: 40px;
-        border: 1px solid var(--chat-border);
-        background: var(--chat-bg);
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 18px;
-        color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .sidebar-toggle-btn:hover {
-        background: var(--hover-bg);
-        color: var(--text-primary);
+        gap: 16px;
     }
 
     .app-title-header {
@@ -546,6 +342,24 @@
     .app-name {
         font-size: 16px;
         font-weight: 600;
+    }
+
+    .new-chat-btn-header {
+        padding: 8px 16px;
+        border: 1px solid var(--chat-border);
+        background: var(--chat-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .new-chat-btn-header:hover {
+        background: var(--hover-bg);
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
     }
 
     .header-actions {
@@ -581,12 +395,75 @@
         box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
     }
 
-    .sponsor-btn {
-    }
-
     .sponsor-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    /* 헤더 로그인/로그아웃 버튼 */
+    .auth-btn-header {
+        width: 40px;
+        height: 40px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .auth-btn-header.login {
+        background: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+    }
+
+    .auth-btn-header.login:hover {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        transform: translateY(-2px);
+    }
+
+    .auth-btn-header.logout {
+        background: var(--chat-bg);
+        color: var(--text-secondary);
+        border-color: var(--chat-border);
+    }
+
+    .auth-btn-header.logout:hover {
+        background: var(--hover-bg);
+        color: var(--error-color);
+        border-color: var(--error-color);
+        transform: translateY(-2px);
+    }
+
+    .auth-btn-header.checking {
+        background: var(--hover-bg);
+        color: var(--text-secondary);
+        border-color: var(--chat-border);
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* 텍스트 기반 버튼 스타일 */
+    .login-text {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .github-btn {
+        background: var(--chat-bg);
+        border: 1px solid var(--chat-border);
+    }
+
+    .github-btn:hover {
+        background: #22c55e;
+        border-color: #22c55e;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
     }
 
     /* 모바일에서의 대화 액션 드롭다운 */
@@ -936,10 +813,6 @@
 
     /* 반응형 */
     @@media (max-width: 768px) {
-        .mobile-overlay {
-            display: block;
-        }
-
         .desktop-actions {
             display: none;
         }
@@ -948,23 +821,17 @@
             display: block;
         }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            transform: translateX(-100%);
-        }
-
-        .sidebar:not(.closed) {
-            transform: translateX(0);
-            width: var(--sidebar-width);
-            opacity: 1;
-            visibility: visible;
-        }
-
         .chat-header {
             padding: 8px 12px;
+        }
+
+        .header-left {
+            gap: 8px;
+        }
+
+        .new-chat-btn-header {
+            padding: 6px 12px;
+            font-size: 12px;
         }
 
         .messages-list {
@@ -1098,10 +965,6 @@
     }
 
     @@media (max-width: 480px) {
-        :root {
-            --sidebar-width: 100vw;
-        }
-
         .app-name {
             font-size: 14px;
         }
@@ -1114,6 +977,10 @@
             width: 32px;
             height: 32px;
             font-size: 14px;
+        }
+
+        .new-chat-btn-header {
+            display: none; /* 매우 작은 화면에서는 숨김 */
         }
     }
 </style>

@@ -31,10 +31,6 @@ public partial class Chat : IDisposable
     private bool _hasApiKey = false;
     private bool _isCheckingApiKey = true;
 
-    // 사이드바 상태 관리 (초기값은 false, 화면 크기에 따라 동적 결정)
-    private bool _isSidebarOpen = false;
-    private bool _isInitialized = false;
-
     // 글자 수 제한 관련 변수
     private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
     private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
@@ -56,7 +52,7 @@ public partial class Chat : IDisposable
     // 설정 모달 상태 관리
     private bool _showSettingsModal = false;
 
-    // 대화 액션 드롭downs 상태 관리
+    // 대화 액션 드롭다운 상태 관리
     private bool _showConversationActionsDropdown = false;
 
     // 새 버전 알림 상태 관리 - confirm 대신 인앱 알림 사용
@@ -174,9 +170,6 @@ public partial class Chat : IDisposable
             
             // 캐시 무효화 및 버전 체크
             await CheckAppVersionAsync();
-            
-            // 초기 화면 크기에 따른 사이드바 상태 설정
-            await InitializeSidebarState();
         }
 
         await SafeInvokeJSAsync("scrollToBottom", "messages");
@@ -231,7 +224,7 @@ public partial class Chat : IDisposable
     }
 
     // 안전한 JavaScript 호출
-    private async Task SafeInvokeJSAsync(string identifier, params object[] args)
+    private async Task SafeInvokeJSAsync(string identifier, params object?[] args)
     {
         try
         {
@@ -357,7 +350,7 @@ public partial class Chat : IDisposable
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
                 Console.WriteLine($"첫 방문: 버전 {versionToStore} 저장");
             }
-            else if (serverVersionInfo != null && 
+            else if (serverVersionInfo?.Version != null && 
                      storedVersion != serverVersionInfo.Version &&
                      !dismissedVersionsList.Contains(serverVersionInfo.Version))
             {
@@ -366,7 +359,7 @@ public partial class Chat : IDisposable
                 await ShowGentleUpdateNotificationAsync();
                 Console.WriteLine($"새 버전 감지: {serverVersionInfo.Version} (현재: {storedVersion})");
             }
-            else if (serverVersionInfo != null && dismissedVersionsList.Contains(serverVersionInfo.Version))
+            else if (serverVersionInfo?.Version != null && dismissedVersionsList.Contains(serverVersionInfo.Version))
             {
                 Console.WriteLine($"버전 {serverVersionInfo.Version}는 사용자가 이전에 무시함");
             }
@@ -436,16 +429,17 @@ public partial class Chat : IDisposable
     }
 
     // 부드러운 업데이트 알림 표시 - confirm 완전 제거
-    private async Task ShowGentleUpdateNotificationAsync()
+    private Task ShowGentleUpdateNotificationAsync()
     {
-        if (_pendingUpdate is null) return;
+        if (_pendingUpdate is null)
+            return Task.CompletedTask;
 
         // 포커스 빼앗김 없는 페이지 통합 알림만 표시
         _showUpdateNotification = true;
         StateHasChanged();
 
         // 5분 후 자동 숨김 처리 (사용자가 직접 닫지 않은 경우)
-        _ = Task.Run(async () =>
+        return Task.Run(async () =>
         {
             await Task.Delay(TimeSpan.FromMinutes(5));
             await InvokeAsync(() =>
@@ -528,7 +522,7 @@ public partial class Chat : IDisposable
                         ? new List<string>() 
                         : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
                     
-                    if (serverVersionInfo != null && 
+                    if (serverVersionInfo?.Version != null && 
                         storedVersion != serverVersionInfo.Version && 
                         !dismissedVersionsList.Contains(serverVersionInfo.Version) &&
                         !_showUpdateNotification) // 이미 알림이 표시되지 않은 경우만
@@ -547,51 +541,6 @@ public partial class Chat : IDisposable
         
         // 1시간 후 시작하여 1시간 간격으로 실행
         _updateCheckTimer.Change(TimeSpan.FromHours(1), TimeSpan.FromHours(1));
-    }
-
-    private async Task InitializeSidebarState()
-    {
-        try
-        {
-            var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
-            
-            // 데스크톱(768px 초과)에서는 기본적으로 열린 상태
-            // 모바일(768px 이하)에서는 기본적으로 닫힌 상태
-            _isSidebarOpen = windowWidth > 768;
-            _isInitialized = true;
-            
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"사이드바 초기 상태 설정 중 오류: {ex.Message}");
-            // 오류 발생 시 데스크톱 기본값으로 설정
-            _isSidebarOpen = true;
-            _isInitialized = true;
-            StateHasChanged();
-        }
-    }
-
-    // JavaScript에서 호출할 수 있는 메서드 (창 크기 변경 시)
-    [JSInvokable]
-    public Task OnWindowResize(int width)
-    {
-        var isMobile = width <= 768;
-        
-        // 모바일에서 데스크톱으로 전환 시 사이드바 열기
-        if (!isMobile && !_isSidebarOpen)
-        {
-            _isSidebarOpen = true;
-            StateHasChanged();
-        }
-        // 데스크톱에서 모바일로 전환 시 사이드바 닫기 (단, 이미 열려있다면)
-        else if (isMobile && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-            StateHasChanged();
-        }
-
-        return Task.CompletedTask;
     }
 
     private async Task HandleLoginAsync()
@@ -614,9 +563,33 @@ public partial class Chat : IDisposable
         await Task.CompletedTask;
     }
 
-    private void ToggleSidebar()
+    // 로그아웃 메서드 추가
+    private async Task Logout()
     {
-        _isSidebarOpen = !_isSidebarOpen;
+        // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
+        if (_hasUnsavedContent)
+        {
+            // confirm 대신 인앱 확인 다이얼로그 사용 권장
+            var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
+                "현재 진행 중인 대화 내용이 있습니다. 로그아웃하면 대화 내용이 사라집니다. 정말 로그아웃하시겠습니까?");
+            
+            if (!shouldLogout)
+            {
+                return;
+            }
+        }
+
+        await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
+        
+        // 상태 업데이트
+        _hasApiKey = false;
+        _client = null;
+        _messages.Clear();
+        _userInput = string.Empty;
+        _isStreaming = false;
+        _currentStreamedMessage = string.Empty;
+        _sessionId = Guid.NewGuid().ToString();
+        
         StateHasChanged();
     }
 
@@ -662,13 +635,6 @@ public partial class Chat : IDisposable
         if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
             return;
 
-        // 모바일에서 메시지 전송 시 사이드바 닫기
-        var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
-        if (windowWidth <= 768 && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-        }
-
         var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
         _messages.Add(userMessage);
 
@@ -708,35 +674,6 @@ public partial class Chat : IDisposable
             _currentStreamedMessage = string.Empty;
             StateHasChanged();
         }
-    }
-
-    protected async Task Logout()
-    {
-        // 저장되지 않은 대화 내용이 있다면 부드러운 확인 처리
-        if (_hasUnsavedContent)
-        {
-            // confirm 대신 인앱 확인 다이얼로그 사용 권장
-            var shouldLogout = await JSRuntime.InvokeAsync<bool>("confirm", 
-                "현재 진행 중인 대화 내용이 있습니다. 로그아웃하면 대화 내용이 사라집니다. 정말 로그아웃하시겠습니까?");
-            
-            if (!shouldLogout)
-            {
-                return;
-            }
-        }
-
-        await JSRuntime.InvokeAsync<string>("localStorage.setItem", "openRouterApiKey", string.Empty);
-        
-        // 상태 업데이트
-        _hasApiKey = false;
-        _client = null;
-        _messages.Clear();
-        _userInput = string.Empty;
-        _isStreaming = false;
-        _currentStreamedMessage = string.Empty;
-        _sessionId = Guid.NewGuid().ToString();
-        
-        StateHasChanged();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -797,13 +734,6 @@ public partial class Chat : IDisposable
         _sessionId = Guid.NewGuid().ToString();
         await ChatService.ClearSessionAsync(_sessionId);
         
-        // 모바일에서 대화 리셋 시 사이드바 닫기
-        var windowWidth = await SafeInvokeJSWithResultAsync<int>("getWindowWidth");
-        if (windowWidth <= 768 && _isSidebarOpen)
-        {
-            _isSidebarOpen = false;
-        }
-        
         StateHasChanged();
     }
 
@@ -814,7 +744,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭downs에서 인쇄 후 숨기기
+    // 드롭다운에서 인쇄 후 숨기기
     private async Task PrintAndHideDropdown()
     {
         await PrintConversationAsync();
@@ -822,7 +752,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭downs에서 내보내기 후 숨기기
+    // 드롭다운에서 내보내기 후 숨기기
     private async Task ExportAndHideDropdown()
     {
         await ExportConversationAsTextAsync();
@@ -830,7 +760,7 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // 드롭down에서 공유 후 숨기기
+    // 드롭다운에서 공유 후 숨기기
     private async Task ShareAndHideDropdown()
     {
         await ShareConversationAsync();
