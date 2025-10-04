@@ -1,11 +1,10 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy to GitHub Pages
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -63,6 +62,33 @@ jobs:
     - name: Publish
       run: dotnet publish TableClothLite/TableClothLite.csproj --configuration Release --output ./publish
       
+    - name: Setup SPA routing for GitHub Pages
+      run: |
+        # 404.htmlì´ ì´ë¯¸ wwwrootì— ìžˆëŠ”ì§€ í™•ì¸í•˜ê³  ë³µì‚¬
+        if [ -f "TableClothLite/wwwroot/404.html" ]; then
+          cp TableClothLite/wwwroot/404.html ./publish/wwwroot/404.html
+          echo "404.html copied for SPA routing support"
+        else
+          echo "Warning: 404.html not found in wwwroot"
+        fi
+        
+        # .nojekyll íŒŒì¼ í™•ì¸ ë° ë³µì‚¬
+        if [ -f "TableClothLite/wwwroot/.nojekyll" ]; then
+          cp TableClothLite/wwwroot/.nojekyll ./publish/wwwroot/.nojekyll
+          echo ".nojekyll copied for GitHub Pages"
+        else
+          # .nojekyll íŒŒì¼ì´ ì—†ìœ¼ë©´ ìƒì„±
+          touch ./publish/wwwroot/.nojekyll
+          echo ".nojekyll created for GitHub Pages"
+        fi
+        
+        # SPA ë¼ìš°íŒ… ìŠ¤í¬ë¦½íŠ¸ í™•ì¸
+        if [ -f "TableClothLite/wwwroot/js/spa-routing.js" ]; then
+          echo "SPA routing script found in build output"
+        else
+          echo "Warning: SPA routing script not found"
+        fi
+        
     - name: Create version.json
       run: |
         mkdir -p ./publish/wwwroot
@@ -72,45 +98,59 @@ jobs:
           "timestamp": "$(date -Iseconds)",
           "buildTime": "$TIMESTAMP",
           "commit": "$GITHUB_SHA",
-          "branch": "$GITHUB_REF_NAME"
+          "branch": "$GITHUB_REF_NAME",
+          "spaRouting": true,
+          "deployment": "github-pages"
         }
         EOF
         
     - name: Add smart cache headers
       run: |
         cat > ./publish/wwwroot/_headers << EOF
-        # HTML ÆÄÀÏ - Ç×»ó ÃÖ½Å ¹öÀü È®ÀÎ
+        # HTML íŒŒì¼ - í•­ìƒ ìµœì‹  ë²„ì „ í™•ì¸
         /*.html
           Cache-Control: no-cache, must-revalidate
           Pragma: no-cache
           X-Version: $VERSION
           X-Build-Time: $TIMESTAMP
         
-        # ¹öÀü Á¤º¸ ÆÄÀÏ - Ä³½Ã ¹æÁö
+        # SPA ë¼ìš°íŒ… ì§€ì› íŒŒì¼ë“¤
+        /404.html
+          Cache-Control: no-cache, must-revalidate
+          Pragma: no-cache
+          X-SPA-Routing: enabled
+        
+        # ë²„ì „ ì •ë³´ íŒŒì¼ - ìºì‹œ ë¹„í™œì„±
         /version.json
           Cache-Control: no-cache, no-store, must-revalidate
           Pragma: no-cache
           Expires: 0
         
-        # Service Worker - ºê¶ó¿ìÀú°¡ ÀÚµ¿À¸·Î 24½Ã°£¸¶´Ù Ã¼Å©
+        # Service Worker - ë¸Œë¼ìš°ì €ê°€ ìžë™ìœ¼ë¡œ 24ì‹œê°„ë§ˆë‹¤ ì²´í¬
         /service-worker.js
           Cache-Control: public, max-age=0, must-revalidate
           X-Version: $VERSION
         
-        # WASM ÆÄÀÏ - ÇØ½Ã ±â¹ÝÀÌ¹Ç·Î Àå±â Ä³½Ã °¡´É
+        # SPA ë¼ìš°íŒ… ìŠ¤í¬ë¦½íŠ¸
+        /js/spa-routing.js
+          Cache-Control: public, max-age=3600, must-revalidate
+          X-Version: $VERSION
+          X-SPA-Support: true
+        
+        # WASM íŒŒì¼ - í•´ì‹œ ê¸°ë°˜ì´ë¯€ë¡œ ì˜êµ¬ ìºì‹œ ê°€ëŠ¥
         *.wasm
         *.dll
         *.pdb
           Cache-Control: public, max-age=31536000, immutable
           X-Content-Type-Options: nosniff
         
-        # JavaScript/CSS - ETag ±â¹Ý Á¶°ÇºÎ Ä³½Ã
+        # JavaScript/CSS - ETag ë“±ì„ í†µí•œ ì¡°ê±´ë¶€ ìºì‹œ
         *.js
         *.css
           Cache-Control: public, max-age=3600, must-revalidate
           X-Version: $VERSION
         
-        # ÀÌ¹ÌÁö ¹× ÆùÆ® - Áß±â Ä³½Ã
+        # ì´ë¯¸ì§€ ë° í°íŠ¸ - ì¤‘ê¸° ìºì‹œ
         *.png
         *.jpg
         *.jpeg
@@ -120,12 +160,12 @@ jobs:
         *.woff2
           Cache-Control: public, max-age=86400, must-revalidate
         
-        # JSON ÆÄÀÏ - ´Ü±â Ä³½Ã
+        # JSON íŒŒì¼ - ë‹¨ê¸° ìºì‹œ
         *.json
           Cache-Control: public, max-age=300, must-revalidate
           X-Version: $VERSION
         
-        # Manifest ÆÄÀÏ
+        # Manifest íŒŒì¼
         *.webmanifest
           Cache-Control: public, max-age=3600, must-revalidate
         EOF
