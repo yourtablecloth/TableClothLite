@@ -48,6 +48,7 @@ public sealed partial class SandboxViewModel : ObservableObject
     private MemoryStream? _pendingDownloadStream;
     private string? _pendingFileName;
     private ServiceInfo? _pendingServiceInfo;
+    private string? _pendingTargetUrl;
 
     /// <summary>
     /// 대기 중인 서비스 정보를 가져옵니다.
@@ -89,28 +90,54 @@ public sealed partial class SandboxViewModel : ObservableObject
         ServiceInfo serviceInfo,
         CancellationToken cancellationToken = default)
     {
-        // 환경 감지
-        await DetectEnvironmentAsync();
+        // OS 감지를 먼저 동기적으로 실행 (사용자 상호작용 컨텍스트 유지)
+        bool isWindows = true;
+        bool isDesktop = true;
+        
+        try
+        {
+            // JavaScript를 통해 OS 감지 - 동기적으로 실행
+            var osInfo = await _jsRuntime.InvokeAsync<OsDetectionResult>("detectOS");
+            isWindows = osInfo?.IsWindows ?? true;
+
+            // 화면 너비로 데스크톱 여부 감지 (768px 이상을 데스크톱으로 간주)
+            var windowWidth = await _jsRuntime.InvokeAsync<int>("getWindowWidth");
+            isDesktop = windowWidth >= 768;
+            
+            IsWindows = isWindows;
+            IsDesktop = isDesktop;
+
+            _logger.LogInformation(
+                "환경 감지 완료 - OS: {Os}, Desktop: {IsDesktop}, Width: {Width}",
+                isWindows ? "Windows" : "Non-Windows",
+                isDesktop,
+                windowWidth);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "환경 감지 중 오류 발생. 기본값 사용.");
+            // 오류 발생 시 안전하게 기본값 사용
+            isWindows = true;
+            isDesktop = true;
+            IsWindows = true;
+            IsDesktop = true;
+        }
 
         // Windows 데스크톱 환경이 아닌 경우 가이드 모달 표시
-        if (!IsWindows || !IsDesktop)
+        if (!isWindows || !isDesktop)
         {
             _logger.LogInformation(
-                "비호환 환경 감지 - OS: {Os}, Desktop: {IsDesktop}. 가이드 모달 표시.",
-                IsWindows ? "Windows" : "Non-Windows",
-                IsDesktop);
+                "비호환 환경 감지 - OS: {Os}, Desktop: {IsDesktop}. 가이드 모달 즉시 표시.",
+                isWindows ? "Windows" : "Non-Windows",
+                isDesktop);
 
-            // WSB 파일 생성은 미리 준비
-            var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
-                this, targetUrl, serviceInfo, cancellationToken).ConfigureAwait(false);
-            
-            _pendingDownloadStream = new MemoryStream();
-            doc.Save(_pendingDownloadStream);
-            _pendingDownloadStream.Position = 0L;
+            // 서비스 정보만 저장하고, 가이드 모달을 즉시 표시
+            // 파일 생성은 사용자가 "그래도 다운로드" 버튼을 클릭할 때 수행
             _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
             _pendingServiceInfo = serviceInfo;
+            _pendingTargetUrl = targetUrl;
 
-            // 가이드 모달 표시
+            // 가이드 모달을 즉시 표시 (사용자 상호작용 컨텍스트 내)
             ShowWsbDownloadGuide = true;
             return;
         }
@@ -124,20 +151,38 @@ public sealed partial class SandboxViewModel : ObservableObject
     /// </summary>
     public async Task DownloadPendingFileAsync(CancellationToken cancellationToken = default)
     {
-        if (_pendingDownloadStream != null && _pendingFileName != null)
+        if (_pendingServiceInfo != null && _pendingFileName != null)
         {
             _logger.LogInformation("사용자가 비호환 환경에서 WSB 파일 다운로드를 선택했습니다.");
             
-            await _fileDownloadService.DownloadFileAsync(
-                _pendingDownloadStream, 
-                _pendingFileName, 
-                "application/xml",
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+            try
+            {
+                // 이제 파일을 생성합니다
+                var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
+                    this, _pendingTargetUrl ?? string.Empty, _pendingServiceInfo, cancellationToken).ConfigureAwait(false);
+                
+                _pendingDownloadStream = new MemoryStream();
+                doc.Save(_pendingDownloadStream);
+                _pendingDownloadStream.Position = 0L;
+                
+                await _fileDownloadService.DownloadFileAsync(
+                    _pendingDownloadStream, 
+                    _pendingFileName, 
+                    "application/xml",
+                    cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            // 정리
-            _pendingDownloadStream?.Dispose();
-            _pendingDownloadStream = null;
-            _pendingFileName = null;
+                // 정리
+                _pendingDownloadStream?.Dispose();
+                _pendingDownloadStream = null;
+                _pendingFileName = null;
+                _pendingServiceInfo = null;
+                _pendingTargetUrl = null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WSB 파일 다운로드 중 오류 발생");
+                throw;
+            }
         }
 
         ShowWsbDownloadGuide = false;
@@ -175,6 +220,7 @@ public sealed partial class SandboxViewModel : ObservableObject
         _pendingDownloadStream = null;
         _pendingFileName = null;
         _pendingServiceInfo = null;
+        _pendingTargetUrl = null;
     }
 
     public string CalculateAbsoluteUrl(string relativePath)
