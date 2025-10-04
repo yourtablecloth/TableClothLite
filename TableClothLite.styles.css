@@ -411,6 +411,7 @@ main[b-3zwydhbc4h] {
 }
 
 .message-content[b-1eksyvqne5] {
+    position: relative;
     flex: 1;
 }
 
@@ -736,6 +737,68 @@ main[b-3zwydhbc4h] {
         padding: 6px 12px;
         font-size: 12px;
     }
+}
+
+/* 메시지 복사 버튼 스타일 */
+.copy-message-btn[b-1eksyvqne5] {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+    .copy-message-btn:hover[b-1eksyvqne5] {
+        background: var(--hover-bg);
+        transform: scale(1.05);
+    }
+
+    .copy-message-btn:active[b-1eksyvqne5] {
+        transform: scale(0.95);
+    }
+
+/* 메시지 컨텐츠 영역 */
+.message-content[b-1eksyvqne5] {
+    position: relative;
+    flex: 1;
+}
+
+/* PC: hover 시 복사 버튼 표시 */
+@media (hover: hover) and (pointer: fine) {
+    .message-group:hover .copy-message-btn[b-1eksyvqne5] {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* 모바일: 포커스 또는 active 상태일 때 복사 버튼 표시 */
+@media (hover: none) or (pointer: coarse) {
+    .message-group:focus-within .copy-message-btn[b-1eksyvqne5],
+    .message-group:active .copy-message-btn[b-1eksyvqne5],
+    .message-group.show-actions .copy-message-btn[b-1eksyvqne5] {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* 모바일에서 메시지 그룹을 터치 가능하게 */
+    .message-group[b-1eksyvqne5] {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* 클릭된 상태 표시 */
+.message-group.clicked .copy-message-btn[b-1eksyvqne5] {
+    opacity: 1;
+    visibility: visible;
 }
 /* /Pages/Home.razor.rz.scp.css */
 .service-section[b-5coph13hgo] {

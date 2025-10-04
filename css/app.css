@@ -600,3 +600,141 @@ html.light-theme ::-webkit-scrollbar-thumb:hover {
         font-size: 13px;
     }
 }
+
+/* 드롭다운 메뉴 스타일 */
+.menu-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.menu-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background-color: var(--card-bg);
+    min-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 1000;
+    padding: 8px 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.menu-dropdown-content.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    clear: both;
+    font-weight: 400;
+    color: var(--primary-text);
+    text-align: left;
+    white-space: nowrap;
+    background-color: transparent;
+    border: 0;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--secondary-bg);
+    color: var(--primary-text);
+    text-decoration: none;
+}
+
+.dropdown-item:active {
+    background-color: var(--tertiary-bg);
+}
+
+.dropdown-item.logout-item {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+.dropdown-item.logout-item:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.dropdown-divider {
+    height: 0;
+    margin: 8px 0;
+    overflow: hidden;
+    border-top: 1px solid var(--border-color);
+}
+
+/* 다크 테마 드롭다운 스타일 */
+html.dark-theme .menu-dropdown-content {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+html.dark-theme .dropdown-item.logout-item:hover {
+    background-color: rgba(255, 107, 107, 0.15);
+}
+
+/* 대화 액션 드롭다운 (기존 스타일 통일) */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background-color: var(--card-bg);
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    z-index: 1000;
+    padding: 8px 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 모바일 반응형 드롭다운 */
+@media (max-width: 768px) {
+    .menu-dropdown-content,
+    .dropdown-menu {
+        min-width: 200px;
+        right: -8px;
+        max-width: calc(100vw - 32px);
+    }
+    
+    .dropdown-item {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+}
+
+/* 드롭다운 애니메이션 */
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu-dropdown-content.show,
+.dropdown-menu.show {
+    animation: dropdownSlideIn 0.2s ease;
+}

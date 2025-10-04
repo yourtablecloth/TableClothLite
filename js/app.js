@@ -109,6 +109,22 @@ window.scrollToBottom = function (elementId) {
     }
 };
 
+// 스마트 스크롤 - 사용자가 맨 아래에 있을 때만 자동 스크롤
+window.smartScrollToBottom = function (elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        // 사용자가 거의 맨 아래에 있는지 확인 (100px 여유)
+        const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+        
+        if (isNearBottom) {
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        return isNearBottom;
+    }
+    return false;
+};
+
 // 부드러운 스크롤 함수
 window.smoothScrollToBottom = function (elementId) {
     const element = document.getElementById(elementId);
@@ -670,205 +686,472 @@ window.downloadFileStream = async (fileName, contentType, dotNetStreamReference)
     URL.revokeObjectURL(url);
 };
 
-// 복사 기능 (개선된 버전)
-window.copyToClipboard = async function (text) {
-    if (typeof text !== 'string') text = String(text ?? '');
-
-    // 방법 1: 최신 Clipboard API 시도
+// 클립보드에 텍스트 복사
+window.copyToClipboard = async function(text) {
     try {
-        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        // 모던 브라우저의 Clipboard API 사용
+        if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
             return true;
         }
-    } catch (error) {
-        console.warn('Clipboard API 실패:', error);
-    }
-
-    // 방법 2: execCommand 방식 시도 (구형 브라우저 지원)
-    try {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
         
-        // 화면에 보이지 않도록 설정
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        textArea.style.opacity = '0';
-        textArea.style.pointerEvents = 'none';
-        textArea.style.tabIndex = '-1';
+        // 레거시 방법 (Clipboard API가 없는 경우)
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-999999px';
+        textarea.style.top = '-999999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
         
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (successful) {
-            return true;
-        }
-    } catch (error) {
-        console.warn('execCommand 복사 실패:', error);
-    }
-
-    // 방법 3: 사용자에게 수동 복사 요청 (최후의 수단)
-    try {
-        const userResponse = window.prompt(
-            '자동 복사가 지원되지 않습니다.\n아래 내용을 수동으로 선택하여 복사해주세요.\n\n복사하려면 Ctrl+A (전체선택) 후 Ctrl+C (복사)를 눌러주세요.',
-            text
-        );
-        // 사용자가 취소하지 않았다면 성공으로 간주
-        return userResponse !== null;
-    } catch (error) {
-        console.error('수동 복사 요청 실패:', error);
-        return false;
-    }
-};
-
-// 모바일 최적화: 스크롤 관성 개선
-window.optimizeScrolling = function() {
-    const messagesContainer = document.getElementById('messages');
-    if (messagesContainer) {
-        messagesContainer.style.webkitOverflowScrolling = 'touch';
-    }
-};
-
-// PWA 관련: 설치 프롬프트 처리
-let deferredPrompt;
-let pwaInstallDotNetHelper = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    console.log('PWA 설치 프롬프트 준비됨');
-    
-    // Blazor 컴포넌트에 알림
-    if (pwaInstallDotNetHelper) {
         try {
-            pwaInstallDotNetHelper.invokeMethodAsync('ShowInstallPrompt');
-        } catch (error) {
-            console.log('설치 프롬프트 알림 실패:', error);
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            return successful;
+        } catch (err) {
+            document.body.removeChild(textarea);
+            return false;
         }
-    }
-});
-
-// PWA 설치 이벤트 리스너
-window.addEventListener('appinstalled', () => {
-    console.log('PWA 설치 완료');
-    deferredPrompt = null;
-    localStorage.setItem('pwa-installed', 'true');
-    window.showToast?.('앱이 성공적으로 설치되었습니다!', 'success');
-});
-
-// PWA 설치 관련 함수들
-window.initPwaInstall = function(dotNetHelper) {
-    pwaInstallDotNetHelper = dotNetHelper;
-    console.log('PWA 설치 초기화 완료');
-};
-
-window.disposePwaInstall = function() {
-    pwaInstallDotNetHelper = null;
-};
-
-window.canShowInstallPrompt = function() {
-    return deferredPrompt !== null && deferredPrompt !== undefined;
-};
-
-window.installPwa = async function() {
-    if (!deferredPrompt) {
-        console.log('설치 프롬프트를 사용할 수 없습니다');
-        return false;
-    }
-
-    try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`PWA 설치 사용자 선택: ${outcome}`);
-        
-        if (outcome === 'accepted') {
-            deferredPrompt = null;
-            return true;
-        }
-        return false;
     } catch (error) {
-        console.error('PWA 설치 오류:', error);
+        console.error('클립보드 복사 실패:', error);
         return false;
     }
 };
 
-window.isPwaInstalled = function() {
-    // 1. 설치 기록 확인
-    if (localStorage.getItem('pwa-installed') === 'true') {
-        return true;
-    }
+// 모바일에서 메시지 그룹 터치 처리
+function setupMessageGroupInteraction() {
+    // 이벤트 위임 방식 사용
+    const messagesContainer = document.querySelector('.messages-container');
+    if (!messagesContainer) return;
     
-    // 2. standalone 모드 확인
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        localStorage.setItem('pwa-installed', 'true');
-        return true;
-    }
+    // 모바일 환경 체크
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-    // 3. iOS standalone 모드 확인
-    if (window.navigator.standalone === true) {
-        localStorage.setItem('pwa-installed', 'true');
-        return true;
-    }
-    
-    return false;
-};
-
-// PWA 업데이트 알림
-window.notifyPwaUpdate = function() {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'CHECK_UPDATE'
+    if (isMobile) {
+        let currentActiveGroup = null;
+        
+        messagesContainer.addEventListener('click', function(e) {
+            const messageGroup = e.target.closest('.message-group');
+            if (!messageGroup) return;
+            
+            // 복사 버튼을 직접 클릭한 경우는 무시
+            if (e.target.closest('.copy-message-btn')) return;
+            
+            // 이전에 active였던 그룹 제거
+            if (currentActiveGroup && currentActiveGroup !== messageGroup) {
+                currentActiveGroup.classList.remove('clicked');
+            }
+            
+            // 현재 그룹 토글
+            messageGroup.classList.toggle('clicked');
+            currentActiveGroup = messageGroup.classList.contains('clicked') ? messageGroup : null;
+        });
+        
+        // 다른 곳 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.message-group') && currentActiveGroup) {
+                currentActiveGroup.classList.remove('clicked');
+                currentActiveGroup = null;
+            }
         });
     }
-};
+}
 
-// 오프라인 상태 확인
-window.isOnline = function() {
-    return navigator.onLine;
-};
-
-// 네트워크 상태 변경 이벤트
-window.addEventListener('online', () => {
-    console.log('온라인 상태로 변경됨');
-    window.showToast?.('인터넷에 다시 연결되었습니다.', 'success');
+// 채팅 페이지 초기화 시 메시지 그룹 상호작용 설정
+document.addEventListener('DOMContentLoaded', function() {
+    setupMessageGroupInteraction();
 });
 
-window.addEventListener('offline', () => {
-    console.log('오프라인 상태로 변경됨');
-    window.showToast?.('인터넷 연결이 끊겼습니다. 일부 기능이 제한될 수 있습니다.', 'warning');
-});
-
-// PWA 디스플레이 모드 감지
-window.getPwaDisplayMode = function() {
-    const displayMode = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' :
-                       window.matchMedia('(display-mode: fullscreen)').matches ? 'fullscreen' :
-                       window.matchMedia('(display-mode: minimal-ui)').matches ? 'minimal-ui' :
-                       'browser';
-    return displayMode;
-};
-
-// PWA 관련 정보 로깅 (디버그용)
-if (window.location.hostname === 'localhost') {
-    console.log('PWA 상태:', {
-        installed: window.isPwaInstalled(),
-        displayMode: window.getPwaDisplayMode(),
-        online: window.isOnline(),
-        canInstall: window.canShowInstallPrompt()
+// Blazor가 렌더링을 완료한 후에도 실행
+if (window.Blazor) {
+    window.Blazor.addEventListener('enhancedload', function() {
+        setupMessageGroupInteraction();
     });
 }
 
-window.showInstallPrompt = function() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            deferredPrompt = null;
+// version.json을 가져오는 함수 (캐시 무효화 포함)
+window.fetchVersionJson = async function(url) {
+    try {
+        const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
         });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return JSON.stringify(data);
+        }
+        return null;
+    } catch (error) {
+        console.error('version.json 가져오기 실패:', error);
+        return null;
     }
 };
 
 // 초기화 완료 로그
 console.log('식탁보 AI JavaScript 모듈 로드 완료 ✅');
+
+// 토스트 알림 표시 함수
+window.showToast = function(message, type = 'info') {
+    // 기존 토스트가 있으면 제거
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // 토스트 엘리먼트 생성
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    
+    // 아이콘 선택
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    else if (type === 'error') icon = '❌';
+    else if (type === 'warning') icon = '⚠️';
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // 스타일 적용
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 400px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // 다크 모드 지원
+    if (document.body.getAttribute('data-theme') === 'dark') {
+        toast.style.background = '#1f2937';
+        toast.style.color = '#f9fafb';
+        toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+    }
+    
+    // 타입별 색상
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
+    toast.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
+    
+    document.body.appendChild(toast);
+    
+    // 5초 후 자동 제거
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+};
+
+// CSS 애니메이션 추가
+if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .toast-notification {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .toast-message {
+            flex: 1;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .toast-close:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .toast-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// 인쇄 미리보기 함수
+window.showPrintPreview = function(htmlContent) {
+    if (!htmlContent) {
+        console.error('인쇄할 내용이 없습니다.');
+        return;
+    }
+    
+    // 새 창에서 인쇄 미리보기
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        window.showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+        return;
+    }
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // 문서 로드 후 인쇄 다이얼로그 표시
+    printWindow.onload = function() {
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+    };
+    
+    // 인쇄 후 창 닫기 (사용자가 인쇄를 취소하거나 완료한 후)
+    printWindow.onafterprint = function() {
+        printWindow.close();
+    };
+};
+
+// 대화 내용을 텍스트 파일로 내보내기
+window.exportConversationAsText = function(jsonData) {
+    try {
+        const data = JSON.parse(jsonData);
+        
+        // 텍스트 형식으로 변환
+        let textContent = '식탁보 AI 대화 기록\n';
+        textContent += `생성일: ${data.exportDate}\n`;
+        textContent += '='.repeat(50) + '\n\n';
+        
+        data.messages.forEach((msg, index) => {
+            const sender = msg.isUser ? '사용자' : 'AI';
+            textContent += `[${index + 1}] ${sender}:\n`;
+            textContent += msg.content.trim() + '\n\n';
+        });
+        
+        textContent += '='.repeat(50) + '\n';
+        textContent += '식탁보 AI - https://yourtablecloth.app\n';
+        
+        // Blob 생성 및 다운로드
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        
+        // 파일명 생성 (날짜 포함)
+        const date = new Date();
+        const filename = `tablecloth-ai-chat-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}.txt`;
+        
+        // 다운로드 트리거
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // 메모리 정리
+        URL.revokeObjectURL(url);
+        
+        window.showToast('대화 내용이 텍스트 파일로 저장되었습니다.', 'success');
+        return true;
+    } catch (error) {
+        console.error('텍스트 내보내기 오류:', error);
+        window.showToast('텍스트 파일 내보내기에 실패했습니다.', 'error');
+        return false;
+    }
+};
+
+// 대화 내용 공유 함수
+window.shareContent = async function(shareData) {
+    const result = {
+        success: false,
+        method: '',
+        error: null
+    };
+    
+    try {
+        // 방법 1: Web Share API 사용 (모바일 및 최신 브라우저)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: shareData.title,
+                    text: shareData.text
+                });
+                result.success = true;
+                result.method = 'webshare';
+                return result;
+            } catch (shareError) {
+                // 사용자가 공유를 취소한 경우
+                if (shareError.name === 'AbortError') {
+                    result.error = 'cancelled';
+                    return result;
+                }
+                console.log('Web Share API 실패, 클립보드 시도:', shareError);
+            }
+        }
+        
+        // 방법 2: 클립보드 API 사용
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(shareData.text);
+                result.success = true;
+                result.method = 'clipboard';
+                return result;
+            } catch (clipboardError) {
+                console.log('클립보드 API 실패:', clipboardError);
+            }
+        }
+        
+        // 방법 3: 레거시 복사 방법
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = shareData.text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            if (successful) {
+                result.success = true;
+                result.method = 'clipboard';
+                return result;
+            }
+        } catch (legacyError) {
+            console.log('레거시 복사 실패:', legacyError);
+        }
+        
+        // 모든 방법 실패
+        result.error = 'unsupported';
+        return result;
+        
+    } catch (error) {
+        console.error('공유 중 오류:', error);
+        result.error = error.message;
+        return result;
+    }
+};
+
+// OS 감지 함수
+window.detectOS = function() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    const result = {
+        isWindows: false,
+        isMac: false,
+        isLinux: false,
+        isAndroid: false,
+        isIOS: false,
+        userAgent: userAgent
+    };
+    
+    // Windows 감지
+    if (/windows/i.test(userAgent)) {
+        result.isWindows = true;
+    }
+    // macOS 감지
+    else if (/macintosh|mac os x/i.test(userAgent)) {
+        result.isMac = true;
+    }
+    // iOS 감지 (iPhone, iPad, iPod)
+    else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        result.isIOS = true;
+    }
+    // Android 감지
+    else if (/android/i.test(userAgent)) {
+        result.isAndroid = true;
+    }
+    // Linux 감지 (Android가 아닌 경우)
+    else if (/linux/i.test(userAgent)) {
+        result.isLinux = true;
+    }
+    
+    console.log('OS 감지 결과:', result);
+    return result;
+};
+
+// 스크롤 정보 가져오기 함수
+window.getScrollInfo = function(selector) {
+    try {
+        const element = document.querySelector(selector);
+        if (!element) {
+            console.warn(`요소를 찾을 수 없음: ${selector}`);
+            return {
+                scrollTop: 0,
+                scrollHeight: 0,
+                clientHeight: 0
+            };
+        }
+        
+        return {
+            scrollTop: element.scrollTop,
+            scrollHeight: element.scrollHeight,
+            clientHeight: element.clientHeight
+        };
+    } catch (error) {
+        console.error('스크롤 정보 가져오기 오류:', error);
+        return {
+            scrollTop: 0,
+            scrollHeight: 0,
+            clientHeight: 0
+        };
+    }
+};
