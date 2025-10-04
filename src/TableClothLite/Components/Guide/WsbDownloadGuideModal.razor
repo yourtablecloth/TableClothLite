@@ -1,0 +1,403 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+
+<div class="wsb-download-guide-modal" @onclick="HandleBackdropClick">
+    <div class="modal-content" @onclick:stopPropagation="true">
+        <div class="modal-header">
+            <h3>Windows Sandbox 필요</h3>
+            <button class="close-btn" @onclick="Close" type="button">✕</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="guide-content">
+                <div class="icon-section">
+                    <span class="warning-icon">⚠️</span>
+                    <h4>WSB 파일 다운로드 안내</h4>
+                </div>
+                
+                <div class="info-box">
+                    <p><strong>Windows Sandbox는 Windows 데스크톱 전용 기능입니다.</strong></p>
+                    <p>WSB 파일은 Windows 10/11 데스크톱 환경에서만 실행할 수 있습니다.</p>
+                </div>
+                
+                <div class="current-environment">
+                    <h5>현재 환경</h5>
+                    <ul>
+                        @if (!IsWindows)
+                        {
+                            <li>🖥️ 운영체제: @GetCurrentOS()</li>
+                            <li>⚠️ Windows가 아닙니다</li>
+                        }
+                        @if (!IsDesktop)
+                        {
+                            <li>📱 디바이스: 모바일 또는 태블릿</li>
+                            <li>⚠️ 데스크톱 환경이 아닙니다</li>
+                        }
+                    </ul>
+                </div>
+                
+                <div class="steps">
+                    <h5>WSB 파일을 사용하려면:</h5>
+                    
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h6>Windows PC 준비</h6>
+                            <p>Windows 10 Pro/Enterprise/Education 또는 Windows 11이 설치된 데스크톱 PC를 준비하세요.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h6>Windows Sandbox 설치</h6>
+                            <p>Windows PC에서 "Windows 기능 켜기/끄기"를 통해 Windows Sandbox를 활성화하세요.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h6>WSB 파일 다운로드</h6>
+                            <p>Windows PC에서 이 페이지에 다시 접속하여 WSB 파일을 다운로드하세요.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h6>WSB 파일 실행</h6>
+                            <p>다운로드받은 .wsb 파일을 더블클릭하여 안전한 샌드박스 환경에서 실행하세요.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                @if (AllowDownloadAnyway)
+                {
+                    <div class="download-anyway-section">
+                        <button class="btn btn-warning" @onclick="DownloadAnyway" type="button">
+                            그래도 다운로드하기
+                        </button>
+                        <p class="download-anyway-note">
+                            다운로드한 파일은 Windows PC로 전송하여 사용할 수 있습니다.
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" @onclick="Close" type="button">
+                닫기
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wsb-download-guide-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background: var(--card-bg, white);
+        color: var(--primary-text, #2c3e50);
+        border-radius: 12px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid var(--border-color, #e9ecef);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--secondary-text, #6c757d);
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+        background: var(--secondary-bg, #f8f9fa);
+        color: var(--primary-text, #495057);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .icon-section {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .warning-icon {
+        font-size: 48px;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .icon-section h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .info-box {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    .info-box p {
+        margin: 0 0 8px 0;
+        color: #856404;
+    }
+
+    .info-box p:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-box strong {
+        font-weight: 600;
+    }
+
+    .current-environment {
+        background: var(--secondary-bg, #f8f9fa);
+        border: 1px solid var(--border-color, #e9ecef);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+
+    .current-environment h5 {
+        margin: 0 0 12px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .current-environment ul {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--secondary-text, #6c757d);
+    }
+
+    .current-environment li {
+        margin-bottom: 6px;
+    }
+
+    .steps h5 {
+        margin: 0 0 16px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .step {
+        display: flex;
+        margin-bottom: 20px;
+        align-items: flex-start;
+    }
+
+    .step-number {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+        margin-right: 16px;
+        margin-top: 2px;
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    }
+
+    .step-content h6 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .step-content p {
+        margin: 0;
+        color: var(--secondary-text, #6c757d);
+        line-height: 1.5;
+    }
+
+    .download-anyway-section {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color, #e9ecef);
+        text-align: center;
+    }
+
+    .download-anyway-note {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--secondary-text, #6c757d);
+        font-style: italic;
+    }
+
+    .modal-footer {
+        padding: 16px 24px 24px;
+        border-top: 1px solid var(--border-color, #e9ecef);
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 10px 24px;
+        border-radius: 6px;
+        border: 1px solid;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary {
+        background: var(--secondary-text, #6c757d);
+        border-color: var(--secondary-text, #6c757d);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        border-color: #545b62;
+        transform: translateY(-1px);
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+        color: white;
+        padding: 12px 28px;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        border-color: #d97706;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    @@media (max-width: 768px) {
+        .wsb-download-guide-modal {
+            padding: 10px;
+        }
+
+        .modal-content {
+            max-height: 95vh;
+        }
+
+        .modal-header, .modal-body, .modal-footer {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .icon-section .warning-icon {
+            font-size: 40px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsWindows { get; set; } = true;
+    [Parameter] public bool IsDesktop { get; set; } = true;
+    [Parameter] public bool AllowDownloadAnyway { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDownloadAnyway { get; set; }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClick()
+    {
+        await Close();
+    }
+
+    private async Task DownloadAnyway()
+    {
+        await OnDownloadAnyway.InvokeAsync();
+        await Close();
+    }
+
+    private string GetCurrentOS()
+    {
+        if (!IsWindows)
+        {
+            // 실제 OS는 JavaScript에서 감지한 값을 사용하지만,
+            // 여기서는 간단하게 표시
+            return "Windows가 아님";
+        }
+        return "Unknown";
+    }
+}

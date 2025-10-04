@@ -920,7 +920,7 @@
             font-size: 14px;
         }
 
-        .new-chat-btn-header {
+        .new-chat-btn_header {
             display: none; /* 매우 작은 화면에서는 숨김 */
         }
 
@@ -938,6 +938,16 @@
                        OnClose="CloseSandboxGuide" />
 }
 
+@* WSB 다운로드 가이드 모달 *@
+@if (Model.ShowWsbDownloadGuide)
+{
+    <WsbDownloadGuideModal IsWindows="@Model.IsWindows"
+                           IsDesktop="@Model.IsDesktop"
+                           AllowDownloadAnyway="true"
+                           OnClose="CloseWsbDownloadGuide"
+                           OnDownloadAnyway="DownloadWsbAnyway" />
+}
+
 @* 서비스 목록 모달 *@
 @if (_showServicesModal)
 {
@@ -948,4 +958,4 @@
 @if (_showSettingsModal)
 {
     <SettingsModal OnClose="CloseSettingsModal" />
-}
+}}

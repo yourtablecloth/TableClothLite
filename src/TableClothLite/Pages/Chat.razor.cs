@@ -1284,6 +1284,20 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
+    // WSB 다운로드 가이드 모달 닫기
+    private void CloseWsbDownloadGuide()
+    {
+        Model.CloseWsbDownloadGuide();
+        StateHasChanged();
+    }
+
+    // WSB 파일을 어쨌든 다운로드
+    private async Task DownloadWsbAnyway()
+    {
+        await Model.DownloadPendingFileAsync();
+        StateHasChanged();
+    }
+
     // 서비스 목록 모달 닫기
     private void CloseServicesModal()
     {
