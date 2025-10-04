@@ -47,6 +47,12 @@ public sealed partial class SandboxViewModel : ObservableObject
     // 대기 중인 다운로드 정보를 저장
     private MemoryStream? _pendingDownloadStream;
     private string? _pendingFileName;
+    private ServiceInfo? _pendingServiceInfo;
+
+    /// <summary>
+    /// 대기 중인 서비스 정보를 가져옵니다.
+    /// </summary>
+    public ServiceInfo? PendingServiceInfo => _pendingServiceInfo;
 
     /// <summary>
     /// 환경 감지를 수행합니다.
@@ -102,6 +108,7 @@ public sealed partial class SandboxViewModel : ObservableObject
             doc.Save(_pendingDownloadStream);
             _pendingDownloadStream.Position = 0L;
             _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
+            _pendingServiceInfo = serviceInfo;
 
             // 가이드 모달 표시
             ShowWsbDownloadGuide = true;
@@ -167,6 +174,7 @@ public sealed partial class SandboxViewModel : ObservableObject
         _pendingDownloadStream?.Dispose();
         _pendingDownloadStream = null;
         _pendingFileName = null;
+        _pendingServiceInfo = null;
     }
 
     public string CalculateAbsoluteUrl(string relativePath)

@@ -300,6 +300,8 @@
     <WsbDownloadGuideModal IsWindows="@Model.IsWindows"
                            IsDesktop="@Model.IsDesktop"
                            AllowDownloadAnyway="true"
+                           ServiceUrl="@Model.PendingServiceInfo?.Url"
+                           ServiceDisplayName="@Model.PendingServiceInfo?.DisplayName"
                            OnClose="CloseWsbDownloadGuide"
                            OnDownloadAnyway="DownloadWsbAnyway" />
 }

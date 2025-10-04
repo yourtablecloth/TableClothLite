@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components
 @using Microsoft.JSInterop
+@using TableClothLite.Shared.Models
 
 <div class="wsb-download-guide-modal" @onclick="HandleBackdropClick">
     <div class="modal-content" @onclick:stopPropagation="true">
@@ -35,6 +36,20 @@
                         }
                     </ul>
                 </div>
+                
+                @if (!string.IsNullOrEmpty(ServiceUrl))
+                {
+                    <div class="alternative-action">
+                        <h5>지금 바로 접속하기</h5>
+                        <p>Windows Sandbox를 사용하지 않고 해당 사이트에 직접 접속할 수 있습니다.</p>
+                        <button class="btn btn-primary" @onclick="OpenServiceUrl" type="button">
+                            🌐 @ServiceDisplayName 사이트로 이동
+                        </button>
+                        <p class="alternative-note">
+                            ⚠️ 새 창에서 열립니다. 보안을 위해 샌드박스 사용을 권장합니다.
+                        </p>
+                    </div>
+                }
                 
                 <div class="steps">
                     <h5>WSB 파일을 사용하려면:</h5>
@@ -294,6 +309,35 @@
         font-style: italic;
     }
 
+    .alternative-action {
+        background: var(--secondary-bg, #f8f9fa);
+        border: 2px solid var(--accent-color, #007bff);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .alternative-action h5 {
+        margin: 0 0 12px 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .alternative-action p {
+        margin: 0 0 16px 0;
+        color: var(--secondary-text, #6c757d);
+        line-height: 1.5;
+    }
+
+    .alternative-note {
+        margin-top: 12px !important;
+        font-size: 12px !important;
+        color: var(--secondary-text, #6c757d) !important;
+        font-style: italic;
+    }
+
     .modal-footer {
         padding: 16px 24px 24px;
         border-top: 1px solid var(--border-color, #e9ecef);
@@ -339,6 +383,22 @@
         box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
     }
 
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-color: #007bff;
+        color: white;
+        padding: 12px 28px;
+        font-size: 15px;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        border-color: #0056b3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+    }
+
     @@media (max-width: 768px) {
         .wsb-download-guide-modal {
             padding: 10px;
@@ -369,6 +429,8 @@
     [Parameter] public bool IsWindows { get; set; } = true;
     [Parameter] public bool IsDesktop { get; set; } = true;
     [Parameter] public bool AllowDownloadAnyway { get; set; } = true;
+    [Parameter] public string? ServiceUrl { get; set; }
+    [Parameter] public string? ServiceDisplayName { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnDownloadAnyway { get; set; }
 
@@ -388,6 +450,14 @@
     {
         await OnDownloadAnyway.InvokeAsync();
         await Close();
+    }
+
+    private async Task OpenServiceUrl()
+    {
+        if (!string.IsNullOrEmpty(ServiceUrl))
+        {
+            await JSRuntime.InvokeVoidAsync("open", ServiceUrl, "_blank");
+        }
     }
 
     private string GetCurrentOS()
