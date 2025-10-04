@@ -81,6 +81,7 @@ main[b-3zwydhbc4h] {
 /* /Pages/Chat.razor.rz.scp.css */
 .chat-app[b-1eksyvqne5] {
     height: 100vh;
+    height: 100dvh; /* 동적 뷰포트 높이 - 모바일 주소창 고려 */
     background: var(--primary-bg);
     color: var(--primary-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -91,11 +92,16 @@ main[b-3zwydhbc4h] {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh; /* 동적 뷰포트 높이 */
     overflow: hidden;
 }
 
 .chat-header[b-1eksyvqne5] {
     padding: 12px 20px;
+    /* Safe Area 지원 - 상단과 좌우 */
+    padding-top: max(12px, calc(var(--safe-area-inset-top) + 12px));
+    padding-left: max(20px, calc(var(--safe-area-inset-left) + 20px));
+    padding-right: max(20px, calc(var(--safe-area-inset-right) + 20px));
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -461,6 +467,10 @@ main[b-3zwydhbc4h] {
 .input-area[b-1eksyvqne5] {
     border-top: 1px solid var(--border-color);
     padding: 12px 24px;
+    /* Safe Area 지원 - 하단과 좌우 */
+    padding-bottom: max(12px, calc(var(--safe-area-inset-bottom) + 12px));
+    padding-left: max(24px, calc(var(--safe-area-inset-left) + 24px));
+    padding-right: max(24px, calc(var(--safe-area-inset-right) + 24px));
     position: relative;
     background: var(--primary-bg);
 }
@@ -584,6 +594,10 @@ main[b-3zwydhbc4h] {
 @media (max-width: 768px) {
     .chat-header[b-1eksyvqne5] {
         padding: 8px 12px;
+        /* Safe Area 지원 - 모바일 */
+        padding-top: max(8px, calc(var(--safe-area-inset-top) + 8px));
+        padding-left: max(12px, calc(var(--safe-area-inset-left) + 12px));
+        padding-right: max(12px, calc(var(--safe-area-inset-right) + 12px));
     }
 
     .header-left[b-1eksyvqne5] {
@@ -597,10 +611,17 @@ main[b-3zwydhbc4h] {
 
     .messages-list[b-1eksyvqne5] {
         padding: 16px;
+        /* Safe Area 지원 - 좌우 */
+        padding-left: max(16px, calc(var(--safe-area-inset-left) + 16px));
+        padding-right: max(16px, calc(var(--safe-area-inset-right) + 16px));
     }
 
     .input-area[b-1eksyvqne5] {
         padding: 8px 16px;
+        /* Safe Area 지원 - 모바일 하단 */
+        padding-bottom: max(16px, calc(var(--safe-area-inset-bottom) + 16px));
+        padding-left: max(16px, calc(var(--safe-area-inset-left) + 16px));
+        padding-right: max(16px, calc(var(--safe-area-inset-right) + 16px));
     }
 
     .welcome-content h1[b-1eksyvqne5] {
@@ -709,9 +730,9 @@ main[b-3zwydhbc4h] {
 /* 모바일에서 알림 위치 조정 */
 @media (max-width: 480px) {
     .update-notification[b-1eksyvqne5] {
-        top: 10px;
-        right: 10px;
-        left: 10px;
+        top: max(10px, calc(var(--safe-area-inset-top) + 10px));
+        right: max(10px, var(--safe-area-inset-right));
+        left: max(10px, var(--safe-area-inset-left));
         max-width: none;
     }
 
