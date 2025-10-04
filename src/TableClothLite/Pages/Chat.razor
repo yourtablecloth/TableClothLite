@@ -70,20 +70,20 @@
                 {
                     <!-- 데스크톱: 개별 버튼들 -->
                     <div class="conversation-actions desktop-actions">
-                        <button @onclick="PrintConversationAsync" class="action-btn" title="대화 내용 인쇄" type="button">
+                        <button @onclick="PrintConversationAsync" class="header-action-btn" title="대화 내용 인쇄" type="button">
                             🖨️
                         </button>
-                        <button @onclick="ExportConversationAsTextAsync" class="action-btn" title="텍스트 파일로 내보내기" type="button">
+                        <button @onclick="ExportConversationAsTextAsync" class="header-action-btn" title="텍스트 파일로 내보내기" type="button">
                             📄
                         </button>
-                        <button @onclick="ShareConversationAsync" class="action-btn" title="대화 내용 공유" type="button">
+                        <button @onclick="ShareConversationAsync" class="header-action-btn" title="대화 내용 공유" type="button">
                             📤
                         </button>
                     </div>
                     
                     <!-- 모바일: 드롭다운 메뉴 -->
                     <div class="conversation-actions mobile-actions">
-                        <button @onclick="ToggleConversationActionsDropdown" class="action-btn" title="대화 액션" type="button">
+                        <button @onclick="ToggleConversationActionsDropdown" class="header-action-btn" title="대화 액션" type="button">
                             ⋯
                         </button>
                         <div class="conversation-actions-dropdown @(_showConversationActionsDropdown ? "show" : "")">
@@ -126,19 +126,19 @@
                     </button>
                 }
                 
-                <button @onclick="OpenServicesModalAsync" class="action-btn" title="서비스 목록" type="button">
+                <button @onclick="OpenServicesModalAsync" class="header-action-btn" title="서비스 목록" type="button">
                     🛒
                 </button>
-                <button @onclick="OpenSettingDialog" class="action-btn" title="설정" type="button">
+                <button @onclick="OpenSettingDialog" class="header-action-btn" title="설정" type="button">
                     ⚙️
                 </button>
-                <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="action-btn sponsor-btn" title="개발 후원하기">
+                <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="header-action-btn sponsor-btn" title="개발 후원하기">
                     💝
                 </a>
-                <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="action-btn" title="GitHub">
+                <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="header-action-btn github-btn" title="GitHub">
                     <strong>{;}</strong>
                 </a>
-                <a href="https://yourtablecloth.app/" target="_blank" class="action-btn" title="식탁보 홈페이지">
+                <a href="https://yourtablecloth.app/" target="_blank" class="header-action-btn home-btn" title="식탁보 홈페이지">
                     🏠
                 </a>
             </div>
@@ -365,99 +365,11 @@
         gap: 4px;
     }
 
-    .action-btn {
-        width: 40px;
-        height: 40px;
-        border: 1px solid transparent;
-        background: var(--primary-bg);
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 16px;
-        color: var(--secondary-text);
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-        background: var(--secondary-bg);
-        border-color: var(--border-color);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px var(--shadow-color);
-    }
-
-    .sponsor-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-    }
-
-    /* 헤더 로그인/로그아웃 버튼 */
-    .auth-btn-header {
-        width: 40px;
-        height: 40px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        border-radius: 8px;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-
-    .auth-btn-header.login {
-        background: var(--accent-color);
-        color: white;
-        border-color: var(--accent-color);
-    }
-
-    .auth-btn-header.login:hover {
-        background: var(--accent-color);
-        border-color: var(--accent-color);
-        filter: brightness(0.9);
-        transform: translateY(-2px);
-    }
-
-    .auth-btn-header.logout {
-        background: var(--primary-bg);
-        color: var(--secondary-text);
-        border-color: var(--border-color);
-    }
-
-    .auth-btn-header.logout:hover {
-        background: var(--secondary-bg);
-        color: var(--error-color);
-        border-color: var(--error-color);
-        transform: translateY(-2px);
-    }
-
-    .auth-btn-header.checking {
-        background: var(--secondary-bg);
-        color: var(--secondary-text);
-        border-color: var(--border-color);
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
     /* 텍스트 기반 버튼 스타일 */
     .login-text {
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.5px;
-    }
-
-    .github-btn {
-        background: var(--primary-bg);
-        border: 1px solid var(--border-color);
-    }
-
-    .github-btn:hover {
-        background: #22c55e;
-        border-color: #22c55e;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
     }
 
     /* 모바일에서의 대화 액션 드롭다운 */
@@ -735,26 +647,39 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: var(--modal-backdrop);
+        background: var(--primary-bg);
+        border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 12px;
         z-index: 10;
         border-radius: 12px;
-        color: var(--secondary-text);
+        color: var(--primary-text);
         font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 2px 8px var(--shadow-color);
     }
 
     .login-overlay-btn {
-        padding: 8px 16px;
+        padding: 10px 20px;
         background: var(--accent-color);
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+    }
+
+    .login-overlay-btn:hover {
+        background: var(--accent-color);
+        filter: brightness(0.9);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
     }
 
     .input-wrapper {
@@ -922,7 +847,7 @@
         border: none;
         border-radius: 6px;
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 500,
         cursor: pointer;
         transition: all 0.2s ease;
     }
