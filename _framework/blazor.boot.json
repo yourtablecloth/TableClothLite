@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "TableClothLite",
   "resources": {
-    "hash": "sha256-FQ+ySu7VYBBOXgsQGkWuF+Qbs9R7LePe/K3a7OYII4w=",
+    "hash": "sha256-rAg0f5l2ptgRazz9KZ1zLTjwQBbdUI7WCX4k1hmnucM=",
     "fingerprinting": {
       "AngleSharp.up7648hgwu.wasm": "AngleSharp.wasm",
       "Blazored.LocalStorage.12n6dz54qr.wasm": "Blazored.LocalStorage.wasm",
@@ -24,7 +24,7 @@
       "Microsoft.Extensions.Diagnostics.Abstractions.o97u05c9gb.wasm": "Microsoft.Extensions.Diagnostics.Abstractions.wasm",
       "Microsoft.Extensions.Diagnostics.lk2ttr0x6l.wasm": "Microsoft.Extensions.Diagnostics.wasm",
       "Microsoft.Extensions.Http.9qwcqulsre.wasm": "Microsoft.Extensions.Http.wasm",
-      "Microsoft.Extensions.Logging.Abstractions.ktaivkkahe.wasm": "Microsoft.Extensions.Logging.Abstractions.wasm",
+      "Microsoft.Extensions.Logging.Abstractions.qu3mb3lnbo.wasm": "Microsoft.Extensions.Logging.Abstractions.wasm",
       "Microsoft.Extensions.Logging.oyrf5zd3yr.wasm": "Microsoft.Extensions.Logging.wasm",
       "Microsoft.Extensions.Options.cye6fgpn51.wasm": "Microsoft.Extensions.Options.wasm",
       "Microsoft.Extensions.Primitives.wdgxpgsqcr.wasm": "Microsoft.Extensions.Primitives.wasm",
@@ -74,8 +74,8 @@
       "System.Threading.82acoiyymq.wasm": "System.Threading.wasm",
       "System.Web.HttpUtility.h1htfqt019.wasm": "System.Web.HttpUtility.wasm",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "System.Xml.ReaderWriter.wasm",
-      "TableClothLite.Shared.08pfly0sgk.wasm": "TableClothLite.Shared.wasm",
-      "TableClothLite.ujbaw5xn74.wasm": "TableClothLite.wasm",
+      "TableClothLite.Shared.1t5s7nq4bq.wasm": "TableClothLite.Shared.wasm",
+      "TableClothLite.aoiuno75xt.wasm": "TableClothLite.wasm",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "TG.Blazor.IndexedDB.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.9ih887ebfz.js": "dotnet.native.js",
@@ -125,7 +125,7 @@
       "Microsoft.Extensions.Diagnostics.Abstractions.o97u05c9gb.wasm": "sha256-tEtUKTeItXncbYJzaOn0W/BY6wHDdtVCzr0FPuKmN4M=",
       "Microsoft.Extensions.Diagnostics.lk2ttr0x6l.wasm": "sha256-u4RUZ6A9cWnQlgCP/S7IxI1Wh8+1iQrhwgBkYE0TEWo=",
       "Microsoft.Extensions.Http.9qwcqulsre.wasm": "sha256-sRLhNMcl46Jn6vSRo5GP+0i6/F22MxBKkaQOTok9zR0=",
-      "Microsoft.Extensions.Logging.Abstractions.ktaivkkahe.wasm": "sha256-uOkeqfOTrzzJ36Yoip34kddg7arunDWtkTHuUzvWRtI=",
+      "Microsoft.Extensions.Logging.Abstractions.qu3mb3lnbo.wasm": "sha256-/ls3V4Df4Kms+zGG5ISWehDtrxcXYyw6Tqnye89UD2k=",
       "Microsoft.Extensions.Logging.oyrf5zd3yr.wasm": "sha256-sKOjZ6H5TkO/+qfWsNQ+u++TkQ+Yvcs3Kof4x3XGpkA=",
       "Microsoft.Extensions.Options.cye6fgpn51.wasm": "sha256-zG93jidCj4vBcVrLdr3CRtyNM05ws3tdBGjyDTdb9jQ=",
       "Microsoft.Extensions.Primitives.wdgxpgsqcr.wasm": "sha256-zPXs1ZxaGv/gjScqkSbos0m3HyxJufpF3haxdyuT0QA=",
@@ -173,8 +173,8 @@
       "System.Threading.82acoiyymq.wasm": "sha256-8P2hHDMhWmFasTjydp596prdpBK7XM8QOkUCY/ZBx+k=",
       "System.Web.HttpUtility.h1htfqt019.wasm": "sha256-heJjIS0TxXlTOzoQF5/OcGGEsa8zaQLoOJWyssZdj1U=",
       "System.Xml.ReaderWriter.plpjx8ae2q.wasm": "sha256-o/aGLZlaugH+0+JJg2HH0YxQ0ZrgpS4EGtufa8qkGOs=",
-      "TableClothLite.Shared.08pfly0sgk.wasm": "sha256-kNVxHy5CDI3bLTS05pzPYlElOV7Mj2AWCJcqmqRtqKU=",
-      "TableClothLite.ujbaw5xn74.wasm": "sha256-+nyAk3pcbXkXfksH6rCBPIbYBo0APdkkd8+p+4EjbTs=",
+      "TableClothLite.Shared.1t5s7nq4bq.wasm": "sha256-mzCwmU/QnBeCYlpDT+n8P2hPg+i+M/j3lp6P+LxqfRY=",
+      "TableClothLite.aoiuno75xt.wasm": "sha256-CkGo/O/GMUVDX8P3mpXXiqKndlDa72K7Yx/ylDcpprE=",
       "TG.Blazor.IndexedDB.y0k6n7pzc8.wasm": "sha256-4u3DzThxux9K9sTeHhZyBhid/AlxJKAaouBiayJ/n5Y="
     }
   },
