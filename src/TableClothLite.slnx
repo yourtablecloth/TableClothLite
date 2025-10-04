@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="../LICENSE" />
+    <File Path="../README.md" />
+  </Folder>
   <Project Path="TableClothLite.Installer/TableClothLite.Installer.csproj" />
   <Project Path="TableClothLite.Shared/TableClothLite.Shared.csproj" />
   <Project Path="TableClothLite/TableClothLite.csproj" />
