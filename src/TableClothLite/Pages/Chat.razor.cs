@@ -320,6 +320,9 @@ public partial class Chat : IDisposable
             );
             
             await Model.GenerateSandboxDocumentAsync(url, defaultService);
+            
+            // 모달이 표시되도록 StateHasChanged 호출
+            StateHasChanged();
         }
         catch (Exception ex)
         {

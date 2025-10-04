@@ -1073,3 +1073,69 @@ window.shareContent = async function(shareData) {
         return result;
     }
 };
+
+// OS 감지 함수
+window.detectOS = function() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    const result = {
+        isWindows: false,
+        isMac: false,
+        isLinux: false,
+        isAndroid: false,
+        isIOS: false,
+        userAgent: userAgent
+    };
+    
+    // Windows 감지
+    if (/windows/i.test(userAgent)) {
+        result.isWindows = true;
+    }
+    // macOS 감지
+    else if (/macintosh|mac os x/i.test(userAgent)) {
+        result.isMac = true;
+    }
+    // iOS 감지 (iPhone, iPad, iPod)
+    else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        result.isIOS = true;
+    }
+    // Android 감지
+    else if (/android/i.test(userAgent)) {
+        result.isAndroid = true;
+    }
+    // Linux 감지 (Android가 아닌 경우)
+    else if (/linux/i.test(userAgent)) {
+        result.isLinux = true;
+    }
+    
+    console.log('OS 감지 결과:', result);
+    return result;
+};
+
+// 스크롤 정보 가져오기 함수
+window.getScrollInfo = function(selector) {
+    try {
+        const element = document.querySelector(selector);
+        if (!element) {
+            console.warn(`요소를 찾을 수 없음: ${selector}`);
+            return {
+                scrollTop: 0,
+                scrollHeight: 0,
+                clientHeight: 0
+            };
+        }
+        
+        return {
+            scrollTop: element.scrollTop,
+            scrollHeight: element.scrollHeight,
+            clientHeight: element.clientHeight
+        };
+    } catch (error) {
+        console.error('스크롤 정보 가져오기 오류:', error);
+        return {
+            scrollTop: 0,
+            scrollHeight: 0,
+            clientHeight: 0
+        };
+    }
+};
