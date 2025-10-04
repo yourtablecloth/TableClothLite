@@ -179,7 +179,15 @@ public partial class Chat : IDisposable
             await CheckAppVersionAsync();
         }
 
-        await SafeInvokeJSAsync("scrollToBottom", "messages");
+        // 스트리밍 중이면 스마트 스크롤, 아니면 일반 스크롤
+        if (_isStreaming)
+        {
+            await SafeInvokeJSAsync("smartScrollToBottom", "messages");
+        }
+        else
+        {
+            await SafeInvokeJSAsync("scrollToBottom", "messages");
+        }
     }
 
     // JavaScript 초기화를 안전하게 처리
@@ -710,7 +718,8 @@ public partial class Chat : IDisposable
             if (_client == null)
                 throw new InvalidOperationException("Client is not initialized.");
 
-            await SafeInvokeJSAsync("scrollToBottom", "messages");
+            // 스트리밍 시작 시 스마트 스크롤 (사용자가 맨 아래에 있으면 스크롤)
+            await SafeInvokeJSAsync("smartScrollToBottom", "messages");
 
             await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId, _streamingCancellationTokenSource.Token))
             {

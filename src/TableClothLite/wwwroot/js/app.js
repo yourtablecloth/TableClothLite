@@ -109,6 +109,22 @@ window.scrollToBottom = function (elementId) {
     }
 };
 
+// 스마트 스크롤 - 사용자가 맨 아래에 있을 때만 자동 스크롤
+window.smartScrollToBottom = function (elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        // 사용자가 거의 맨 아래에 있는지 확인 (100px 여유)
+        const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+        
+        if (isNearBottom) {
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        return isNearBottom;
+    }
+    return false;
+};
+
 // 부드러운 스크롤 함수
 window.smoothScrollToBottom = function (elementId) {
     const element = document.getElementById(elementId);
