@@ -3,7 +3,6 @@
 @using TableClothLite.Components.Catalog
 @using TableClothLite.Components.Settings
 
-@inject IDialogService DialogService
 @inject OpenRouterAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
@@ -28,12 +27,6 @@
 
 <!-- PWA 업데이트 알림만 유지 -->
 <PwaUpdateNotification />
-
-<FluentToastProvider />
-<FluentDialogProvider />
-<FluentTooltipProvider />
-<FluentMessageBarProvider />
-<FluentMenuProvider />
 
 <style>
     .page {

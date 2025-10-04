@@ -508,15 +508,15 @@ html.dark-theme fluent-button {
 
 /* 로그인 버튼 특별 스타일 */
 .auth-btn-header.login {
-    background: var(--accent-color);
+    background: var(--secondary-text);
     color: white;
-    border-color: var(--accent-color);
+    border-color: var(--secondary-text);
     font-weight: 700;
 }
 
 .auth-btn-header.login:hover {
-    background: var(--accent-color);
-    border-color: var(--accent-color);
+    background: var(--secondary-text);
+    border-color: var(--secondary-text);
     filter: brightness(0.9);
     color: white;
 }

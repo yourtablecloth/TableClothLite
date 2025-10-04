@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.JSInterop;
-using TableClothLite.Components.Chat;
 using TableClothLite.Components.Settings;
 using TableClothLite.Components.Catalog;
 

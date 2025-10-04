@@ -57,24 +57,24 @@ public sealed partial class SandboxViewModel : ObservableObject
         {
             // JavaScript를 통해 OS 감지
             var osInfo = await _jsRuntime.InvokeAsync<OsDetectionResult>("detectOS");
-            _isWindows = osInfo?.IsWindows ?? true;
+            IsWindows = osInfo?.IsWindows ?? true;
 
             // 화면 너비로 데스크톱 여부 감지 (768px 이상을 데스크톱으로 간주)
             var windowWidth = await _jsRuntime.InvokeAsync<int>("getWindowWidth");
-            _isDesktop = windowWidth >= 768;
+            IsDesktop = windowWidth >= 768;
 
             _logger.LogInformation(
                 "환경 감지 완료 - OS: {Os}, Desktop: {IsDesktop}, Width: {Width}",
-                _isWindows ? "Windows" : "Non-Windows",
-                _isDesktop,
+                IsWindows ? "Windows" : "Non-Windows",
+                IsDesktop,
                 windowWidth);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "환경 감지 중 오류 발생. 기본값 사용.");
             // 오류 발생 시 안전하게 기본값 사용
-            _isWindows = true;
-            _isDesktop = true;
+            IsWindows = true;
+            IsDesktop = true;
         }
     }
 
@@ -87,12 +87,12 @@ public sealed partial class SandboxViewModel : ObservableObject
         await DetectEnvironmentAsync();
 
         // Windows 데스크톱 환경이 아닌 경우 가이드 모달 표시
-        if (!_isWindows || !_isDesktop)
+        if (!IsWindows || !IsDesktop)
         {
             _logger.LogInformation(
                 "비호환 환경 감지 - OS: {Os}, Desktop: {IsDesktop}. 가이드 모달 표시.",
-                _isWindows ? "Windows" : "Non-Windows",
-                _isDesktop);
+                IsWindows ? "Windows" : "Non-Windows",
+                IsDesktop);
 
             // WSB 파일 생성은 미리 준비
             var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
@@ -104,7 +104,7 @@ public sealed partial class SandboxViewModel : ObservableObject
             _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
 
             // 가이드 모달 표시
-            _showWsbDownloadGuide = true;
+            ShowWsbDownloadGuide = true;
             return;
         }
 
@@ -133,7 +133,7 @@ public sealed partial class SandboxViewModel : ObservableObject
             _pendingFileName = null;
         }
 
-        _showWsbDownloadGuide = false;
+        ShowWsbDownloadGuide = false;
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public sealed partial class SandboxViewModel : ObservableObject
     /// </summary>
     public void CloseWsbDownloadGuide()
     {
-        _showWsbDownloadGuide = false;
+        ShowWsbDownloadGuide = false;
         
         // 대기 중인 다운로드 정리
         _pendingDownloadStream?.Dispose();
