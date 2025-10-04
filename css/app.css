@@ -1,5 +1,135 @@
+/* CSS 변수 정의 - 라이트 테마 (기본) */
+:root,
+html.light-theme {
+    --primary-bg: #ffffff;
+    --secondary-bg: #f8f9fa;
+    --tertiary-bg: #e9ecef;
+    --primary-text: #212529;
+    --secondary-text: #6c757d;
+    --border-color: #dee2e6;
+    --accent-color: #0071c1;
+    --error-color: #dc3545;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --shadow-color: rgba(0, 0, 0, 0.15);
+    --chat-user-bg: #007bff;
+    --chat-assistant-bg: #f8f9fa;
+    --modal-backdrop: rgba(0, 0, 0, 0.6);
+    --input-bg: #ffffff;
+    --card-bg: #ffffff;
+    --navbar-bg: #ffffff;
+    --footer-bg: #f8f9fa;
+    
+    /* 모달 및 설정 관련 변수 */
+    --modal-header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --toggle-bg: #ccc;
+    --toggle-active-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --hover-transform: translateY(-1px);
+    --note-bg: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    --note-border: #ffeaa7;
+    --note-text: #856404;
+    
+    /* 헤더 액션 버튼 관련 변수 */
+    --header-btn-size: 40px;
+    --header-btn-border-radius: 8px;
+    --header-btn-hover-scale: 1.02;
+    --header-btn-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* 다크 테마 - 더 높은 우선순위로 설정 */
+html.dark-theme {
+    --primary-bg: #1a1a1a !important;
+    --secondary-bg: #2d2d2d !important;
+    --tertiary-bg: #404040 !important;
+    --primary-text: #ffffff !important;
+    --secondary-text: #b0b0b0 !important;
+    --border-color: #404040 !important;
+    --accent-color: #4a9eff !important;
+    --error-color: #ff6b6b !important;
+    --success-color: #51cf66 !important;
+    --warning-color: #ffd43b !important;
+    --shadow-color: rgba(0, 0, 0, 0.5) !important;
+    --chat-user-bg: #2a5298 !important;
+    --chat-assistant-bg: #2d2d2d !important;
+    --modal-backdrop: rgba(0, 0, 0, 0.8) !important;
+    --input-bg: #2d2d2d !important;
+    --card-bg: #2d2d2d !important;
+    --navbar-bg: #1a1a1a !important;
+    --footer-bg: #2d2d2d !important;
+    
+    /* 다크 테마 모달 및 설정 변수 */
+    --modal-header-bg: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+    --toggle-bg: #4a5568 !important;
+    --toggle-active-bg: linear-gradient(135deg, #4a9eff 0%, #2a5298 100%) !important;
+    --note-bg: linear-gradient(135deg, #2d2d2d 0%, #404040 100%) !important;
+    --note-border: #404040 !important;
+    --note-text: #b0b0b0 !important;
+}
+
+/* 강제 테마 적용을 위한 추가 규칙 */
+html.dark-theme,
+html.dark-theme body {
+    background-color: var(--primary-bg) !important;
+    color: var(--primary-text) !important;
+}
+
+html.light-theme,
+html.light-theme body {
+    background-color: var(--primary-bg) !important;
+    color: var(--primary-text) !important;
+}
+
+/* 기본 스타일 업데이트 - 더 높은 우선순위 */
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    background-color: var(--primary-bg) !important;
+    color: var(--primary-text) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Bootstrap 오버라이드 */
+html.dark-theme .container,
+html.dark-theme .container-fluid,
+html.dark-theme .row,
+html.dark-theme .col,
+html.dark-theme [class^="col-"],
+html.dark-theme [class*=" col-"] {
+    background-color: transparent !important;
+    color: var(--primary-text) !important;
+}
+
+/* 다크 테마에서 카드 스타일 강제 적용 */
+html.dark-theme .card {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--primary-text) !important;
+}
+
+/* 버튼 스타일 다크 테마 적용 */
+html.dark-theme .btn-primary {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: #ffffff !important;
+}
+
+html.dark-theme .btn-secondary {
+    background-color: var(--secondary-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--primary-text) !important;
+}
+
+/* 입력 필드 다크 테마 */
+html.dark-theme .form-control,
+html.dark-theme input,
+html.dark-theme textarea,
+html.dark-theme select {
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--primary-text) !important;
+}
+
+html.dark-theme .form-control::placeholder {
+    color: var(--secondary-text) !important;
 }
 
 h1:focus {
@@ -7,40 +137,98 @@ h1:focus {
 }
 
 a, .btn-link {
-    color: #0071c1;
+    color: var(--accent-color);
+    transition: color 0.2s ease;
+}
+
+a:hover, .btn-link:hover {
+    color: var(--accent-color);
+    filter: brightness(1.1);
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    filter: brightness(0.9);
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem var(--primary-bg), 0 0 0 0.25rem var(--accent-color);
 }
 
 .content {
     padding-top: 1.1rem;
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
 }
 
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--success-color);
 }
 
 .invalid {
-    outline: 1px solid red;
+    outline: 1px solid var(--error-color);
 }
 
 .validation-message {
-    color: red;
+    color: var(--error-color);
 }
 
+/* Form 요소들 테마 적용 */
+.form-control {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--primary-text);
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: var(--input-bg);
+    border-color: var(--accent-color);
+    color: var(--primary-text);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--secondary-text);
+}
+
+/* Select 요소 다크 모드 대응 */
+select, select option {
+    background-color: var(--input-bg);
+    color: var(--primary-text);
+}
+
+/* Card 및 Modal 스타일 */
+.card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--primary-text);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--primary-text);
+}
+
+.modal-backdrop {
+    background-color: var(--modal-backdrop);
+}
+
+/* Blazor 오류 UI 테마 적용 */
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
+    color-scheme: light dark;
+    background: var(--error-color);
     bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -1px 2px var(--shadow-color);
     box-sizing: border-box;
     display: none;
     left: 0;
@@ -48,25 +236,28 @@ a, .btn-link {
     position: fixed;
     width: 100%;
     z-index: 1000;
+    color: white;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+    color: white;
+}
 
 .blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA9NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI6LBCUC4RGM6LBQU6OS4OWQTM3IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDg2IDk2LjAxODMgMjYzLjU3NiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, var(--error-color);
     padding: 1rem 1rem 1rem 3.7rem;
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
+/* 로딩 인디케이터 테마 적용 */
 .loading-progress {
     position: relative;
     display: block;
@@ -75,40 +266,353 @@ a, .btn-link {
     margin: 20vh auto 1rem auto;
 }
 
-    .loading-progress circle {
-        fill: none;
-        stroke: #e0e0e0;
-        stroke-width: 0.6rem;
-        transform-origin: 50% 50%;
-        transform: rotate(-90deg);
-    }
+.loading-progress circle {
+    fill: none;
+    stroke: var(--border-color);
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
 
-        .loading-progress circle:last-child {
-            stroke: #1b6ec2;
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
+.loading-progress circle:last-child {
+    stroke: var(--accent-color);
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
 
 .loading-progress-text {
     position: absolute;
     text-align: center;
     font-weight: bold;
     inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    color: var(--primary-text);
 }
 
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
-    }
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Loading");
+}
 
 code {
-    color: #c02d76;
+    color: var(--accent-color);
+    background-color: var(--secondary-bg);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
+    color: var(--secondary-text);
     text-align: end;
 }
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* 버튼 스타일 개선 */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-text);
+    border-color: var(--secondary-text);
+    color: var(--primary-bg);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-text);
+    border-color: var(--secondary-text);
+    filter: brightness(0.9);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-danger {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+    color: #212529;
+}
+
+/* 테이블 스타일 */
+.table {
+    color: var(--primary-text);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > td,
+.table-striped > tbody > tr:nth-of-type(odd) > th {
+    background-color: var(--secondary-bg);
+}
+
+.table-bordered {
+    border-color: var(--border-color);
+}
+
+.table-bordered > thead > tr > th,
+.table-bordered > tbody > tr > th,
+.table-bordered > tfoot > tr > th,
+.table-bordered > thead > tr > td,
+.table-bordered > tbody > tr > td,
+.table-bordered > tfoot > tr > td {
+    border-color: var(--border-color);
+}
+
+/* 네비게이션 요소들 */
+.navbar {
+    background-color: var(--navbar-bg) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-light .navbar-brand,
+.navbar-light .navbar-nav .nav-link {
+    color: var(--primary-text) !important;
+}
+
+/* 푸터 스타일 */
+.footer {
+    background-color: var(--footer-bg);
+    border-top: 1px solid var(--border-color);
+    color: var(--secondary-text);
+}
+
+/* 스크롤바 스타일 (Webkit 브라우저) */
+html.dark-theme ::-webkit-scrollbar {
+    width: 8px;
+}
+
+html.dark-theme ::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb {
+    background: var(--tertiary-bg);
+    border-radius: 4px;
+}
+
+html.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-color);
+}
+
+/* 라이트 테마 스크롤바 */
+html.light-theme ::-webkit-scrollbar {
+    width: 8px;
+}
+
+html.light-theme ::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+}
+
+html.light-theme ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+html.light-theme ::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-text);
+}
+
+/* 선택 텍스트 스타일 */
+::selection {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+::-moz-selection {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* FluentUI 컴포넌트 다크 테마 대응 */
+html.dark-theme fluent-accordion,
+html.dark-theme fluent-accordion-item,
+html.dark-theme fluent-card,
+html.dark-theme fluent-grid,
+html.dark-theme fluent-grid-item {
+    background-color: var(--card-bg);
+    color: var(--primary-text);
+}
+
+html.dark-theme fluent-button {
+    background-color: var(--secondary-bg);
+    color: var(--primary-text);
+    border-color: var(--border-color);
+}
+
+/* 애니메이션 최적화 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 헤더 액션 버튼 통일 스타일 */
+.header-action-btn, 
+.action-btn, 
+.auth-btn-header {
+    width: var(--header-btn-size);
+    height: var(--header-btn-size);
+    border: 1px solid var(--border-color);
+    background: var(--primary-bg);
+    color: var(--secondary-text);
+    cursor: pointer;
+    border-radius: var(--header-btn-border-radius);
+    font-size: 16px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 600;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* 호버 효과 */
+.header-action-btn:hover, 
+.action-btn:hover, 
+.auth-btn-header:hover:not(:disabled) {
+    background: var(--secondary-bg);
+    border-color: var(--accent-color);
+    color: var(--primary-text);
+    transform: var(--hover-transform) scale(var(--header-btn-hover-scale));
+    box-shadow: var(--header-btn-shadow);
+    z-index: 1;
+}
+
+/* 활성 상태 */
+.header-action-btn:active, 
+.action-btn:active, 
+.auth-btn-header:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 4px var(--shadow-color);
+}
+
+/* 포커스 상태 (접근성) */
+.header-action-btn:focus-visible, 
+.action-btn:focus-visible, 
+.auth-btn-header:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* 로그인 버튼 특별 스타일 */
+.auth-btn-header.login {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    font-weight: 700;
+}
+
+.auth-btn-header.login:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    filter: brightness(0.9);
+    color: white;
+}
+
+/* 로그아웃 버튼 특별 스타일 */
+.auth-btn-header.logout:hover {
+    background: var(--error-color);
+    border-color: var(--error-color);
+    color: white;
+}
+
+/* 체크 중 상태 */
+.auth-btn-header.checking {
+    background: var(--secondary-bg);
+    color: var(--secondary-text);
+    border-color: var(--border-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+}
+
+/* 후원 버튼 특별 스타일 */
+.sponsor-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    border-color: #ff6b6b;
+    color: white;
+}
+
+.sponsor-btn:hover {
+    background: linear-gradient(135deg, #ee5a24 0%, #d63031 100%);
+    border-color: #ee5a24;
+    color: white;
+    transform: var(--hover-transform) scale(1.05);
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.4);
+}
+
+/* GitHub 버튼 특별 스타일 */
+.github-btn {
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+}
+
+.github-btn:hover {
+    background: #24292e;
+    border-color: #24292e;
+    color: white;
+    transform: var(--hover-transform) scale(var(--header-btn-hover-scale));
+    box-shadow: 0 4px 12px rgba(36, 41, 46, 0.3);
+}
+
+/* 홈 버튼 특별 스타일 */
+.home-btn:hover {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    transform: var(--hover-transform) scale(var(--header-btn-hover-scale));
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* 비활성화 상태 */
+.header-action-btn:disabled, 
+.action-btn:disabled, 
+.auth-btn-header:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 반응형 - 모바일 */
+@media (max-width: 768px) {
+    :root {
+        --header-btn-size: 36px;
+        --header-btn-border-radius: 6px;
+    }
+    
+    .header-action-btn, 
+    .action-btn, 
+    .auth-btn-header {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --header-btn-size: 32px;
+        --header-btn-border-radius: 6px;
+    }
+    
+    .header-action-btn, 
+    .action-btn, 
+    .auth-btn-header {
+        font-size: 13px;
+    }
 }

@@ -3,9 +3,96 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
     <title>식탁보 AI</title>
     <base href="/" />
+    
+    <!-- 테마 초기 로딩 스크립트 (FOUC 방지) -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme-preference') || 'Auto';
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            
+            // 시스템 테마 상세 정보
+            const systemThemeInfo = {
+                mediaQuerySupported: !!window.matchMedia,
+                prefersDark: prefersDark,
+                prefersLight: prefersLight,
+                noPreference: !prefersDark && !prefersLight,
+                userAgent: navigator.userAgent,
+                platform: getPlatform(),
+                currentTime: new Date().toLocaleString()
+            };
+            
+            let shouldApplyDark = false;
+            let reason = '';
+            
+            if (savedTheme === 'Dark') {
+                shouldApplyDark = true;
+                reason = '사용자가 다크 모드를 선택함';
+            } else if (savedTheme === 'Light') {
+                shouldApplyDark = false;
+                reason = '사용자가 라이트 모드를 선택함';
+            } else if (savedTheme === 'Auto') {
+                shouldApplyDark = prefersDark;
+                reason = prefersDark ? 
+                    '자동 모드: 시스템에서 다크 모드를 선호함' : 
+                    '자동 모드: 시스템에서 라이트 모드를 선호함 (또는 선호도 없음)';
+            }
+            
+            console.log('🎨 테마 초기 로딩 상세 정보:', {
+                savedTheme,
+                shouldApplyDark,
+                reason,
+                systemInfo: systemThemeInfo
+            });
+            
+            // 플랫폼 감지 함수
+            function getPlatform() {
+                const ua = navigator.userAgent;
+                if (ua.includes('Windows')) return 'Windows';
+                if (ua.includes('Mac')) return 'macOS';
+                if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+                if (ua.includes('Android')) return 'Android';
+                if (ua.includes('Linux')) return 'Linux';
+                return 'Unknown';
+            }
+            
+            if (shouldApplyDark) {
+                document.documentElement.classList.add('dark-theme');
+                document.documentElement.classList.remove('light-theme');
+                console.log('✅ 다크 테마 클래스 적용');
+            } else {
+                document.documentElement.classList.add('light-theme');
+                document.documentElement.classList.remove('dark-theme');
+                console.log('✅ 라이트 테마 클래스 적용');
+            }
+            
+            // 적용된 클래스와 CSS 변수 확인
+            setTimeout(() => {
+                console.log('📋 HTML 클래스 목록:', document.documentElement.className);
+                const computedStyle = getComputedStyle(document.documentElement);
+                console.log('🎨 적용된 CSS 변수들:', {
+                    '--primary-bg': computedStyle.getPropertyValue('--primary-bg').trim(),
+                    '--primary-text': computedStyle.getPropertyValue('--primary-text').trim(),
+                    '--accent-color': computedStyle.getPropertyValue('--accent-color').trim()
+                });
+                
+                // 시스템 테마 변경 감지 설정
+                if (window.matchMedia) {
+                    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                    darkModeMediaQuery.addEventListener('change', (e) => {
+                        console.log('🔄 시스템 테마 변경 감지:', e.matches ? '다크 모드' : '라이트 모드');
+                        if (localStorage.getItem('theme-preference') === 'Auto') {
+                            console.log('⚡ 자동 모드이므로 테마 자동 변경');
+                        }
+                    });
+                }
+            }, 100);
+        })();
+    </script>
+    
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -267,4 +354,4 @@
     </script>
 </body>
 
-</html></html>
+</html>
