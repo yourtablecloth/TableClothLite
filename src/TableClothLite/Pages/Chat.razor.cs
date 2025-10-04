@@ -275,6 +275,25 @@ public partial class Chat : IDisposable
         return Task.CompletedTask;
     }
 
+    // JavaScript에서 호출할 수 있는 메서드 - 창 크기 변경 처리
+    [JSInvokable]
+    public Task OnWindowResize(int width)
+    {
+        // 창 크기 변경 시 필요한 처리 (예: 모바일/데스크톱 모드 전환)
+        // 현재는 로깅만 수행
+        Console.WriteLine($"창 크기 변경 감지: {width}px");
+        return Task.CompletedTask;
+    }
+
+    // JavaScript에서 호출할 수 있는 메서드 - 페이지 포커스 처리
+    [JSInvokable]
+    public async Task OnPageFocus()
+    {
+        // 페이지가 포커스를 받았을 때 API 키 상태 재확인
+        await CheckApiKeyStatus();
+        StateHasChanged();
+    }
+
     // JavaScript에서 호출할 수 있는 메서드 - 샌드박스에서 링크 열기
     [JSInvokable]
     public async Task OpenSandbox(string url)
