@@ -1365,6 +1365,28 @@ public partial class Chat : IDisposable
         }
     }
 
+    // 개별 메시지 복사
+    private async Task CopyMessageAsync(string content)
+    {
+        try
+        {
+            var success = await JSRuntime.InvokeAsync<bool>("copyToClipboard", content);
+            if (success)
+            {
+                await SafeInvokeJSAsync("showToast", "메시지가 클립보드에 복사되었습니다.", "success");
+            }
+            else
+            {
+                await SafeInvokeJSAsync("showToast", "복사하지 못했습니다. 다시 시도해주세요.", "error");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"메시지 복사 중 오류: {ex.Message}");
+            await SafeInvokeJSAsync("showToast", "복사하지 못했습니다.", "error");
+        }
+    }
+
     public void Dispose()
     {
         // 스트리밍 작업 취소 및 정리

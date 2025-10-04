@@ -203,6 +203,12 @@
                             <div class="message-text">
                                 @FormatMessage(message.Content)
                             </div>
+                            <button class="copy-message-btn" 
+                                    @onclick="() => CopyMessageAsync(message.Content)" 
+                                    title="메시지 복사"
+                                    type="button">
+                                📋
+                            </button>
                         </div>
                     </div>
                 }

@@ -670,244 +670,110 @@ window.downloadFileStream = async (fileName, contentType, dotNetStreamReference)
     URL.revokeObjectURL(url);
 };
 
-// 복사 기능 (개선된 버전)
-window.copyToClipboard = async function (text) {
-    if (typeof text !== 'string') text = String(text ?? '');
-
-    // 방법 1: 최신 Clipboard API 시도
+// 클립보드에 텍스트 복사
+window.copyToClipboard = async function(text) {
     try {
-        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        // 모던 브라우저의 Clipboard API 사용
+        if (navigator.clipboard && window.isSecureContext) {
             await navigator.clipboard.writeText(text);
             return true;
         }
-    } catch (error) {
-        console.warn('Clipboard API 실패:', error);
-    }
-
-    // 방법 2: execCommand 방식 시도 (구형 브라우저 지원)
-    try {
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
         
-        // 화면에 보이지 않도록 설정
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        textArea.style.opacity = '0';
-        textArea.style.pointerEvents = 'none';
-        textArea.style.tabIndex = '-1';
+        // 레거시 방법 (Clipboard API가 없는 경우)
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-999999px';
+        textarea.style.top = '-999999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
         
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (successful) {
-            return true;
-        }
-    } catch (error) {
-        console.warn('execCommand 복사 실패:', error);
-    }
-
-    // 방법 3: 사용자에게 수동 복사 요청 (최후의 수단)
-    try {
-        const userResponse = window.prompt(
-            '자동 복사가 지원되지 않습니다.\n아래 내용을 수동으로 선택하여 복사해주세요.\n\n복사하려면 Ctrl+A (전체선택) 후 Ctrl+C (복사)를 눌러주세요.',
-            text
-        );
-        // 사용자가 취소하지 않았다면 성공으로 간주
-        return userResponse !== null;
-    } catch (error) {
-        console.error('수동 복사 요청 실패:', error);
-        return false;
-    }
-};
-
-// 모바일 최적화: 스크롤 관성 개선
-window.optimizeScrolling = function() {
-    const messagesContainer = document.getElementById('messages');
-    if (messagesContainer) {
-        messagesContainer.style.webkitOverflowScrolling = 'touch';
-    }
-};
-
-// PWA 관련: 설치 프롬프트 처리
-let deferredPrompt;
-let pwaInstallDotNetHelper = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    console.log('PWA 설치 프롬프트 준비됨');
-    
-    // Blazor 컴포넌트에 알림
-    if (pwaInstallDotNetHelper) {
         try {
-            pwaInstallDotNetHelper.invokeMethodAsync('ShowInstallPrompt');
-        } catch (error) {
-            console.log('설치 프롬프트 알림 실패:', error);
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            return successful;
+        } catch (err) {
+            document.body.removeChild(textarea);
+            return false;
         }
-    }
-});
-
-// PWA 설치 이벤트 리스너
-window.addEventListener('appinstalled', () => {
-    console.log('PWA 설치 완료');
-    deferredPrompt = null;
-    localStorage.setItem('pwa-installed', 'true');
-    window.showToast?.('앱이 성공적으로 설치되었습니다!', 'success');
-});
-
-// PWA 설치 관련 함수들
-window.initPwaInstall = function(dotNetHelper) {
-    pwaInstallDotNetHelper = dotNetHelper;
-    console.log('PWA 설치 초기화 완료');
-};
-
-window.disposePwaInstall = function() {
-    pwaInstallDotNetHelper = null;
-};
-
-window.canShowInstallPrompt = function() {
-    return deferredPrompt !== null && deferredPrompt !== undefined;
-};
-
-window.installPwa = async function() {
-    if (!deferredPrompt) {
-        console.log('설치 프롬프트를 사용할 수 없습니다');
-        return false;
-    }
-
-    try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`PWA 설치 사용자 선택: ${outcome}`);
-        
-        if (outcome === 'accepted') {
-            deferredPrompt = null;
-            return true;
-        }
-        return false;
     } catch (error) {
-        console.error('PWA 설치 오류:', error);
+        console.error('클립보드 복사 실패:', error);
         return false;
     }
 };
 
-window.isPwaInstalled = function() {
-    // 1. 설치 기록 확인
-    if (localStorage.getItem('pwa-installed') === 'true') {
-        return true;
-    }
+// 모바일에서 메시지 그룹 터치 처리
+function setupMessageGroupInteraction() {
+    // 이벤트 위임 방식 사용
+    const messagesContainer = document.querySelector('.messages-container');
+    if (!messagesContainer) return;
     
-    // 2. standalone 모드 확인
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        localStorage.setItem('pwa-installed', 'true');
-        return true;
-    }
+    // 모바일 환경 체크
+    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     
-    // 3. iOS standalone 모드 확인
-    if (window.navigator.standalone === true) {
-        localStorage.setItem('pwa-installed', 'true');
-        return true;
-    }
-    
-    return false;
-};
-
-// PWA 업데이트 알림
-window.notifyPwaUpdate = function() {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'CHECK_UPDATE'
+    if (isMobile) {
+        let currentActiveGroup = null;
+        
+        messagesContainer.addEventListener('click', function(e) {
+            const messageGroup = e.target.closest('.message-group');
+            if (!messageGroup) return;
+            
+            // 복사 버튼을 직접 클릭한 경우는 무시
+            if (e.target.closest('.copy-message-btn')) return;
+            
+            // 이전에 active였던 그룹 제거
+            if (currentActiveGroup && currentActiveGroup !== messageGroup) {
+                currentActiveGroup.classList.remove('clicked');
+            }
+            
+            // 현재 그룹 토글
+            messageGroup.classList.toggle('clicked');
+            currentActiveGroup = messageGroup.classList.contains('clicked') ? messageGroup : null;
+        });
+        
+        // 다른 곳 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.message-group') && currentActiveGroup) {
+                currentActiveGroup.classList.remove('clicked');
+                currentActiveGroup = null;
+            }
         });
     }
-};
+}
 
-// 오프라인 상태 확인
-window.isOnline = function() {
-    return navigator.onLine;
-};
-
-// 네트워크 상태 변경 이벤트
-window.addEventListener('online', () => {
-    console.log('온라인 상태로 변경됨');
-    window.showToast?.('인터넷에 다시 연결되었습니다.', 'success');
+// 채팅 페이지 초기화 시 메시지 그룹 상호작용 설정
+document.addEventListener('DOMContentLoaded', function() {
+    setupMessageGroupInteraction();
 });
 
-window.addEventListener('offline', () => {
-    console.log('오프라인 상태로 변경됨');
-    window.showToast?.('인터넷 연결이 끊겼습니다. 일부 기능이 제한될 수 있습니다.', 'warning');
-});
-
-// PWA 디스플레이 모드 감지
-window.getPwaDisplayMode = function() {
-    const displayMode = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' :
-                       window.matchMedia('(display-mode: fullscreen)').matches ? 'fullscreen' :
-                       window.matchMedia('(display-mode: minimal-ui)').matches ? 'minimal-ui' :
-                       'browser';
-    return displayMode;
-};
-
-// PWA 관련 정보 로깅 (디버그용)
-if (window.location.hostname === 'localhost') {
-    console.log('PWA 상태:', {
-        installed: window.isPwaInstalled(),
-        displayMode: window.getPwaDisplayMode(),
-        online: window.isOnline(),
-        canInstall: window.canShowInstallPrompt()
+// Blazor가 렌더링을 완료한 후에도 실행
+if (window.Blazor) {
+    window.Blazor.addEventListener('enhancedload', function() {
+        setupMessageGroupInteraction();
     });
 }
 
-window.showInstallPrompt = function() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            deferredPrompt = null;
-        });
-    }
-};
-
-// 드롭다운 외부 클릭 감지
-window.setupDropdownClickOutside = function(dotNetHelper) {
-    // 기존 리스너가 있다면 제거
-    if (window.dropdownClickHandler) {
-        document.removeEventListener('click', window.dropdownClickHandler);
-    }
-    
-    window.dropdownClickHandler = function(e) {
-        // 드롭다운 토글 버튼 클릭인지 확인
-        const toggleButton = e.target.closest('.header-action-btn, .dropdown-toggle');
-        
-        // 토글 버튼 클릭이면 아무것도 하지 않음 (Blazor가 토글 처리)
-        if (toggleButton) {
-            return;
-        }
-        
-        // 드롭다운 메뉴 내부 클릭인지 확인
-        const dropdownMenu = e.target.closest('.menu-dropdown-content, .dropdown-menu');
-        
-        // 드롭다운 메뉴 내부 클릭이 아니면 모든 드롭다운 닫기
-        if (!dropdownMenu) {
-            if (dotNetHelper) {
-                try {
-                    dotNetHelper.invokeMethodAsync('HideConversationActionsDropdown');
-                    dotNetHelper.invokeMethodAsync('HideMenuDropdown');
-                } catch (error) {
-                    // 메서드가 없는 경우 무시
-                    console.log('드롭다운 닫기 실패:', error);
-                }
+// version.json을 가져오는 함수 (캐시 무효화 포함)
+window.fetchVersionJson = async function(url) {
+    try {
+        const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
             }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return JSON.stringify(data);
         }
-    };
-    
-    // 이벤트 리스너 등록 (약간의 지연을 두어 초기화 완료 후 등록)
-    setTimeout(() => {
-        document.addEventListener('click', window.dropdownClickHandler);
-        console.log('드롭다운 외부 클릭 감지 설정 완료');
-    }, 100);
+        return null;
+    } catch (error) {
+        console.error('version.json 가져오기 실패:', error);
+        return null;
+    }
 };
 
 // 초기화 완료 로그
@@ -1205,27 +1071,5 @@ window.shareContent = async function(shareData) {
         console.error('공유 중 오류:', error);
         result.error = error.message;
         return result;
-    }
-};
-
-// version.json을 가져오는 함수 (캐시 무효화 포함)
-window.fetchVersionJson = async function(url) {
-    try {
-        const response = await fetch(url, {
-            cache: 'no-cache',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            return JSON.stringify(data);
-        }
-        return null;
-    } catch (error) {
-        console.error('version.json 가져오기 실패:', error);
-        return null;
     }
 };
