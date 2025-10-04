@@ -68,21 +68,8 @@
             <div class="header-actions">
                 @if (_messages.Any())
                 {
-                    <!-- 데스크톱: 개별 버튼들 -->
-                    <div class="conversation-actions desktop-actions">
-                        <button @onclick="PrintConversationAsync" class="header-action-btn" title="대화 내용 인쇄" type="button">
-                            🖨️
-                        </button>
-                        <button @onclick="ExportConversationAsTextAsync" class="header-action-btn" title="텍스트 파일로 내보내기" type="button">
-                            📄
-                        </button>
-                        <button @onclick="ShareConversationAsync" class="header-action-btn" title="대화 내용 공유" type="button">
-                            📤
-                        </button>
-                    </div>
-                    
-                    <!-- 모바일: 드롭다운 메뉴 -->
-                    <div class="conversation-actions mobile-actions">
+                    <!-- 대화 관련 액션들 - 모든 화면에서 드롭다운으로 통일 -->
+                    <div class="conversation-actions">
                         <button @onclick="ToggleConversationActionsDropdown" class="header-action-btn" title="대화 액션" type="button">
                             ⋯
                         </button>
@@ -96,15 +83,38 @@
                             <button @onclick="ShareAndHideDropdown" class="dropdown-item" type="button">
                                 📤 공유하기
                             </button>
-                            <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="dropdown-item sponsor-item" @onclick="HideConversationActionsDropdown">
-                                💝 개발 후원하기
-                            </a>
                         </div>
                     </div>
                 }
                 
+                <!-- 메뉴 드롭다운 -->
+                <div class="menu-dropdown">
+                    <button @onclick="ToggleMenuDropdown" class="header-action-btn" title="메뉴" type="button">
+                        ⋯
+                    </button>
+                    <div class="menu-dropdown-content @(_showMenuDropdown ? "show" : "")">
+                        <button @onclick="OpenServicesModalAndHideMenu" class="dropdown-item" type="button">
+                            🛒 서비스 목록
+                        </button>
+                        <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
+                            💝 개발 후원하기
+                        </a>
+                        <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
+                            <strong>{;}</strong> GitHub
+                        </a>
+                        <a href="https://yourtablecloth.app/" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
+                            🏠 식탁보 홈페이지
+                        </a>
+                    </div>
+                </div>
+                
                 <!-- 테마 토글 버튼 -->
                 <ThemeToggle Compact="true" />
+                
+                <!-- 설정 버튼 -->
+                <button @onclick="OpenSettingDialog" class="header-action-btn" title="설정" type="button">
+                    ⚙️
+                </button>
                 
                 <!-- 로그인/로그아웃 버튼 -->
                 @if (_isCheckingApiKey)
@@ -125,22 +135,6 @@
                         👤
                     </button>
                 }
-                
-                <button @onclick="OpenServicesModalAsync" class="header-action-btn" title="서비스 목록" type="button">
-                    🛒
-                </button>
-                <button @onclick="OpenSettingDialog" class="header-action-btn" title="설정" type="button">
-                    ⚙️
-                </button>
-                <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="header-action-btn sponsor-btn" title="개발 후원하기">
-                    💝
-                </a>
-                <a href="https://github.com/yourtablecloth/TableClothLite" target="_blank" class="header-action-btn github-btn" title="GitHub">
-                    <strong>{;}</strong>
-                </a>
-                <a href="https://yourtablecloth.app/" target="_blank" class="header-action-btn home-btn" title="식탁보 홈페이지">
-                    🏠
-                </a>
             </div>
         </div>
 
@@ -360,9 +354,72 @@
         position: relative;
     }
 
-    .conversation-actions {
+    /* 드롭다운 공통 스타일 */
+    .conversation-actions,
+    .menu-dropdown {
+        position: relative;
+    }
+
+    .conversation-actions-dropdown,
+    .menu-dropdown-content {
+        position: absolute;
+        top: 45px;
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px var(--shadow-color);
+        z-index: 1000;
+        min-width: 180px;
+        display: none;
+    }
+
+    .conversation-actions-dropdown.show,
+    .menu-dropdown-content.show {
+        display: block;
+    }
+
+    .dropdown-item {
         display: flex;
-        gap: 4px;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--primary-text);
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: var(--secondary-bg);
+    }
+
+    .dropdown-item:first-child {
+        border-radius: 8px 8px 0 0;
+    }
+
+    .dropdown-item:last-child {
+        border-radius: 0 0 8px 8px;
+    }
+
+    .dropdown-item:only-child {
+        border-radius: 8px;
+    }
+
+    .sponsor-item {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white !important;
+        font-weight: 600;
+    }
+
+    .sponsor-item:hover {
+        background: linear-gradient(135deg, #ee5a24 0%, #d63031 100%) !important;
+        color: white !important;
     }
 
     /* 텍스트 기반 버튼 스타일 */
@@ -370,72 +427,6 @@
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.5px;
-    }
-
-    /* 모바일에서의 대화 액션 드롭다운 */
-    @@media (max-width: 768px) {
-        .conversation-actions {
-            position: relative;
-        }
-        
-        .conversation-actions-dropdown {
-            position: absolute;
-            top: 45px;
-            right: 0;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px var(--shadow-color);
-            z-index: 1000;
-            min-width: 180px;
-            display: none;
-        }
-        
-        .conversation-actions-dropdown.show {
-            display: block;
-        }
-        
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--primary-text);
-            text-decoration: none;
-        }
-        
-        .dropdown-item:hover {
-            background: var(--secondary-bg);
-        }
-        
-        .dropdown-item:first-child {
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .dropdown-item:last-child {
-            border-radius: 0 0 8px 8px;
-        }
-        
-        .dropdown-item:only-child {
-            border-radius: 8px;
-        }
-        
-        .sponsor-item {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            color: white !important;
-            font-weight: 600;
-        }
-        
-        .sponsor-item:hover {
-            background: linear-gradient(135deg, #ee5a24 0%, #d63031 100%) !important;
-            color: white !important;
-        }
     }
 
     .messages-container {
@@ -752,14 +743,6 @@
 
     /* 반응형 */
     @@media (max-width: 768px) {
-        .desktop-actions {
-            display: none;
-        }
-        
-        .mobile-actions {
-            display: block;
-        }
-
         .chat-header {
             padding: 8px 12px;
         }
@@ -847,7 +830,7 @@
         border: none;
         border-radius: 6px;
         font-size: 12px;
-        font-weight: 500,
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
     }
@@ -891,19 +874,7 @@
             left: 10px;
             max-width: none;
         }
-    }
 
-    @@media (min-width: 769px) {
-        .desktop-actions {
-            display: flex;
-        }
-        
-        .mobile-actions {
-            display: none;
-        }
-    }
-
-    @@media (max-width: 480px) {
         .app-name {
             font-size: 14px;
         }

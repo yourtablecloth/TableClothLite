@@ -57,6 +57,9 @@ public partial class Chat : IDisposable
 
     // 대화 액션 드롭다운 상태 관리
     private bool _showConversationActionsDropdown = false;
+    
+    // 메뉴 드롭다운 상태 관리
+    private bool _showMenuDropdown = false;
 
     // 새 버전 알림 상태 관리 - confirm 대신 인앱 알림 사용
     private bool _showUpdateNotification = false;
@@ -259,6 +262,15 @@ public partial class Chat : IDisposable
     public Task HideConversationActionsDropdown()
     {
         _showConversationActionsDropdown = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+    
+    // JavaScript에서 호출할 수 있는 메서드 - 메뉴 드롭다운 숨기기
+    [JSInvokable]
+    public Task HideMenuDropdown()
+    {
+        _showMenuDropdown = false;
         StateHasChanged();
         return Task.CompletedTask;
     }
@@ -782,6 +794,13 @@ public partial class Chat : IDisposable
         _showConversationActionsDropdown = !_showConversationActionsDropdown;
         StateHasChanged();
     }
+    
+    // 메뉴 드롭다운 토글
+    private void ToggleMenuDropdown()
+    {
+        _showMenuDropdown = !_showMenuDropdown;
+        StateHasChanged();
+    }
 
     // 드롭다운에서 인쇄 후 숨기기
     private async Task PrintAndHideDropdown()
@@ -804,6 +823,14 @@ public partial class Chat : IDisposable
     {
         await ShareConversationAsync();
         _showConversationActionsDropdown = false;
+        StateHasChanged();
+    }
+    
+    // 메뉴에서 서비스 모달 열고 드롭다운 숨기기
+    private async Task OpenServicesModalAndHideMenu()
+    {
+        await OpenServicesModalAsync();
+        _showMenuDropdown = false;
         StateHasChanged();
     }
 
