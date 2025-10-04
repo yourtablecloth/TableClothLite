@@ -1,6 +1,8 @@
 @using Microsoft.AspNetCore.Components
 @using TableClothLite.Services
 @using TableClothLite.ViewModels
+@using TableClothLite.Components
+@implements IDisposable
 
 <div class="settings-modal" @onclick="HandleBackdropClick">
     <div class="modal-content" @onclick:stopPropagation="true">
@@ -11,6 +13,11 @@
         
         <!-- 탭 네비게이션 -->
         <div class="tab-navigation">
+            <button class="tab-button @(_activeTab == "theme" ? "active" : "")" 
+                    @onclick="@(() => SetActiveTab("theme"))" type="button">
+                <span class="tab-icon">🎨</span>
+                <span class="tab-label">테마</span>
+            </button>
             <button class="tab-button @(_activeTab == "ai" ? "active" : "")" 
                     @onclick="@(() => SetActiveTab("ai"))" type="button">
                 <span class="tab-icon">🤖</span>
@@ -24,6 +31,63 @@
         </div>
         
         <div class="modal-body">
+            <!-- 테마 설정 탭 -->
+            <div class="tab-content @(_activeTab == "theme" ? "active" : "")">
+                <div class="settings-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-icon">🎨</span>
+                            <h4>테마 설정</h4>
+                        </div>
+                        <div class="section-description">
+                            앱의 외관과 색상 테마를 설정합니다.
+                        </div>
+                    </div>
+                    
+                    <div class="setting-card">
+                        <div class="settings-grid">
+                            <div class="setting-item theme-selection">
+                                <div class="setting-info">
+                                    <div class="setting-name">
+                                        <span class="setting-icon">🌓</span>
+                                        테마 모드
+                                    </div>
+                                    <div class="setting-description">앱의 색상 테마를 선택하세요</div>
+                                </div>
+                                <div class="theme-options">
+                                    <div class="theme-option @(ThemeService.CurrentTheme == ThemeMode.Auto ? "active" : "")"
+                                         @onclick="() => SetTheme(ThemeMode.Auto)">
+                                        <div class="theme-preview auto">🌗</div>
+                                        <div class="theme-label">자동</div>
+                                        <div class="theme-description">시스템 설정 따름</div>
+                                    </div>
+                                    <div class="theme-option @(ThemeService.CurrentTheme == ThemeMode.Light ? "active" : "")"
+                                         @onclick="() => SetTheme(ThemeMode.Light)">
+                                        <div class="theme-preview light">☀️</div>
+                                        <div class="theme-label">라이트</div>
+                                        <div class="theme-description">밝은 테마</div>
+                                    </div>
+                                    <div class="theme-option @(ThemeService.CurrentTheme == ThemeMode.Dark ? "active" : "")"
+                                         @onclick="() => SetTheme(ThemeMode.Dark)">
+                                        <div class="theme-preview dark">🌙</div>
+                                        <div class="theme-label">다크</div>
+                                        <div class="theme-description">어두운 테마</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-note">
+                        <div class="note-icon">💡</div>
+                        <div class="note-text">
+                            자동 모드는 운영체제의 다크/라이트 모드 설정에 따라 자동으로 변경됩니다.
+                            설정은 즉시 적용되며 다음 방문 시에도 유지됩니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- AI 모델 설정 탭 -->
             <div class="tab-content @(_activeTab == "ai" ? "active" : "")">
                 <div class="settings-section">
@@ -46,7 +110,7 @@
                             <div class="model-selector">
                                 <select class="model-select" @bind="SettingsModel.OpenRouterModel">
                                     <optgroup label="무료 모델">
-                                        <option value="@(Constants.DefaultOpenRouterModel)">@(Constants.DefaultOpenRouterModel)</option>
+                                        <option value="meta-llama/llama-3.1-8b-instruct:free">meta-llama/llama-3.1-8b-instruct:free</option>
                                     </optgroup>
                                     <optgroup label="다른 모델">
                                         <option value="anthropic/claude-sonnet-4.5">anthropic/claude-sonnet-4.5</option>
@@ -195,7 +259,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.6);
+        background: var(--modal-backdrop, rgba(0, 0, 0, 0.6));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -204,15 +268,16 @@
     }
 
     .modal-content {
-        background: white;
+        background: var(--card-bg, white);
         border-radius: 16px;
         max-width: 800px;
         width: 100%;
         max-height: 90vh;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 60px var(--shadow-color, rgba(0, 0, 0, 0.3));
         overflow: hidden;
+        color: var(--primary-text, #212529);
     }
 
     .modal-header {
@@ -240,7 +305,6 @@
         padding: 8px;
         border-radius: 8px;
         transition: all 0.2s ease;
-        backdrop-filter: blur(10px);
     }
 
     .close-btn:hover {
@@ -248,7 +312,6 @@
         transform: scale(1.1);
     }
 
-    /* 탭 네비게이션 */
     .tab-navigation {
         display: flex;
         background: #f8f9fa;
@@ -284,16 +347,6 @@
         box-shadow: 0 -2px 0 #007bff inset;
     }
 
-    .tab-button.active::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #007bff;
-    }
-
     .tab-icon {
         font-size: 16px;
     }
@@ -307,31 +360,19 @@
         overflow-y: auto;
     }
 
-    /* 탭 콘텐츠 */
     .tab-content {
         display: none;
         padding: 24px;
-        animation: fadeIn 0.3s ease;
     }
 
     .tab-content.active {
         display: block;
     }
 
-    @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
     .settings-section {
         margin-bottom: 32px;
     }
 
-    .settings-section:last-child {
-        margin-bottom: 0;
-    }
-
-    /* 섹션 헤더 */
     .section-header {
         margin-bottom: 24px;
     }
@@ -351,31 +392,25 @@
         margin: 0;
         font-size: 1.3rem;
         font-weight: 600;
-        color: #2c3e50;
+        color: var(--primary-text, #2c3e50);
     }
 
     .section-description {
-        color: #6c757d;
+        color: var(--secondary-text, #6c757d);
         font-size: 14px;
         line-height: 1.5;
         margin-left: 36px;
     }
 
-    /* 설정 카드 */
     .setting-card {
-        background: white;
-        border: 1px solid #e9ecef;
+        background: var(--card-bg, white);
+        border: 1px solid var(--border-color, #e9ecef);
         border-radius: 12px;
         padding: 24px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.1));
         transition: box-shadow 0.2s ease;
     }
 
-    .setting-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    }
-
-    /* 설정 그리드 */
     .settings-grid {
         display: flex;
         flex-direction: column;
@@ -395,7 +430,8 @@
         padding-bottom: 0;
     }
 
-    .setting-item.model-selection {
+    .setting-item.model-selection,
+    .setting-item.theme-selection {
         flex-direction: column;
         align-items: stretch;
         gap: 16px;
@@ -408,7 +444,8 @@
         margin-right: 16px;
     }
 
-    .setting-item.model-selection .setting-info {
+    .setting-item.model-selection .setting-info,
+    .setting-item.theme-selection .setting-info {
         margin-right: 0;
     }
 
@@ -418,7 +455,7 @@
         gap: 8px;
         font-size: 16px;
         font-weight: 600;
-        color: #2c3e50;
+        color: var(--primary-text, #2c3e50);
         margin-bottom: 4px;
     }
 
@@ -428,7 +465,82 @@
 
     .setting-description {
         font-size: 14px;
-        color: #6c757d;
+        color: var(--secondary-text, #6c757d);
+    }
+
+    /* 테마 선택 스타일 */
+    .theme-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        width: 100%;
+    }
+
+    .theme-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        border: 2px solid var(--border-color, #e9ecef);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: var(--card-bg, #ffffff);
+        color: var(--primary-text, #212529);
+    }
+
+    .theme-option:hover {
+        border-color: var(--accent-color, #007bff);
+        background: var(--secondary-bg, #f8f9fa);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.1));
+    }
+
+    .theme-option.active {
+        border-color: var(--accent-color, #007bff);
+        background: var(--accent-color, #007bff);
+        color: white;
+        box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+    }
+
+    .theme-preview {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--secondary-bg, #f8f9fa);
+        border: 1px solid var(--border-color, #dee2e6);
+    }
+
+    .theme-option.active .theme-preview {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .theme-preview.auto {
+        animation: themeRotate 4s linear infinite;
+    }
+
+    @@keyframes themeRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .theme-label {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .theme-description {
+        font-size: 12px;
+        opacity: 0.8;
+        text-align: center;
+        margin: 0;
     }
 
     /* 모델 선택기 */
@@ -439,29 +551,19 @@
     .model-select {
         width: 100%;
         padding: 16px 20px;
-        border: 2px solid #e9ecef;
+        border: 2px solid var(--border-color, #e9ecef);
         border-radius: 12px;
         font-size: 14px;
-        background: white;
+        background: var(--card-bg, white);
+        color: var(--primary-text, #212529);
         cursor: pointer;
         transition: all 0.2s ease;
     }
 
     .model-select:focus {
         outline: none;
-        border-color: #007bff;
+        border-color: var(--accent-color, #007bff);
         box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    }
-
-    .model-select optgroup {
-        font-weight: bold;
-        color: #495057;
-        padding: 8px 0;
-    }
-
-    .model-select option {
-        padding: 8px 16px;
-        font-weight: normal;
     }
 
     .model-info {
@@ -470,7 +572,7 @@
 
     .model-note {
         font-size: 12px;
-        color: #6c757d;
+        color: var(--secondary-text, #6c757d);
         font-style: italic;
     }
 
@@ -518,15 +620,10 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    input:focus + .slider {
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-    }
-
     input:checked + .slider:before {
         transform: translateX(26px);
     }
 
-    /* 설정 노트 */
     .settings-note {
         display: flex;
         align-items: flex-start;
@@ -549,7 +646,6 @@
         line-height: 1.5;
     }
 
-    /* 로딩 및 상태 메시지 */
     .loading-indicator {
         display: flex;
         align-items: center;
@@ -612,7 +708,6 @@
         font-size: 14px;
     }
 
-    /* 모달 푸터 */
     .modal-footer {
         padding: 20px 24px;
         background: #f8f9fa;
@@ -630,8 +725,6 @@
         font-size: 14px;
         font-weight: 600;
         transition: all 0.2s ease;
-        position: relative;
-        overflow: hidden;
     }
 
     .btn:disabled {
@@ -663,7 +756,6 @@
         transform: translateY(-1px);
     }
 
-    /* 반응형 디자인 */
     @@media (max-width: 768px) {
         .settings-modal {
             padding: 10px;
@@ -687,22 +779,6 @@
             font-size: 13px;
         }
 
-        .tab-icon {
-            font-size: 14px;
-        }
-
-        .setting-item {
-            padding: 12px 0;
-        }
-
-        .setting-name {
-            font-size: 14px;
-        }
-
-        .setting-description {
-            font-size: 12px;
-        }
-
         .modal-footer {
             flex-direction: column-reverse;
             gap: 12px;
@@ -711,14 +787,6 @@
         .btn {
             width: 100%;
         }
-
-        .section-title h4 {
-            font-size: 1.1rem;
-        }
-
-        .section-description {
-            margin-left: 28px;
-        }
     }
 </style>
 
@@ -726,16 +794,22 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Inject] private SandboxSettingsViewModel SettingsModel { get; set; } = default!;
     [Inject] private ConfigService ConfigService { get; set; } = default!;
+    [Inject] private ThemeService ThemeService { get; set; } = default!;
 
-    // UI 상태 관리
     private bool _isLoading = false;
     private string _statusMessage = string.Empty;
     private bool _isError = false;
-    private string _activeTab = "ai"; // 기본 탭은 AI 모델
+    private string _activeTab = "theme";
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentSettings();
+        ThemeService.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void SetActiveTab(string tab)
@@ -744,20 +818,40 @@
         StateHasChanged();
     }
 
+    private async Task SetTheme(ThemeMode theme)
+    {
+        await ThemeService.SetThemeAsync(theme);
+        
+        _statusMessage = $"테마가 '{GetThemeDisplayName(theme)}'(으)로 변경되었습니다.";
+        _isError = false;
+        StateHasChanged();
+        
+        await Task.Delay(2000);
+        _statusMessage = string.Empty;
+        StateHasChanged();
+    }
+
+    private string GetThemeDisplayName(ThemeMode theme)
+    {
+        return theme switch
+        {
+            ThemeMode.Auto => "자동",
+            ThemeMode.Light => "라이트 모드",
+            ThemeMode.Dark => "다크 모드",
+            _ => "자동"
+        };
+    }
+
     private async Task LoadCurrentSettings()
     {
         try
         {
-            // ConfigService를 통해 실제 설정 로드
             var config = await ConfigService.LoadAsync();
             SettingsModel.ImportFromSandboxConfig(config);
-            
-            Console.WriteLine("설정을 성공적으로 로드했습니다.");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"설정 로드 중 오류: {ex.Message}");
-            // 로드 실패 시 기본값 사용
             ResetToDefaults();
         }
     }
@@ -768,8 +862,7 @@
         
         if (!_isError)
         {
-            // 성공적으로 저장된 경우에만 모달 닫기
-            await Task.Delay(1000); // 성공 메시지를 잠깐 보여주기
+            await Task.Delay(1000);
             await Close();
         }
     }
@@ -783,23 +876,16 @@
 
         try
         {
-            // SettingsModel에서 SandboxConfig로 변환
             var config = SettingsModel.ExportToSandboxConfig();
-            
-            // ConfigService를 통해 실제 저장
             await ConfigService.SaveAsync(config);
             
             _statusMessage = "설정이 성공적으로 저장되었습니다.";
             _isError = false;
-            
-            Console.WriteLine("설정이 성공적으로 저장되었습니다.");
         }
         catch (Exception ex)
         {
             _statusMessage = $"설정 저장 중 오류가 발생했습니다: {ex.Message}";
             _isError = true;
-            
-            Console.WriteLine($"설정 저장 중 오류: {ex.Message}");
         }
         finally
         {
@@ -812,33 +898,23 @@
     {
         try
         {
-            // SandboxSettingsViewModel의 기본값으로 리셋
             SettingsModel.EnableNetworking = true;
-            SettingsModel.EnableAudioInput = true;  // 기존 Setting.razor와 동일
-            SettingsModel.EnableVideoInput = true;   // 기존 Setting.razor와 동일
+            SettingsModel.EnableAudioInput = true;
+            SettingsModel.EnableVideoInput = true;
             SettingsModel.EnablePrinterRedirection = true;
             SettingsModel.EnableClipboardRedirection = true;
-            SettingsModel.OpenRouterModel = Constants.DefaultOpenRouterModel; // 기본 추천 모델
+            SettingsModel.OpenRouterModel = "meta-llama/llama-3.1-8b-instruct:free";
             
             _statusMessage = "설정이 기본값으로 복원되었습니다.";
             _isError = false;
             
             StateHasChanged();
-            
-            // 메시지를 잠깐 보여준 후 자동으로 사라지게 함
-            Task.Delay(3000).ContinueWith(_ => 
-            {
-                _statusMessage = string.Empty;
-                InvokeAsync(StateHasChanged);
-            });
         }
         catch (Exception ex)
         {
             _statusMessage = $"기본값 복원 중 오류가 발생했습니다: {ex.Message}";
             _isError = true;
             StateHasChanged();
-            
-            Console.WriteLine($"기본값 복원 중 오류: {ex.Message}");
         }
     }
 
@@ -849,10 +925,14 @@
 
     private async Task HandleBackdropClick()
     {
-        // 저장 중이 아닐 때만 백드롭 클릭으로 닫기 허용
         if (!_isLoading)
         {
             await Close();
         }
+    }
+
+    public void Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
     }
 }

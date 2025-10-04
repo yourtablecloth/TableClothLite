@@ -1,0 +1,175 @@
+@using TableClothLite.Services
+@implements IDisposable
+
+<div class="theme-toggle @(Compact ? "compact" : "")" @onclick="ToggleTheme" title="@GetTooltipText()">
+    <div class="theme-icon-container">
+        @if (ThemeService.CurrentTheme == ThemeMode.Auto)
+        {
+            <span class="theme-icon auto">🌗</span>
+        }
+        else if (ThemeService.IsDarkMode)
+        {
+            <span class="theme-icon dark">🌙</span>
+        }
+        else
+        {
+            <span class="theme-icon light">☀️</span>
+        }
+    </div>
+    @if (!Compact)
+    {
+        <div class="theme-label">
+            @GetThemeLabel()
+        </div>
+    }
+</div>
+
+<style>
+    .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        user-select: none;
+        background: var(--secondary-bg, #f8f9fa);
+        border: 1px solid var(--border-color, #dee2e6);
+        color: var(--primary-text, #212529);
+    }
+
+    .theme-toggle:hover {
+        background: var(--tertiary-bg, #e9ecef);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.15));
+    }
+
+    .theme-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+    }
+
+    .theme-icon {
+        font-size: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .theme-toggle:hover .theme-icon {
+        transform: scale(1.1);
+    }
+
+    .theme-icon.auto {
+        animation: rotate 4s linear infinite;
+    }
+
+    @@keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .theme-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--secondary-text, #6c757d);
+    }
+
+    /* 컴팩트 모드 */
+    .theme-toggle.compact {
+        padding: 8px;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+    }
+
+    /* 모바일 최적화 */
+    @@media (max-width: 768px) {
+        .theme-toggle {
+            padding: 6px 8px;
+            gap: 6px;
+        }
+
+        .theme-label {
+            font-size: 12px;
+        }
+
+        .theme-icon {
+            font-size: 14px;
+        }
+
+        .theme-toggle.compact {
+            padding: 6px;
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public bool Compact { get; set; } = false;
+    [Inject] private ThemeService ThemeService { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.ThemeChanged += OnThemeChanged;
+        await ThemeService.InitializeAsync();
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ToggleTheme()
+    {
+        var nextTheme = ThemeService.CurrentTheme switch
+        {
+            ThemeMode.Auto => ThemeMode.Light,
+            ThemeMode.Light => ThemeMode.Dark,
+            ThemeMode.Dark => ThemeMode.Auto,
+            _ => ThemeMode.Auto
+        };
+
+        await ThemeService.SetThemeAsync(nextTheme);
+    }
+
+    private string GetThemeLabel()
+    {
+        return ThemeService.CurrentTheme switch
+        {
+            ThemeMode.Auto => "자동",
+            ThemeMode.Light => "라이트",
+            ThemeMode.Dark => "다크",
+            _ => "자동"
+        };
+    }
+
+    private string GetTooltipText()
+    {
+        var current = ThemeService.CurrentTheme switch
+        {
+            ThemeMode.Auto => "자동 (시스템 설정 따름)",
+            ThemeMode.Light => "라이트 모드",
+            ThemeMode.Dark => "다크 모드",
+            _ => "자동"
+        };
+
+        var next = ThemeService.CurrentTheme switch
+        {
+            ThemeMode.Auto => "라이트 모드로 변경",
+            ThemeMode.Light => "다크 모드로 변경",
+            ThemeMode.Dark => "자동 모드로 변경",
+            _ => "라이트 모드로 변경"
+        };
+
+        return $"현재: {current} - 클릭하여 {next}";
+    }
+
+    public void Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeChanged;
+    }
+}

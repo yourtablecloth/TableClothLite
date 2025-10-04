@@ -33,6 +33,7 @@ builder.Services.AddFileSystemAccessService();
 builder.Services.AddSingleton<SandboxComposerService>();
 builder.Services.AddSingleton<CatalogService>();
 builder.Services.AddSingleton<ConfigService>();
+builder.Services.AddSingleton<ThemeService>(); // 테마 서비스 추가
 
 builder.Services.AddScoped<OpenRouterAuthService>();
 builder.Services.AddScoped<OpenAIChatService>();
