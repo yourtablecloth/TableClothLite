@@ -176,7 +176,7 @@ public class ThemeService : IAsyncDisposable
     }
 
     [JSInvokable]
-    public async Task OnSystemThemeChanged(bool isDarkMode)
+    public Task OnSystemThemeChanged(bool isDarkMode)
     {
         if (CurrentTheme == ThemeMode.Auto)
         {
@@ -188,6 +188,8 @@ public class ThemeService : IAsyncDisposable
                 ThemeChanged?.Invoke(this, new ThemeChangedEventArgs(CurrentTheme, IsDarkMode));
             }
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task<ThemeMode> GetSavedThemeAsync()

@@ -66,14 +66,15 @@
                 }
             </div>
             <div class="header-actions">
-                @if (_messages.Any())
-                {
-                    <!-- 대화 관련 액션들 - 모든 화면에서 드롭다운으로 통일 -->
-                    <div class="conversation-actions">
-                        <button @onclick="ToggleConversationActionsDropdown" class="header-action-btn" title="대화 액션" type="button">
-                            ⋯
-                        </button>
-                        <div class="conversation-actions-dropdown @(_showConversationActionsDropdown ? "show" : "")">
+                <!-- 통합 메뉴 드롭다운 -->
+                <div class="menu-dropdown">
+                    <button @onclick="ToggleMenuDropdown" class="header-action-btn" title="메뉴" type="button">
+                        ⋯
+                    </button>
+                    <div class="menu-dropdown-content @(_showMenuDropdown ? "show" : "")">
+                        @if (_hasApiKey && _messages.Any())
+                        {
+                            <!-- 로그인 + 대화 있을 때 -->
                             <button @onclick="PrintAndHideDropdown" class="dropdown-item" type="button">
                                 🖨️ 인쇄하기
                             </button>
@@ -83,16 +84,17 @@
                             <button @onclick="ShareAndHideDropdown" class="dropdown-item" type="button">
                                 📤 공유하기
                             </button>
-                        </div>
-                    </div>
-                }
-                
-                <!-- 메뉴 드롭다운 -->
-                <div class="menu-dropdown">
-                    <button @onclick="ToggleMenuDropdown" class="header-action-btn" title="메뉴" type="button">
-                        ⋯
-                    </button>
-                    <div class="menu-dropdown-content @(_showMenuDropdown ? "show" : "")">
+                            <div class="dropdown-divider"></div>
+                        }
+                        @if (_hasApiKey)
+                        {
+                            <!-- 로그인 상태에서만 보이는 메뉴 -->
+                            <button @onclick="OpenSettingDialogAndHideMenu" class="dropdown-item" type="button">
+                                ⚙️ 설정
+                            </button>
+                            <div class="dropdown-divider"></div>
+                        }
+                        <!-- 공통 메뉴 -->
                         <button @onclick="OpenServicesModalAndHideMenu" class="dropdown-item" type="button">
                             🛒 서비스 목록
                         </button>
@@ -105,34 +107,31 @@
                         <a href="https://yourtablecloth.app/" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
                             🏠 식탁보 홈페이지
                         </a>
+                        @if (_hasApiKey)
+                        {
+                            <!-- 로그인 상태에서만 보이는 로그아웃 -->
+                            <div class="dropdown-divider"></div>
+                            <button @onclick="LogoutAndHideMenu" class="dropdown-item logout-item" type="button">
+                                ⏻ 로그아웃
+                            </button>
+                        }
                     </div>
                 </div>
                 
                 <!-- 테마 토글 버튼 -->
                 <ThemeToggle Compact="true" />
                 
-                <!-- 설정 버튼 -->
-                <button @onclick="OpenSettingDialog" class="header-action-btn" title="설정" type="button">
-                    ⚙️
-                </button>
-                
-                <!-- 로그인/로그아웃 버튼 -->
+                <!-- 로그인 버튼 (로그아웃 상태일 때만 표시) -->
                 @if (_isCheckingApiKey)
                 {
                     <button class="auth-btn-header checking" disabled type="button" title="로그인 상태 확인 중">
                         ⏳
                     </button>
                 }
-                else if (_hasApiKey)
-                {
-                    <button @onclick="Logout" class="auth-btn-header logout" type="button" title="로그아웃">
-                        ⏻
-                    </button>
-                }
-                else
+                else if (!_hasApiKey)
                 {
                     <button @onclick="HandleLoginAsync" class="auth-btn-header login" type="button" title="로그인">
-                        👤
+                        👤 로그인
                     </button>
                 }
             </div>
@@ -241,7 +240,7 @@
                     <div class="input-disabled-overlay">
                         🔒 로그인 후 채팅을 시작할 수 있습니다
                         <button @onclick="HandleLoginAsync" class="login-overlay-btn" type="button">
-                            로그인
+                            👤
                         </button>
                     </div>
                 }
@@ -355,12 +354,10 @@
     }
 
     /* 드롭다운 공통 스타일 */
-    .conversation-actions,
     .menu-dropdown {
         position: relative;
     }
 
-    .conversation-actions-dropdown,
     .menu-dropdown-content {
         position: absolute;
         top: 45px;
@@ -370,11 +367,10 @@
         border-radius: 8px;
         box-shadow: 0 4px 12px var(--shadow-color);
         z-index: 1000;
-        min-width: 180px;
+        min-width: 200px;
         display: none;
     }
 
-    .conversation-actions-dropdown.show,
     .menu-dropdown-content.show {
         display: block;
     }
@@ -411,6 +407,21 @@
         border-radius: 8px;
     }
 
+    .dropdown-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 4px 0;
+    }
+
+    .logout-item {
+        color: var(--error-color);
+        font-weight: 600;
+    }
+
+    .logout-item:hover {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
     .sponsor-item {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
         color: white !important;
@@ -422,11 +433,31 @@
         color: white !important;
     }
 
-    /* 텍스트 기반 버튼 스타일 */
-    .login-text {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
+    /* 로그인 버튼 스타일 */
+    .auth-btn-header {
+        padding: 8px 16px;
+        border: 1px solid var(--border-color);
+        background: var(--accent-color);
+        color: white;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .auth-btn-header:hover:not(:disabled) {
+        filter: brightness(0.9);
+        transform: translateY(-1px);
+    }
+
+    .auth-btn-header.checking {
+        background: var(--secondary-bg);
+        color: var(--secondary-text);
+        cursor: not-allowed;
     }
 
     .messages-container {
@@ -891,6 +922,11 @@
 
         .new-chat-btn-header {
             display: none; /* 매우 작은 화면에서는 숨김 */
+        }
+
+        .auth-btn-header.login {
+            padding: 6px 12px;
+            font-size: 12px;
         }
     }
 </style>

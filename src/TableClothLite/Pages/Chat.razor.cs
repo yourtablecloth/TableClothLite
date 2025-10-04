@@ -806,7 +806,7 @@ public partial class Chat : IDisposable
     private async Task PrintAndHideDropdown()
     {
         await PrintConversationAsync();
-        _showConversationActionsDropdown = false;
+        _showMenuDropdown = false;
         StateHasChanged();
     }
 
@@ -814,7 +814,7 @@ public partial class Chat : IDisposable
     private async Task ExportAndHideDropdown()
     {
         await ExportConversationAsTextAsync();
-        _showConversationActionsDropdown = false;
+        _showMenuDropdown = false;
         StateHasChanged();
     }
 
@@ -822,8 +822,17 @@ public partial class Chat : IDisposable
     private async Task ShareAndHideDropdown()
     {
         await ShareConversationAsync();
-        _showConversationActionsDropdown = false;
+        _showMenuDropdown = false;
         StateHasChanged();
+    }
+    
+    // 메뉴에서 설정 열고 드롭다운 숨기기
+    private async Task OpenSettingDialogAndHideMenu()
+    {
+        _showSettingsModal = true;
+        _showMenuDropdown = false;
+        StateHasChanged();
+        await Task.CompletedTask;
     }
     
     // 메뉴에서 서비스 모달 열고 드롭다운 숨기기
@@ -832,6 +841,14 @@ public partial class Chat : IDisposable
         await OpenServicesModalAsync();
         _showMenuDropdown = false;
         StateHasChanged();
+    }
+    
+    // 메뉴에서 로그아웃하고 드롭다운 숨기기
+    private async Task LogoutAndHideMenu()
+    {
+        _showMenuDropdown = false;
+        StateHasChanged();
+        await Logout();
     }
 
     // 대화 내용 인쇄 메서드 - confirm을 좀 더 부드러운 알림으로 변경
