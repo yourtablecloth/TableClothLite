@@ -31,12 +31,22 @@
 <style>
     .page {
         height: 100vh;
+        height: 100dvh; /* 동적 뷰포트 높이 - 모바일 주소창 고려 */
         overflow: hidden;
+        /* Safe Area 지원 */
+        padding-top: var(--safe-area-inset-top);
+        padding-right: var(--safe-area-inset-right);
+        padding-bottom: var(--safe-area-inset-bottom);
+        padding-left: var(--safe-area-inset-left);
     }
 
     .content {
-        height: 100vh;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
         padding: 0;
         margin: 0;
+        /* iOS에서 부드러운 스크롤 */
+        -webkit-overflow-scrolling: touch;
     }
 </style>

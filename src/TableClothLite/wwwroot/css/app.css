@@ -34,6 +34,12 @@ html.light-theme {
     --header-btn-border-radius: 8px;
     --header-btn-hover-scale: 1.02;
     --header-btn-shadow: 0 2px 8px var(--shadow-color);
+    
+    /* Safe Area Insets - 다이나믹 아일랜드/노치 대응 */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
 }
 
 /* 다크 테마 - 더 높은 우선순위로 설정 */
@@ -85,6 +91,17 @@ html, body {
     background-color: var(--primary-bg) !important;
     color: var(--primary-text) !important;
     transition: background-color 0.3s ease, color 0.3s ease;
+    /* Safe Area 지원 - 전체 화면에 적용 */
+    padding-top: var(--safe-area-inset-top);
+    padding-right: var(--safe-area-inset-right);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+}
+
+/* Safe Area가 적용된 body의 자식 요소들도 고려 */
+body > * {
+    /* 컨테이너들이 Safe Area를 존중하도록 */
+    box-sizing: border-box;
 }
 
 /* Bootstrap 오버라이드 */

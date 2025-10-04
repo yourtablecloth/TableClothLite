@@ -122,6 +122,11 @@
         justify-content: center;
         z-index: 10000;
         padding: 20px;
+        /* Safe Area 지원 */
+        padding-top: max(20px, calc(var(--safe-area-inset-top) + 20px));
+        padding-right: max(20px, calc(var(--safe-area-inset-right) + 20px));
+        padding-bottom: max(20px, calc(var(--safe-area-inset-bottom) + 20px));
+        padding-left: max(20px, calc(var(--safe-area-inset-left) + 20px));
         animation: fadeIn 0.2s ease;
     }
 
@@ -137,9 +142,12 @@
         max-width: 600px;
         width: 100%;
         max-height: 90vh;
+        max-height: calc(100vh - max(40px, var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 40px));
         overflow-y: auto;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         animation: slideUp 0.3s ease;
+        /* iOS에서 부드러운 스크롤 */
+        -webkit-overflow-scrolling: touch;
     }
 
     @@keyframes slideUp {
@@ -402,10 +410,16 @@
     @@media (max-width: 768px) {
         .wsb-download-guide-modal {
             padding: 10px;
+            /* 모바일에서 Safe Area 강조 */
+            padding-top: max(10px, calc(var(--safe-area-inset-top) + 10px));
+            padding-right: max(10px, calc(var(--safe-area-inset-right) + 10px));
+            padding-bottom: max(10px, calc(var(--safe-area-inset-bottom) + 10px));
+            padding-left: max(10px, calc(var(--safe-area-inset-left) + 10px));
         }
 
         .modal-content {
             max-height: 95vh;
+            max-height: calc(100vh - max(20px, var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 20px));
         }
 
         .modal-header, .modal-body, .modal-footer {

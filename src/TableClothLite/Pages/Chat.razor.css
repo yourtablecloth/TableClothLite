@@ -1,5 +1,6 @@
 .chat-app {
     height: 100vh;
+    height: 100dvh; /* 동적 뷰포트 높이 - 모바일 주소창 고려 */
     background: var(--primary-bg);
     color: var(--primary-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -10,11 +11,16 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh; /* 동적 뷰포트 높이 */
     overflow: hidden;
 }
 
 .chat-header {
     padding: 12px 20px;
+    /* Safe Area 지원 - 상단과 좌우 */
+    padding-top: max(12px, calc(var(--safe-area-inset-top) + 12px));
+    padding-left: max(20px, calc(var(--safe-area-inset-left) + 20px));
+    padding-right: max(20px, calc(var(--safe-area-inset-right) + 20px));
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -380,6 +386,10 @@
 .input-area {
     border-top: 1px solid var(--border-color);
     padding: 12px 24px;
+    /* Safe Area 지원 - 하단과 좌우 */
+    padding-bottom: max(12px, calc(var(--safe-area-inset-bottom) + 12px));
+    padding-left: max(24px, calc(var(--safe-area-inset-left) + 24px));
+    padding-right: max(24px, calc(var(--safe-area-inset-right) + 24px));
     position: relative;
     background: var(--primary-bg);
 }
@@ -503,6 +513,10 @@
 @media (max-width: 768px) {
     .chat-header {
         padding: 8px 12px;
+        /* Safe Area 지원 - 모바일 */
+        padding-top: max(8px, calc(var(--safe-area-inset-top) + 8px));
+        padding-left: max(12px, calc(var(--safe-area-inset-left) + 12px));
+        padding-right: max(12px, calc(var(--safe-area-inset-right) + 12px));
     }
 
     .header-left {
@@ -516,10 +530,17 @@
 
     .messages-list {
         padding: 16px;
+        /* Safe Area 지원 - 좌우 */
+        padding-left: max(16px, calc(var(--safe-area-inset-left) + 16px));
+        padding-right: max(16px, calc(var(--safe-area-inset-right) + 16px));
     }
 
     .input-area {
         padding: 8px 16px;
+        /* Safe Area 지원 - 모바일 하단 */
+        padding-bottom: max(16px, calc(var(--safe-area-inset-bottom) + 16px));
+        padding-left: max(16px, calc(var(--safe-area-inset-left) + 16px));
+        padding-right: max(16px, calc(var(--safe-area-inset-right) + 16px));
     }
 
     .welcome-content h1 {
@@ -628,9 +649,9 @@
 /* 모바일에서 알림 위치 조정 */
 @media (max-width: 480px) {
     .update-notification {
-        top: 10px;
-        right: 10px;
-        left: 10px;
+        top: max(10px, calc(var(--safe-area-inset-top) + 10px));
+        right: max(10px, var(--safe-area-inset-right));
+        left: max(10px, var(--safe-area-inset-left));
         max-width: none;
     }
 
