@@ -1,4 +1,4 @@
-<Router AppAssembly="@typeof(App).Assembly">
+﻿<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -6,23 +6,7 @@
     <NotFound>
         <PageTitle>페이지를 찾을 수 없습니다.</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
-            <div class="alert alert-warning" role="alert">
-                <h4 class="alert-heading">페이지를 찾을 수 없습니다</h4>
-                <p>요청하신 페이지 '<code>@GetCurrentPath()</code>'를 찾을 수 없습니다.</p>
-                <hr>
-                <p class="mb-0">
-                    <a href="/" class="btn btn-primary">홈으로 돌아가기</a>
-                </p>
-            </div>
+            <p role="alert">요청하신 페이지를 찾을 수 없습니다.</p>
         </LayoutView>
     </NotFound>
 </Router>
-
-@code {
-    private string GetCurrentPath()
-    {
-        return NavigationManager.Uri.Replace(NavigationManager.BaseUri, "/");
-    }
-
-    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-}
