@@ -54,6 +54,7 @@ public partial class Chat : IDisposable
     
     // 설정 모달 상태 관리
     private bool _showSettingsModal = false;
+    private string _settingsModalInitialTab = "theme";
 
     // 대화 액션 드롭다운 상태 관리
     private bool _showConversationActionsDropdown = false;
@@ -585,6 +586,14 @@ public partial class Chat : IDisposable
 
     private async Task OpenSettingDialog()
     {
+        _showSettingsModal = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+    
+    private async Task OpenAIModelSettings()
+    {
+        _settingsModalInitialTab = "ai";
         _showSettingsModal = true;
         StateHasChanged();
         await Task.CompletedTask;
@@ -1191,7 +1200,7 @@ public partial class Chat : IDisposable
         }
     }
 
-    // 대화 내용을 텍스트 파일로 내보내기 - alert를 토스트로 변경 가능
+    // 대화 내용을 텍스트 파일로 내보내기 - alert을 토스트로 변경 가능
     private async Task ExportConversationAsTextAsync()
     {
         if (!_messages.Any())
@@ -1328,6 +1337,7 @@ public partial class Chat : IDisposable
     private async Task CloseSettingsModal()
     {
         _showSettingsModal = false;
+        _settingsModalInitialTab = "theme"; // 기본값으로 리셋
         
         // 모델 설정이 변경되었을 수 있으므로 ModelIndicator 새로고침
         if (_modelIndicator is not null)

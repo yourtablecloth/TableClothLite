@@ -93,6 +93,7 @@
 @code {
     [Parameter] public bool HasApiKey { get; set; }
     [Parameter] public EventCallback OnOpenSettings { get; set; }
+    [Parameter] public EventCallback OnOpenAIModelSettings { get; set; }
     [Parameter] public EventCallback OnLogin { get; set; }
 
     [Inject] private ConfigService ConfigService { get; set; } = default!;
@@ -152,7 +153,16 @@
         }
         else
         {
-            await OnOpenSettings.InvokeAsync();
+            // AI 모델 설정 탭으로 바로 이동
+            if (OnOpenAIModelSettings.HasDelegate)
+            {
+                await OnOpenAIModelSettings.InvokeAsync();
+            }
+            else
+            {
+                // 폴백: 일반 설정 열기
+                await OnOpenSettings.InvokeAsync();
+            }
         }
     }
 

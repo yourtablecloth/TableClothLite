@@ -793,6 +793,7 @@
 
 @code {
     [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string InitialTab { get; set; } = "theme";
     [Inject] private SandboxSettingsViewModel SettingsModel { get; set; } = default!;
     [Inject] private ConfigService ConfigService { get; set; } = default!;
     [Inject] private ThemeService ThemeService { get; set; } = default!;
@@ -804,6 +805,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // InitialTab 파라미터 값으로 초기 탭 설정
+        _activeTab = InitialTab;
+        
         await LoadCurrentSettings();
         ThemeService.ThemeChanged += OnThemeChanged;
     }
