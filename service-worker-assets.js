@@ -1,14 +1,6 @@
 self.assetsManifest = {
-  "version": "MlFthapB",
+  "version": "q40Aejub",
   "assets": [
-    {
-      "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
-      "url": ".nojekyll"
-    },
-    {
-      "hash": "sha256-QTm/yNHYdEjjcfm0Y+M9nZCK2UUaZ4ZMqCqbqGzshx8=",
-      "url": "404.html"
-    },
     {
       "hash": "sha256-7h0RkKAWhTVPK8R3IndGMDxjBFt9vO1atmZUfLx3+Lc=",
       "url": "Pages/Home.razor.js"
@@ -494,15 +486,15 @@ self.assetsManifest = {
       "url": "_framework/TG.Blazor.IndexedDB.y0k6n7pzc8.wasm"
     },
     {
-      "hash": "sha256-agAWD+QcV73uYOMYudpXvtnCLGXMJVa+/oLHZUzQFmw=",
-      "url": "_framework/TableClothLite.68br6auy2e.wasm"
+      "hash": "sha256-xuKqZJmwQBuGYGUQRE+QncWm6e0zWLWKrRFtkkXJjPw=",
+      "url": "_framework/TableClothLite.Shared.aswtycohhf.wasm"
     },
     {
-      "hash": "sha256-l3gkdDS5SSlgBq4x5AQsQ21sPDgja87IPs3UBuuD058=",
-      "url": "_framework/TableClothLite.Shared.r3hkhxx8w4.wasm"
+      "hash": "sha256-NKvuWBG3gmv8hAv0vkgPEiOPogd5/sKSUUD1iU75Nts=",
+      "url": "_framework/TableClothLite.wj0cjxvjho.wasm"
     },
     {
-      "hash": "sha256-t6uJqMN09Ybj+BYG1ZNfX9rgbp/YinMfi1SQgk2M5Sk=",
+      "hash": "sha256-Nu7lU7L51neenWhULjIQe3mHBZ9X7p8N6oPZanj1kd8=",
       "url": "_framework/blazor.boot.json"
     },
     {
@@ -542,10 +534,6 @@ self.assetsManifest = {
       "url": "_framework/netstandard.1jkgi1x9pi.wasm"
     },
     {
-      "hash": "sha256-vQB2bW7b6HQvwVRjQ3Sdua34mORHsKEJNQGC5BucRTQ=",
-      "url": "_redirects"
-    },
-    {
       "hash": "sha256-2BU7e7TWpZVmL3bn7kCsz4QHD/wAz60iEC6gIsuH38A=",
       "url": "assets/installer.txt"
     },
@@ -566,16 +554,12 @@ self.assetsManifest = {
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-95y/4bL5LRY+sg0I4WgRbpTrGvfogOwsoaLieLwssEU=",
+      "hash": "sha256-RIS8lYa7mThfHyEf7pPw+lPqJYFbui3qqxhK1FTDDC0=",
       "url": "index.html"
     },
     {
       "hash": "sha256-FbwFYKtgffKUEqrW6o/5n8moAcXVDOctw/2n80ydoH8=",
       "url": "js/app.js"
-    },
-    {
-      "hash": "sha256-WLmTRK6lxgYYTpRyUjwj14YVP77CIShUC6w+tlyFG8c=",
-      "url": "js/spa-routing.js"
     },
     {
       "hash": "sha256-Yy5/hBqRmmU2MJ1TKwP2aXoTO6+OjzrLmJIsC2Wy4H8=",
@@ -756,10 +740,6 @@ self.assetsManifest = {
     {
       "hash": "sha256-+efw2o+Pj24QqXZI50qkwkFLUque/XFFZPT2x8EzXCg=",
       "url": "manifest.webmanifest"
-    },
-    {
-      "hash": "sha256-WrHa6rbh3Ahtq6e9wbkKo+G9K2PT91WSk0i6xfZHUUg=",
-      "url": "web.config"
     }
   ]
 };
