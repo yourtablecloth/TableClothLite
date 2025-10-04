@@ -139,96 +139,186 @@ async function onActivate(event) {
 }
 
 async function onFetch(event) {
-    // 개발 환경에서는 네트워크 우선
-    if (event.request.url.includes('localhost') || event.request.url.includes('127.0.0.1')) {
-        return fetch(event.request);
-    }
+    let cachedResponse = null;
     
-    // version.json은 항상 네트워크에서 가져오기 (캐시 무시)
-    if (event.request.url.includes('version.json')) {
-        try {
-            return await fetch(event.request, {
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache'
-                }
-            });
-        } catch (error) {
-            console.log('version.json fetch failed:', error);
-            // 404 등의 에러는 조용히 처리
-            return new Response('{}', { 
-                status: 200, 
-                headers: { 'Content-Type': 'application/json' }
-            });
+    try {
+        const url = new URL(event.request.url);
+        
+        // 개발 환경에서는 네트워크 우선 (캐시 없음)
+        if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+            try {
+                return await fetch(event.request);
+            } catch (error) {
+                console.log('Development fetch failed:', error);
+                return new Response('Development mode fetch failed', { status: 503 });
+            }
         }
-    }
-    
-    // 네비게이션 요청 (HTML)
-    if (event.request.mode === 'navigate') {
-        try {
-            // 네트워크 우선, 실패시 캐시
-            const networkResponse = await fetch(event.request, {
-                cache: 'no-cache'
-            });
-            
-            if (networkResponse.ok) {
+        
+        // version.json은 항상 네트워크에서 가져오기 (캐시 무시)
+        if (url.pathname.includes('version.json')) {
+            try {
+                const networkResponse = await fetch(event.request, {
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 return networkResponse;
+            } catch (error) {
+                console.log('version.json fetch failed (expected during initial load):', error);
+                // 404 등의 에러는 조용히 처리 - 빈 JSON 반환
+                return new Response('{}', { 
+                    status: 200, 
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
-        } catch (error) {
-            console.log('Network failed for navigation, falling back to cache');
         }
         
-        // 네트워크 실패 시 캐시된 HTML 반환
-        const cachedResponse = await caches.match('/');
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-    }
-    
-    // 기타 리소스 요청
-    if (event.request.method === 'GET') {
-        const cachedResponse = await caches.match(event.request);
-        
-        if (cachedResponse) {
-            // 캐시된 리소스 반환하면서 백그라운드에서 최신성 확인
-            if (shouldCheckFreshness(event.request)) {
-                event.waitUntil(checkAndUpdateCache(event.request));
+        // 외부 도메인 요청은 직접 통과 (캐시하지 않음)
+        if (url.origin !== self.location.origin) {
+            try {
+                return await fetch(event.request);
+            } catch (error) {
+                console.log('External fetch failed:', url.href, error);
+                return new Response('External resource unavailable', { status: 503 });
             }
-            return cachedResponse;
         }
         
-        // 캐시에 없으면 네트워크에서 가져와서 캐시
+        // GET 요청만 캐시 처리
+        if (event.request.method !== 'GET') {
+            try {
+                return await fetch(event.request);
+            } catch (error) {
+                console.log('Non-GET request failed:', event.request.method, url.href, error);
+                return new Response('Request failed', { status: 503 });
+            }
+        }
+        
+        // 네비게이션 요청 (HTML) - 네트워크 우선 전략
+        if (event.request.mode === 'navigate') {
+            try {
+                // 네트워크 우선, 실패시 캐시
+                const networkResponse = await fetch(event.request, {
+                    cache: 'no-cache'
+                });
+                
+                if (networkResponse.ok) {
+                    return networkResponse;
+                }
+            } catch (error) {
+                console.log('Network failed for navigation, falling back to cache');
+            }
+            
+            // 네트워크 실패 시 캐시된 HTML 반환
+            cachedResponse = await caches.match('/index.html');
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            
+            // 캐시도 없으면 offline 페이지 반환
+            return new Response('Offline - No cached content available', { 
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        }
+        
+        // 기타 리소스 요청 - 캐시 우선 전략
         try {
-            const networkResponse = await fetch(event.request);
+            // 1. 캐시에서 먼저 확인
+            cachedResponse = await caches.match(event.request);
             
-            if (networkResponse.ok && shouldCache(event.request)) {
-                const cache = await caches.open(cacheName);
-                cache.put(event.request, networkResponse.clone());
+            if (cachedResponse) {
+                // 캐시된 리소스 반환하면서 백그라운드에서 최신성 확인
+                if (shouldCheckFreshness(event.request)) {
+                    event.waitUntil(checkAndUpdateCache(event.request));
+                }
+                return cachedResponse;
             }
             
-            return networkResponse;
-        } catch (error) {
-            console.error('Network request failed:', error);
-            throw error;
+            // 2. 캐시에 없으면 네트워크에서 가져오기
+            try {
+                const networkResponse = await fetch(event.request);
+                
+                if (networkResponse && networkResponse.ok) {
+                    // 캐시 가능한 리소스면 캐시에 저장
+                    if (shouldCache(event.request)) {
+                        const cache = await caches.open(cacheName);
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                } else {
+                    // 응답이 성공적이지 않으면 에러 처리
+                    console.log('Network response not ok:', networkResponse?.status, url.href);
+                    return networkResponse || new Response('Network response not ok', { status: 502 });
+                }
+            } catch (fetchError) {
+                console.log('Network fetch failed:', url.href, fetchError);
+                
+                // 네트워크 실패 시 fallback
+                // 3. 유사한 캐시가 있는지 확인 (예: /index.html)
+                if (url.pathname === '/' || url.pathname === '') {
+                    const indexCache = await caches.match('/index.html');
+                    if (indexCache) {
+                        return indexCache;
+                    }
+                }
+                
+                // 4. 최종 fallback - 적절한 에러 응답 반환
+                return new Response('Network request failed and no cache available', {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: { 'Content-Type': 'text/plain' }
+                });
+            }
+        } catch (cacheError) {
+            console.error('Cache operation error:', cacheError);
+            
+            // 캐시 작업 자체가 실패한 경우 - 네트워크로 시도
+            try {
+                return await fetch(event.request);
+            } catch (finalError) {
+                console.error('Final fallback fetch failed:', finalError);
+                return new Response('All fetch attempts failed', {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: { 'Content-Type': 'text/plain' }
+                });
+            }
         }
+    } catch (error) {
+        // 최상위 에러 핸들러 - 예상치 못한 오류
+        console.error('Unexpected error in onFetch:', error);
+        return new Response('Unexpected service worker error', {
+            status: 500,
+            statusText: 'Internal Server Error',
+            headers: { 'Content-Type': 'text/plain' }
+        });
     }
-    
-    // 기타 요청은 네트워크로
-    return fetch(event.request);
 }
 
 // 캐시 대상 리소스인지 확인
 function shouldCache(request) {
-    const url = new URL(request.url);
-    return offlineAssetsInclude.some(pattern => pattern.test(url.pathname)) &&
-           !offlineAssetsExclude.some(pattern => pattern.test(url.pathname));
+    try {
+        const url = new URL(request.url);
+        return offlineAssetsInclude.some(pattern => pattern.test(url.pathname)) &&
+               !offlineAssetsExclude.some(pattern => pattern.test(url.pathname));
+    } catch (error) {
+        console.error('Error in shouldCache:', error);
+        return false;
+    }
 }
 
 // 최신성 확인이 필요한 리소스인지 판단
 function shouldCheckFreshness(request) {
-    // CSS, JS 파일만 주기적으로 최신성 확인
-    return /\.(css|js)$/.test(request.url) && Math.random() < 0.1; // 10% 확률로 체크
+    try {
+        // CSS, JS 파일만 주기적으로 최신성 확인
+        return /\.(css|js)$/.test(request.url) && Math.random() < 0.1; // 10% 확률로 체크
+    } catch (error) {
+        console.error('Error in shouldCheckFreshness:', error);
+        return false;
+    }
 }
 
 // 백그라운드에서 캐시 최신성 확인 및 업데이트
@@ -237,7 +327,7 @@ async function checkAndUpdateCache(request) {
         const networkResponse = await fetch(request, { cache: 'no-cache' });
         const cachedResponse = await caches.match(request);
         
-        if (networkResponse.ok && cachedResponse) {
+        if (networkResponse && networkResponse.ok && cachedResponse) {
             const networkETag = networkResponse.headers.get('etag');
             const networkLastModified = networkResponse.headers.get('last-modified');
             const cachedETag = cachedResponse.headers.get('etag');
@@ -254,6 +344,7 @@ async function checkAndUpdateCache(request) {
         }
     } catch (error) {
         console.log('Background update failed:', error);
+        // 백그라운드 업데이트 실패는 무시 (중요하지 않음)
     }
 }
 
@@ -279,6 +370,8 @@ self.addEventListener('message', event => {
                     version: APP_VERSION
                 });
             });
+        }).catch(error => {
+            console.error('Error checking cache status:', error);
         });
     }
 });
