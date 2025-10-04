@@ -5,27 +5,39 @@ self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+self.addEventListener('message', event => onMessage(event));
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
-const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
+const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/ ];
 const offlineAssetsExclude = [ /^service-worker\.js$/, /version\.json$/ ]; // version.json 제외
 
 // 빌드 정보 변수 - GitHub Actions에서 자동 업데이트
 const APP_VERSION = '2024.1.0';
 const BUILD_TIMESTAMP = 1234567890;
 
+// 오프라인 페이지 URL
+const OFFLINE_PAGE = '/offline.html';
+
 async function onInstall(event) {
     console.info('Service worker: Install');
-
-    // 즉시 활성화 - 사용자 경험을 위해 비활성화
-    // self.skipWaiting(); // 주석 - 즉시 활성화하지 않음
 
     // 스마트 캐시 - 해시 비교를 통한 선택적 캐시
     const cache = await caches.open(cacheName);
     const existingCache = await caches.open(cacheNamePrefix + 'previous');
     
     const assetsToCache = [];
+    
+    // 오프라인 페이지 우선 캐시
+    try {
+        const offlineResponse = await fetch(OFFLINE_PAGE);
+        if (offlineResponse.ok) {
+            await cache.put(OFFLINE_PAGE, offlineResponse);
+            console.log('오프라인 페이지 캐시됨');
+        }
+    } catch (error) {
+        console.log('오프라인 페이지 캐시 실패:', error);
+    }
     
     for (const asset of self.assetsManifest.assets) {
         if (offlineAssetsInclude.some(pattern => pattern.test(asset.url)) && 
@@ -49,7 +61,7 @@ async function onInstall(event) {
             
             if (shouldCache) {
                 // version.json과 같은 동적 파일은 SRI 체크 없이 캐시
-                if (/version\.json$/.test(asset.url)) {
+                if (/version\.json$/.test(asset.url) || /\.webmanifest$/.test(asset.url)) {
                     assetsToCache.push(new Request(asset.url, { 
                         cache: 'reload' 
                     }));
@@ -59,39 +71,49 @@ async function onInstall(event) {
                         cache: 'reload' 
                     }));
                 }
-                console.log(`새로 캐시: ${asset.url}`);
             }
         }
     }
     
-    // 필요한 자원만 다운로드
-    if (assetsToCache.length > 0) {
-        console.log(`${assetsToCache.length}개 자원을 새로 다운로드합니다.`);
-        // 배치로 처리하여 에러 방지
-        const batchSize = 10;
-        for (let i = 0; i < assetsToCache.length; i += batchSize) {
-            const batch = assetsToCache.slice(i, i + batchSize);
+    // 배치 캐싱 - 성능 최적화
+    const batchSize = 50;
+    for (let i = 0; i < assetsToCache.length; i += batchSize) {
+        const batch = assetsToCache.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(async request => {
             try {
-                await cache.addAll(batch);
-                console.log(`배치 ${Math.floor(i/batchSize) + 1} 완료`);
-            } catch (error) {
-                console.error(`배치 ${Math.floor(i/batchSize) + 1} 실패:`, error);
-                // 개별 요청으로 재시도
-                for (const request of batch) {
-                    try {
-                        const response = await fetch(request);
-                        if (response.ok) {
-                            await cache.put(request, response);
-                        }
-                    } catch (individualError) {
-                        console.error(`개별 요청 실패: ${request.url}`, individualError);
+                const response = await fetch(request);
+                if (response.ok) {
+                    const responseToCache = response.clone();
+                    
+                    // 해시 정보를 헤더에 추가
+                    const asset = self.assetsManifest.assets.find(a => 
+                        request.url.endsWith(a.url)
+                    );
+                    
+                    if (asset && asset.hash) {
+                        const headers = new Headers(responseToCache.headers);
+                        headers.set('x-asset-hash', asset.hash);
+                        
+                        const newResponse = new Response(responseToCache.body, {
+                            status: responseToCache.status,
+                            statusText: responseToCache.statusText,
+                            headers: headers
+                        });
+                        
+                        await cache.put(request, newResponse);
+                    } else {
+                        await cache.put(request, responseToCache);
                     }
+                    
+                    console.log(`캐시됨: ${request.url}`);
                 }
+            } catch (error) {
+                console.log(`캐시 실패: ${request.url}`, error);
             }
-        }
-    } else {
-        console.log('모든 자원이 최신 상태입니다.');
+        }));
     }
+    
+    console.log(`Service Worker 설치 완료: ${assetsToCache.length}개 파일 캐시`);
 }
 
 async function onActivate(event) {

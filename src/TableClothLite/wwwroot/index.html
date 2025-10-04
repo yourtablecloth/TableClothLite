@@ -3,9 +3,42 @@
 
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>식탁보 AI</title>
     <base href="/" />
+    
+    <!-- PWA 메타 태그 -->
+    <meta name="description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
+    <meta name="keywords" content="식탁보, AI, 챗봇, Windows Sandbox, PWA, 오픈라우터" />
+    <meta name="author" content="식탁보 팀" />
+    <meta name="theme-color" content="#03173d" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#03173d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="식탁보 AI" />
+    <meta name="application-name" content="식탁보 AI" />
+    <meta name="msapplication-TileColor" content="#03173d" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- iOS 스플래시 스크린 (선택적) -->
+    <link rel="apple-touch-startup-image" href="icon-512.png" />
+    
+    <!-- Open Graph 메타 태그 -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="식탁보 AI" />
+    <meta property="og:description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
+    <meta property="og:url" content="https://yourtablecloth.app/" />
+    <meta property="og:image" content="https://yourtablecloth.app/icon-512.png" />
+    <meta property="og:site_name" content="식탁보 AI" />
+    
+    <!-- Twitter Card 메타 태그 -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="식탁보 AI" />
+    <meta name="twitter:description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
+    <meta name="twitter:image" content="https://yourtablecloth.app/icon-512.png" />
     
     <!-- 테마 초기 로딩 스크립트 (FOUC 방지) -->
     <script>
@@ -96,12 +129,21 @@
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
+    
+    <!-- PWA 매니페스트 -->
+    <link href="manifest.webmanifest" rel="manifest" />
+    
+    <!-- Apple 터치 아이콘 -->
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    
+    <!-- Favicon 다양한 크기 -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+    
     <!-- TODO: MSBuild로 이전 검토 -->
     <link href="https://yourtablecloth.app/TableClothCatalog/Catalog.xml" rel="prefetch" />
     <link href="TableClothLite.styles.css" rel="stylesheet" />
-    <link href="manifest.webmanifest" rel="manifest" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     <script src="_content/TG.Blazor.IndexedDB/indexedDb.Blazor.js"></script>
     
     <!-- HTML만 캐시 방지 - 리소스는 조건부 캐시 허용 -->

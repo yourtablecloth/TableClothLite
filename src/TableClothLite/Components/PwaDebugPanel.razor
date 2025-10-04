@@ -1,0 +1,299 @@
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@if (showDebugInfo && isDevelopment)
+{
+    <div class="pwa-debug-panel" @onclick:stopPropagation="true">
+        <button class="toggle-btn" @onclick="ToggleExpanded" type="button">
+            @(isExpanded ? "−" : "+") PWA Debug
+        </button>
+        
+        @if (isExpanded)
+        {
+            <div class="debug-content">
+                <div class="debug-section">
+                    <h5>설치 상태</h5>
+                    <div class="status-item">
+                        <span class="status-label">설치됨:</span>
+                        <span class="status-value @(isInstalled ? "success" : "")">
+                            @(isInstalled ? "✓ 예" : "✗ 아니오")
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">디스플레이 모드:</span>
+                        <span class="status-value">@displayMode</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">설치 가능:</span>
+                        <span class="status-value @(canInstall ? "success" : "")">
+                            @(canInstall ? "✓ 예" : "✗ 아니오")
+                        </span>
+                    </div>
+                </div>
+
+                <div class="debug-section">
+                    <h5>네트워크 상태</h5>
+                    <div class="status-item">
+                        <span class="status-label">온라인:</span>
+                        <span class="status-value @(isOnline ? "success" : "error")">
+                            @(isOnline ? "✓ 연결됨" : "✗ 오프라인")
+                        </span>
+                    </div>
+                </div>
+
+                <div class="debug-section">
+                    <h5>Service Worker</h5>
+                    <div class="status-item">
+                        <span class="status-label">등록됨:</span>
+                        <span class="status-value @(hasServiceWorker ? "success" : "")">
+                            @(hasServiceWorker ? "✓ 예" : "✗ 아니오")
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">상태:</span>
+                        <span class="status-value">@serviceWorkerState</span>
+                    </div>
+                </div>
+
+                <div class="debug-actions">
+                    <button class="debug-btn" @onclick="CheckUpdate" type="button">
+                        업데이트 확인
+                    </button>
+                    <button class="debug-btn" @onclick="UnregisterSW" type="button">
+                        SW 해제
+                    </button>
+                    <button class="debug-btn" @onclick="ClearCache" type="button">
+                        캐시 삭제
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool showDebugInfo = true;
+    private bool isExpanded = false;
+    private bool isDevelopment = false;
+    private bool isInstalled = false;
+    private bool canInstall = false;
+    private bool isOnline = true;
+    private bool hasServiceWorker = false;
+    private string displayMode = "browser";
+    private string serviceWorkerState = "unknown";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 개발 환경 확인
+            var hostname = await JSRuntime.InvokeAsync<string>("eval", "window.location.hostname");
+            isDevelopment = hostname == "localhost" || hostname == "127.0.0.1";
+
+            if (isDevelopment)
+            {
+                await RefreshStatus();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task RefreshStatus()
+    {
+        try
+        {
+            isInstalled = await JSRuntime.InvokeAsync<bool>("isPwaInstalled");
+            canInstall = await JSRuntime.InvokeAsync<bool>("canShowInstallPrompt");
+            isOnline = await JSRuntime.InvokeAsync<bool>("isOnline");
+            displayMode = await JSRuntime.InvokeAsync<string>("getPwaDisplayMode");
+            
+            // Service Worker 상태 확인
+            hasServiceWorker = await JSRuntime.InvokeAsync<bool>("eval", 
+                "'serviceWorker' in navigator && navigator.serviceWorker.controller !== null");
+            
+            if (hasServiceWorker)
+            {
+                serviceWorkerState = await JSRuntime.InvokeAsync<string>("eval",
+                    "navigator.serviceWorker.controller ? navigator.serviceWorker.controller.state : 'none'");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PWA 상태 확인 오류: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleExpanded()
+    {
+        isExpanded = !isExpanded;
+        if (isExpanded)
+        {
+            await RefreshStatus();
+        }
+    }
+
+    private async Task CheckUpdate()
+    {
+        await JSRuntime.InvokeVoidAsync("checkForUpdates");
+        await Task.Delay(1000);
+        await RefreshStatus();
+    }
+
+    private async Task UnregisterSW()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "Service Worker를 해제하시겠습니까? 페이지를 새로고침해야 합니다.");
+        
+        if (confirmed)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                });
+            ");
+            await Task.Delay(500);
+            await JSRuntime.InvokeVoidAsync("eval", "window.location.reload()");
+        }
+    }
+
+    private async Task ClearCache()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            "모든 캐시를 삭제하시겠습니까? 페이지를 새로고침해야 합니다.");
+
+        if (confirmed)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            ");
+            await Task.Delay(500);
+            await JSRuntime.InvokeVoidAsync("eval", "window.location.reload()");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.CompletedTask;
+    }
+}
+
+<style>
+    .pwa-debug-panel {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.9);
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        z-index: 9998;
+        max-width: 320px;
+    }
+
+    .toggle-btn {
+        background: transparent;
+        border: none;
+        color: #00ff00;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        width: 100%;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .toggle-btn:hover {
+        background: rgba(0, 255, 0, 0.1);
+    }
+
+    .debug-content {
+        padding: 0 16px 16px 16px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .debug-section {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+    }
+
+    .debug-section:last-of-type {
+        border-bottom: none;
+    }
+
+    .debug-section h5 {
+        margin: 0 0 8px 0;
+        color: #00ff00;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        line-height: 1.4;
+    }
+
+    .status-label {
+        color: #888;
+    }
+
+    .status-value {
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .status-value.success {
+        color: #00ff00;
+    }
+
+    .status-value.error {
+        color: #ff0000;
+    }
+
+    .debug-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .debug-btn {
+        background: rgba(0, 255, 0, 0.2);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        transition: all 0.2s;
+    }
+
+    .debug-btn:hover {
+        background: rgba(0, 255, 0, 0.3);
+    }
+
+    .debug-btn:active {
+        background: rgba(0, 255, 0, 0.4);
+    }
+
+    @@media (max-width: 768px) {
+        .pwa-debug-panel {
+            bottom: 10px;
+            right: 10px;
+            max-width: 280px;
+        }
+    }
+</style>

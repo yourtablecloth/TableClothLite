@@ -735,10 +735,131 @@ window.optimizeScrolling = function() {
 
 // PWA 관련: 설치 프롬프트 처리
 let deferredPrompt;
+let pwaInstallDotNetHelper = null;
+
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    console.log('PWA 설치 프롬프트 준비됨');
+    
+    // Blazor 컴포넌트에 알림
+    if (pwaInstallDotNetHelper) {
+        try {
+            pwaInstallDotNetHelper.invokeMethodAsync('ShowInstallPrompt');
+        } catch (error) {
+            console.log('설치 프롬프트 알림 실패:', error);
+        }
+    }
 });
+
+// PWA 설치 이벤트 리스너
+window.addEventListener('appinstalled', () => {
+    console.log('PWA 설치 완료');
+    deferredPrompt = null;
+    localStorage.setItem('pwa-installed', 'true');
+    window.showToast?.('앱이 성공적으로 설치되었습니다!', 'success');
+});
+
+// PWA 설치 관련 함수들
+window.initPwaInstall = function(dotNetHelper) {
+    pwaInstallDotNetHelper = dotNetHelper;
+    console.log('PWA 설치 초기화 완료');
+};
+
+window.disposePwaInstall = function() {
+    pwaInstallDotNetHelper = null;
+};
+
+window.canShowInstallPrompt = function() {
+    return deferredPrompt !== null && deferredPrompt !== undefined;
+};
+
+window.installPwa = async function() {
+    if (!deferredPrompt) {
+        console.log('설치 프롬프트를 사용할 수 없습니다');
+        return false;
+    }
+
+    try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`PWA 설치 사용자 선택: ${outcome}`);
+        
+        if (outcome === 'accepted') {
+            deferredPrompt = null;
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('PWA 설치 오류:', error);
+        return false;
+    }
+};
+
+window.isPwaInstalled = function() {
+    // 1. 설치 기록 확인
+    if (localStorage.getItem('pwa-installed') === 'true') {
+        return true;
+    }
+    
+    // 2. standalone 모드 확인
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        localStorage.setItem('pwa-installed', 'true');
+        return true;
+    }
+    
+    // 3. iOS standalone 모드 확인
+    if (window.navigator.standalone === true) {
+        localStorage.setItem('pwa-installed', 'true');
+        return true;
+    }
+    
+    return false;
+};
+
+// PWA 업데이트 알림
+window.notifyPwaUpdate = function() {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'CHECK_UPDATE'
+        });
+    }
+};
+
+// 오프라인 상태 확인
+window.isOnline = function() {
+    return navigator.onLine;
+};
+
+// 네트워크 상태 변경 이벤트
+window.addEventListener('online', () => {
+    console.log('온라인 상태로 변경됨');
+    window.showToast?.('인터넷에 다시 연결되었습니다.', 'success');
+});
+
+window.addEventListener('offline', () => {
+    console.log('오프라인 상태로 변경됨');
+    window.showToast?.('인터넷 연결이 끊겼습니다. 일부 기능이 제한될 수 있습니다.', 'warning');
+});
+
+// PWA 디스플레이 모드 감지
+window.getPwaDisplayMode = function() {
+    const displayMode = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' :
+                       window.matchMedia('(display-mode: fullscreen)').matches ? 'fullscreen' :
+                       window.matchMedia('(display-mode: minimal-ui)').matches ? 'minimal-ui' :
+                       'browser';
+    return displayMode;
+};
+
+// PWA 관련 정보 로깅 (디버그용)
+if (window.location.hostname === 'localhost') {
+    console.log('PWA 상태:', {
+        installed: window.isPwaInstalled(),
+        displayMode: window.getPwaDisplayMode(),
+        online: window.isOnline(),
+        canInstall: window.canShowInstallPrompt()
+    });
+}
 
 window.showInstallPrompt = function() {
     if (deferredPrompt) {
@@ -748,408 +869,6 @@ window.showInstallPrompt = function() {
         });
     }
 };
-
-// OS 감지 함수
-window.detectOS = function () {
-    const userAgent = navigator.userAgent;
-    const osInfo = {
-        isWindows: /Windows/i.test(userAgent),
-        isMac: /Mac/i.test(userAgent) && !/iPhone|iPad|iPod/i.test(userAgent),
-        isLinux: /Linux/i.test(userAgent) && !/Android/i.test(userAgent),
-        isAndroid: /Android/i.test(userAgent),
-        isIOS: /iPhone|iPad|iPod/i.test(userAgent),
-        userAgent: userAgent
-    };
-
-    console.log('OS Detection Result:', osInfo);
-    return osInfo;
-};
-
-// Windows Sandbox 지원 여부 확인
-window.checkWindowsSandboxSupport = function() {
-    const osInfo = window.detectOS();
-    
-    if (!osInfo.isWindows) {
-        return {
-            supported: false,
-            reason: 'Windows 운영체제가 아닙니다.'
-        };
-    }
-    
-    // User Agent에서 Windows 버전 확인 시도
-    const userAgent = navigator.userAgent;
-    
-    // Windows 10 이상인지 확인 (간단한 휴리스틱)
-    if (/Windows NT 10\.0/i.test(userAgent) || /Windows NT 11\./i.test(userAgent)) {
-        return {
-            supported: true,
-            reason: 'Windows 10/11에서 지원 가능합니다.'
-        };
-    }
-    
-    // Windows 11은 여전히 NT 10.0으로 표시될 수 있음
-    if (/Windows NT/i.test(userAgent)) {
-        return {
-            supported: true,
-            reason: 'Windows Sandbox 지원 여부를 확인해주세요.',
-            uncertain: true
-        };
-    }
-    
-    return {
-        supported: false,
-        reason: 'Windows 10 이상이 필요합니다.'
-    };
-};
-
-// Windows 기능 페이지 열기
-window.openWindowsFeatures = function() {
-    try {
-        // Windows 설정의 선택적 기능 페이지 열기 시도
-        window.open('ms-settings:optionalfeatures', '_blank');
-        return true;
-    } catch (error) {
-        console.log('Windows 설정을 자동으로 열 수 없습니다:', error);
-        return false;
-    }
-};
-
-// 스크롤 정보 가져오기 함수
-window.getScrollInfo = function(selector) {
-    const element = document.querySelector(selector);
-    if (!element) {
-        return {
-            scrollTop: 0,
-            scrollHeight: 0,
-            clientHeight: 0
-        };
-    }
-    
-    return {
-        scrollTop: element.scrollTop,
-        scrollHeight: element.scrollHeight,
-        clientHeight: element.clientHeight
-    };
-};
-
-// 대화 내용 인쇄 함수
-window.printConversation = function(htmlContent) {
-    // 새 창에서 인쇄 페이지 생성
-    const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-    
-    if (!printWindow) {
-        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
-        return;
-    }
-    
-    // HTML 내용 작성
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    
-    // 이미지 및 스타일 로드 대기
-    printWindow.onload = function() {
-        setTimeout(function() {
-            // 인쇄 다이얼로그 표시
-            printWindow.print();
-            
-            // 인쇄 후 창 닫기 (사용자가 인쇄를 취소하거나 완료한 후)
-            printWindow.onafterprint = function() {
-                printWindow.close();
-            };
-            
-            // 일정 시간 후 자동으로 닫기 (인쇄 다이얼로그가 닫힌 경우를 대비)
-            setTimeout(function() {
-                if (!printWindow.closed) {
-                    printWindow.close();
-                }
-            }, 1000);
-        }, 500);
-    };
-};
-
-// 드롭다운 메뉴 외부 클릭 시 닫기 기능
-window.setupDropdownClickOutside = function(dotNetHelper) {
-    document.addEventListener('click', function(event) {
-        const dropdown = document.querySelector('.conversation-actions-dropdown');
-        const toggleButton = document.querySelector('.mobile-actions .action-btn');
-        
-        if (dropdown && dropdown.classList.contains('show')) {
-            // 드롭다운이나 토글 버튼을 클릭한 게 아닌 경우
-            if (!dropdown.contains(event.target) && !toggleButton.contains(event.target)) {
-                if (dotNetHelper) {
-                    try {
-                        dotNetHelper.invokeMethodAsync('HideConversationActionsDropdown');
-                    } catch (error) {
-                        console.warn('드롭다운 닫기 중 오류:', error);
-                    }
-                }
-            }
-        }
-    });
-};
-
-// 인쇄 미리보기 함수 (선택사항)
-window.showPrintPreview = function(htmlContent) {
-    const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-    
-    if (!previewWindow) {
-        alert('팝업이 차단되었습니다. 팝업을 허용하고 다시 시도해주세요.');
-        return;
-    }
-    
-    // 미리보기용 HTML 생성 (인쇄 버튼 포함)
-    const previewHtml = htmlContent.replace(
-        '</body>',
-        `
-        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
-            <button onclick="window.print()" style="
-                padding: 10px 20px;
-                background: #2563eb;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            ">🖨️ 인쇄하기</button>
-            <button onclick="window.close()" style="
-                padding: 10px 20px;
-                background: #6b7280;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14px;
-                margin-left: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            ">✕ 닫기</button>
-        </div>
-        </body>`
-    );
-    
-    previewWindow.document.write(previewHtml);
-    previewWindow.document.close();
-    
-    // 인쇄 후 창 닫기 처리
-    previewWindow.onafterprint = function() {
-        previewWindow.close();
-    };
-};
-
-// Web Share API 지원 여부 확인
-window.isWebShareSupported = function() {
-    return typeof navigator.share !== 'undefined' && navigator.share !== null;
-};
-
-// Web Share API를 사용한 공유
-window.shareContent = async function(shareData) {
-    try {
-        if (window.isWebShareSupported()) {
-            await navigator.share(shareData);
-            return { success: true, method: 'webshare' };
-        } else {
-            // Web Share API를 지원하지 않는 경우 클립보드에 복사
-            const copied = await window.copyToClipboard(shareData.text);
-            if (copied) {
-                return { success: true, method: 'clipboard' };
-            } else {
-                return { success: false, method: 'none' };
-            }
-        }
-    } catch (error) {
-        console.error('공유 중 오류:', error);
-        
-        // Web Share API 실패 시 클립보드로 fallback
-        try {
-            const copied = await window.copyToClipboard(shareData.text);
-            if (copied) {
-                return { success: true, method: 'clipboard' };
-            } else {
-                return { success: false, method: 'fallback', error: error.message };
-            }
-        } catch (clipboardError) {
-            return { success: false, method: 'none', error: clipboardError.message };
-        }
-    }
-};
-
-// 대화 내용을 텍스트 파일로 저장하는 함수
-window.exportConversationAsText = function(conversationData) {
-    try {
-        const data = JSON.parse(conversationData);
-        let textContent = `식탁보 AI 대화 기록\n`;
-        textContent += `생성일: ${new Date().toLocaleString('ko-KR')}\n`;
-        textContent += `총 ${data.messages.length}개의 메시지\n`;
-        textContent += `${'='.repeat(50)}\n\n`;
-        
-        data.messages.forEach((message, index) => {
-            const sender = message.isUser ? '사용자' : '식탁보 AI';
-            textContent += `[${index + 1}] ${sender}\n`;
-            textContent += `${'-'.repeat(20)}\n`;
-            textContent += `${message.content}\n\n`;
-        });
-        
-        textContent += `${'='.repeat(50)}\n`;
-        textContent += `식탁보 AI - https://yourtablecloth.app`;
-        
-        // 텍스트 파일 다운로드
-        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `식탁보_AI_대화기록_${new Date().toISOString().split('T')[0]}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        return true;
-    } catch (error) {
-        console.error('텍스트 파일 내보내기 오류:', error);
-        return false;
-    }
-};
-
-// 안전한 version.json 가져오기 함수
-window.fetchVersionJson = async function(url) {
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            cache: 'no-cache',
-            headers: {
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-            }
-        });
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                console.log('version.json 파일을 찾을 수 없습니다.');
-                return null;
-            }
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            console.warn('version.json이 JSON 형식이 아닐 수 있습니다.');
-        }
-
-        const jsonText = await response.text();
-        
-        // JSON 유효성 검사
-        try {
-            JSON.parse(jsonText);
-            return jsonText;
-        } catch (parseError) {
-            console.error('version.json JSON 파싱 오류:', parseError);
-            return null;
-        }
-        
-    } catch (error) {
-        console.log('version.json 가져오기 실패:', error.message);
-        return null;
-    }
-};
-
-// 토스트 알림 표시 함수 (간단한 구현)
-window.showToast = function(message, type = 'info') {
-    console.log(`${type.toUpperCase()}: ${message}`);
-    
-    // 기존 토스트가 있다면 제거
-    const existingToast = document.querySelector('.toast-notification');
-    if (existingToast) {
-        existingToast.remove();
-    }
-    
-    // 토스트 엘리먼트 생성
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        max-width: 300px;
-        padding: 12px 16px;
-        background: ${getToastColor(type)};
-        color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10001;
-        font-size: 14px;
-        line-height: 1.4;
-        animation: slideInFromRight 0.3s ease-out;
-        word-wrap: break-word;
-    `;
-    
-    // 아이콘 추가
-    const icon = getToastIcon(type);
-    toast.innerHTML = `${icon} ${message}`;
-    
-    // 애니메이션 CSS 추가 (한 번만)
-    if (!document.querySelector('#toast-styles')) {
-        const style = document.createElement('style');
-        style.id = 'toast-styles';
-        style.textContent = `
-            @keyframes slideInFromRight {
-                from {
-                    opacity: 0;
-                    transform: translateX(100px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-            @keyframes slideOutToRight {
-                from {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-                to {
-                    opacity: 0;
-                    transform: translateX(100px);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    document.body.appendChild(toast);
-    
-    // 클릭 시 닫기
-    toast.addEventListener('click', () => {
-        toast.style.animation = 'slideOutToRight 0.3s ease-in';
-        setTimeout(() => toast.remove(), 300);
-    });
-    
-    // 자동 삭제
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.style.animation = 'slideOutToRight 0.3s ease-in';
-            setTimeout(() => toast.remove(), 300);
-        }
-    }, type === 'error' ? 5000 : 3000); // 에러는 5초, 나머지는 3초
-};
-
-function getToastColor(type) {
-    switch (type) {
-        case 'success': return '#10b981';
-        case 'error': return '#ef4444';
-        case 'warning': return '#f59e0b';
-        default: return '#3b82f6';
-    }
-}
-
-function getToastIcon(type) {
-    switch (type) {
-        case 'success': return '✅';
-        case 'error': return '❌';
-        case 'warning': return '⚠️';
-        default: return 'ℹ️';
-    }
-}
 
 // 초기화 완료 로그
 console.log('식탁보 AI JavaScript 모듈 로드 완료 ✅');

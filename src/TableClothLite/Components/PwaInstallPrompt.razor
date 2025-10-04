@@ -1,0 +1,361 @@
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@if (showInstallPrompt)
+{
+    <div class="pwa-install-prompt" @onclick:stopPropagation="true">
+        <div class="install-prompt-content">
+            <button class="close-btn" @onclick="DismissPrompt" type="button" aria-label="닫기">
+                ✕
+            </button>
+            
+            <div class="install-icon">
+                <img src="icon-192.png" alt="식탁보 AI" />
+            </div>
+            
+            <h3>앱으로 설치하기</h3>
+            <p>식탁보 AI를 홈 화면에 추가하여 더 빠르고 편리하게 사용하세요!</p>
+            
+            <div class="install-benefits">
+                <div class="benefit-item">
+                    <span class="benefit-icon">⚡</span>
+                    <span>빠른 실행</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">📱</span>
+                    <span>앱처럼 사용</span>
+                </div>
+                <div class="benefit-item">
+                    <span class="benefit-icon">🔔</span>
+                    <span>오프라인 지원</span>
+                </div>
+            </div>
+            
+            <div class="install-actions">
+                <button class="btn btn-primary install-btn" @onclick="InstallApp" type="button">
+                    지금 설치하기
+                </button>
+                <button class="btn btn-secondary later-btn" @onclick="RemindLater" type="button">
+                    나중에
+                </button>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(installInstructions))
+            {
+                <div class="install-instructions">
+                    <p>@installInstructions</p>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool showInstallPrompt = false;
+    private string installInstructions = string.Empty;
+    private DotNetObjectReference<PwaInstallPrompt>? dotNetHelper;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("initPwaInstall", dotNetHelper);
+            
+            // 설치 프롬프트 표시 여부 확인 (7일에 한 번)
+            var lastDismissed = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "pwa-install-dismissed");
+            if (!string.IsNullOrEmpty(lastDismissed))
+            {
+                if (long.TryParse(lastDismissed, out var timestamp))
+                {
+                    var daysSinceDismiss = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - timestamp) / (1000 * 60 * 60 * 24);
+                    if (daysSinceDismiss < 7)
+                    {
+                        return; // 7일이 지나지 않았으면 표시하지 않음
+                    }
+                }
+            }
+            
+            // 이미 설치되었는지 확인
+            var isInstalled = await JSRuntime.InvokeAsync<bool>("isPwaInstalled");
+            if (!isInstalled)
+            {
+                // 3초 후에 프롬프트 표시
+                await Task.Delay(3000);
+                await CheckAndShowInstallPrompt();
+            }
+        }
+    }
+
+    private async Task CheckAndShowInstallPrompt()
+    {
+        var canInstall = await JSRuntime.InvokeAsync<bool>("canShowInstallPrompt");
+        if (canInstall)
+        {
+            showInstallPrompt = true;
+            StateHasChanged();
+        }
+        else
+        {
+            // 플랫폼별 설치 안내 표시
+            installInstructions = await GetPlatformInstallInstructions();
+            if (!string.IsNullOrEmpty(installInstructions))
+            {
+                showInstallPrompt = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task<string> GetPlatformInstallInstructions()
+    {
+        var userAgent = await JSRuntime.InvokeAsync<string>("eval", "navigator.userAgent");
+        
+        if (userAgent.Contains("iPhone") || userAgent.Contains("iPad"))
+        {
+            return "Safari에서 공유 버튼(↗️)을 누른 후 '홈 화면에 추가'를 선택하세요.";
+        }
+        else if (userAgent.Contains("Android"))
+        {
+            return "Chrome 메뉴(⋮)에서 '홈 화면에 추가'를 선택하세요.";
+        }
+        else if (userAgent.Contains("Chrome") || userAgent.Contains("Edge"))
+        {
+            return "주소창 오른쪽의 설치 아이콘을 클릭하세요.";
+        }
+        
+        return string.Empty;
+    }
+
+    [JSInvokable]
+    public async Task ShowInstallPrompt()
+    {
+        showInstallPrompt = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task InstallApp()
+    {
+        var installed = await JSRuntime.InvokeAsync<bool>("installPwa");
+        if (installed)
+        {
+            showInstallPrompt = false;
+            StateHasChanged();
+        }
+        else
+        {
+            // 설치할 수 없는 경우 플랫폼별 안내 표시
+            installInstructions = await GetPlatformInstallInstructions();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DismissPrompt()
+    {
+        showInstallPrompt = false;
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "pwa-install-dismissed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        StateHasChanged();
+    }
+
+    private async Task RemindLater()
+    {
+        showInstallPrompt = false;
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "pwa-install-dismissed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (dotNetHelper != null)
+        {
+            await JSRuntime.InvokeVoidAsync("disposePwaInstall");
+            dotNetHelper.Dispose();
+        }
+    }
+}
+
+<style>
+    .pwa-install-prompt {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        animation: slideUp 0.3s ease-out;
+        padding: env(safe-area-inset-bottom, 0);
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .install-prompt-content {
+        background: var(--card-bg, white);
+        color: var(--primary-text, #2c3e50);
+        border-radius: 16px 16px 0 0;
+        padding: 24px;
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: transparent;
+        border: none;
+        font-size: 24px;
+        color: var(--secondary-text, #7f8c8d);
+        cursor: pointer;
+        padding: 4px 8px;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .install-icon {
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .install-icon img {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .install-prompt-content h3 {
+        margin: 0 0 8px 0;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .install-prompt-content > p {
+        text-align: center;
+        color: var(--secondary-text, #7f8c8d);
+        margin: 0 0 20px 0;
+        font-size: 14px;
+    }
+
+    .install-benefits {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+
+    .benefit-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--secondary-text, #7f8c8d);
+    }
+
+    .benefit-icon {
+        font-size: 24px;
+    }
+
+    .install-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .install-actions button {
+        flex: 1;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .install-btn {
+        background: var(--accent-color, #007bff);
+        color: white;
+    }
+
+    .install-btn:hover {
+        background: var(--accent-hover, #0056b3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .later-btn {
+        background: var(--secondary-bg, #e9ecef);
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .later-btn:hover {
+        background: var(--hover-bg, #dee2e6);
+    }
+
+    .install-instructions {
+        padding: 12px;
+        background: var(--info-bg, #e3f2fd);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 13px;
+        color: var(--info-text, #1976d2);
+        line-height: 1.5;
+    }
+
+    .install-instructions p {
+        margin: 0;
+    }
+
+    @@media (max-width: 768px) {
+        .install-prompt-content {
+            padding: 20px 16px;
+        }
+
+        .install-benefits {
+            gap: 8px;
+        }
+
+        .benefit-item {
+            font-size: 12px;
+        }
+
+        .benefit-icon {
+            font-size: 20px;
+        }
+
+        .install-actions button {
+            font-size: 14px;
+            padding: 10px 16px;
+        }
+    }
+
+    /* 다크 테마 지원 */
+    .dark-theme .install-prompt-content {
+        background: var(--card-bg, #1e1e1e);
+        color: var(--primary-text, #e0e0e0);
+    }
+
+    .dark-theme .install-instructions {
+        background: var(--info-bg, #1a237e);
+        color: var(--info-text, #90caf9);
+    }
+</style>

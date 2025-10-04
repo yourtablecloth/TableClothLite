@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>오프라인 - 식탁보 AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .offline-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            color: #2c3e50;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .retry-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .retry-btn:active {
+            transform: translateY(0);
+        }
+
+        .network-status {
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .online-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #dc3545;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .online .online-indicator {
+            background: #28a745;
+        }
+
+        .features {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .feature-text {
+            font-size: 14px;
+            color: #495057;
+        }
+
+        @media (max-width: 600px) {
+            .offline-container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .offline-icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>인터넷 연결이 끊겼습니다</h1>
+        <p>
+            식탁보 AI는 PWA(Progressive Web App)로 설치되어 있지만,
+            현재 인터넷에 연결되어 있지 않습니다.
+        </p>
+
+        <button class="retry-btn" onclick="window.location.reload()">
+            🔄 다시 시도
+        </button>
+
+        <div class="network-status" id="networkStatus">
+            <span class="online-indicator"></span>
+            <span id="statusText">오프라인</span>
+        </div>
+
+        <div class="features">
+            <div class="feature-item">
+                <span class="feature-icon">💡</span>
+                <span class="feature-text">인터넷이 연결되면 자동으로 다시 시도됩니다</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💾</span>
+                <span class="feature-text">이전에 캐시된 콘텐츠는 오프라인에서도 사용 가능합니다</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔒</span>
+                <span class="feature-text">설정과 데이터는 안전하게 보관됩니다</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 네트워크 상태 모니터링
+        const networkStatus = document.getElementById('networkStatus');
+        const statusText = document.getElementById('statusText');
+
+        function updateNetworkStatus() {
+            if (navigator.onLine) {
+                networkStatus.classList.add('online');
+                statusText.textContent = '온라인 - 연결 확인 중...';
+                
+                // 온라인이 되면 자동으로 재시도
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                networkStatus.classList.remove('online');
+                statusText.textContent = '오프라인';
+            }
+        }
+
+        // 초기 상태 확인
+        updateNetworkStatus();
+
+        // 네트워크 상태 변경 감지
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // 주기적으로 연결 확인 (30초마다)
+        setInterval(() => {
+            if (navigator.onLine) {
+                fetch('/').then(() => {
+                    window.location.reload();
+                }).catch(() => {
+                    // 연결 실패 시 아무 작업도 하지 않음
+                });
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

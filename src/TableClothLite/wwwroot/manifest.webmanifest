@@ -6,17 +6,93 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#03173d",
+  "description": "인터넷 뱅킹, 전자정부 서비스를 손쉽게 이용해보세요.",
+  "scope": "./",
+  "categories": ["productivity", "utilities", "education"],
+  "lang": "ko-KR",
+  "dir": "ltr",
   "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     },
     {
       "src": "icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "모바일 화면"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "데스크톱 화면"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "서비스 목록",
+      "short_name": "서비스",
+      "description": "Windows Sandbox 서비스 목록 보기",
+      "url": "/services",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "AI 채팅",
+      "short_name": "채팅",
+      "description": "AI 챗봇과 대화하기",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "홈",
+      "short_name": "홈",
+      "description": "홈 화면으로 이동",
+      "url": "/",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
