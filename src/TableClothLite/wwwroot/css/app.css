@@ -429,22 +429,6 @@ html.light-theme ::-webkit-scrollbar-thumb:hover {
     color: white;
 }
 
-/* FluentUI 컴포넌트 다크 테마 대응 */
-html.dark-theme fluent-accordion,
-html.dark-theme fluent-accordion-item,
-html.dark-theme fluent-card,
-html.dark-theme fluent-grid,
-html.dark-theme fluent-grid-item {
-    background-color: var(--card-bg);
-    color: var(--primary-text);
-}
-
-html.dark-theme fluent-button {
-    background-color: var(--secondary-bg);
-    color: var(--primary-text);
-    border-color: var(--border-color);
-}
-
 /* 애니메이션 최적화 */
 @media (prefers-reduced-motion: reduce) {
     * {

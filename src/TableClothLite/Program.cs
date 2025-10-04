@@ -3,7 +3,6 @@ using KristofferStrube.Blazor.FileSystemAccess;
 using Markdig;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.FluentUI.AspNetCore.Components;
 using TableClothLite;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
@@ -20,13 +19,8 @@ builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddFluentUIComponents(options =>
-{
-    options.ValidateClassNames = false;
-});
 
 builder.Services.AddHttpClient();
-builder.Services.AddFluentUIComponents();
 builder.Services.AddBlazoredLocalStorageAsSingleton();
 builder.Services.AddFileSystemAccessService();
 

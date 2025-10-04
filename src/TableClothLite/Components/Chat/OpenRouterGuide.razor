@@ -1,29 +1,124 @@
 @inject OpenRouterAuthService AuthService
 
-<FluentDialogHeader ShowDismiss="true">
-    <FluentStack VerticalAlignment="VerticalAlignment.Center">
-        <FluentIcon Value="@(new Icons.Regular.Size24.Bot())" />
-        <FluentLabel Typo="Typography.PaneHeader">
-            OpenRouter 계정 필요
-        </FluentLabel>
-    </FluentStack>
-</FluentDialogHeader>
+<div class="dialog-header">
+    <div class="header-content">
+        <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.753 14.001a.75.75 0 0 1-.75.75h-10.5a.75.75 0 0 1-.75-.75v-9a.75.75 0 0 1 .75-.75h10.5a.75.75 0 0 1 .75.75v9zm-10.5-10.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-10.5zM9.003 8a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75zm0 3a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75z" fill="currentColor"/>
+        </svg>
+        <h2>OpenRouter 계정 필요</h2>
+    </div>
+    <button class="dismiss-button" @onclick="@CancelAsync" aria-label="닫기">✕</button>
+</div>
 
-<FluentDialogBody>
-    <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
-        <FluentLabel>
+<div class="dialog-body">
+    <div class="content-stack">
+        <p>
             채팅 서비스를 이용하기 위해서는 OpenRouter 계정이 필요합니다.
-        </FluentLabel>
-        <FluentLabel>
+        </p>
+        <p>
             계속 진행하시면 OpenRouter 인증 페이지로 이동하여 계정을 연결하게 됩니다.
-        </FluentLabel>
-        <FluentLabel Style="font-weight: bold;">
+        </p>
+        <p class="emphasis">
             처음 이용하시는 경우 OpenRouter에 회원가입이 필요할 수 있습니다.
-        </FluentLabel>
-    </FluentStack>
-</FluentDialogBody>
+        </p>
+    </div>
+</div>
 
-<FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@ContinueAsync">계속하기</FluentButton>
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">취소</FluentButton>
-</FluentDialogFooter>
+<div class="dialog-footer">
+    <button class="btn btn-primary" @onclick="@ContinueAsync">계속하기</button>
+    <button class="btn btn-secondary" @onclick="@CancelAsync">취소</button>
+</div>
+
+<style>
+    .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-content h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .dismiss-button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px 8px;
+        color: #666;
+    }
+
+    .dismiss-button:hover {
+        color: #000;
+    }
+
+    .dialog-body {
+        padding: 24px;
+    }
+
+    .content-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .content-stack p {
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .emphasis {
+        font-weight: bold;
+    }
+
+    .dialog-footer {
+        display: flex;
+        justify-content: flex-start;
+        gap: 8px;
+        padding: 16px 24px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background-color: #0078d4;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #106ebe;
+    }
+
+    .btn-secondary {
+        background-color: #f3f2f1;
+        color: #323130;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e1dfdd;
+    }
+</style>

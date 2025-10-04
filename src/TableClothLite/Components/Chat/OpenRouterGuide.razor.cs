@@ -1,20 +1,18 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.FluentUI.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 
 namespace TableClothLite.Components.Chat;
 
-public partial class OpenRouterGuide : ComponentBase, IDialogContentComponent
+public partial class OpenRouterGuide : ComponentBase
 {
-    [CascadingParameter]
-    public FluentDialog? Dialog { get; set; } = default!;
+    [Parameter] public EventCallback<bool> OnClose { get; set; }
 
     private async Task ContinueAsync()
     {
-        await Dialog!.CloseAsync(true);
+        await OnClose.InvokeAsync(true);
     }
 
     private async Task CancelAsync()
     {
-        await Dialog!.CloseAsync(false);
+        await OnClose.InvokeAsync(false);
     }
 }

@@ -27,36 +27,140 @@
                 </a>
             }
         </nav>
-		<FluentAccordion>
-			@foreach (var eachGroup in ServiceGroup)
-			{
-				<fluent-accordion-item class="service-group" expanded="true">
-                    <h3 id="@eachGroup.First().Category.ToLowerInvariant()" slot="heading" data-scroll-target>
-                        @Model.DisplayCategoryName(eachGroup.Key)
-                    </h3>
-					<FluentGrid Justify="JustifyContent.FlexStart" Spacing="2" AdaptiveRendering="true">
-						@foreach (var eachService in eachGroup)
-						{
-							<FluentGridItem xs="6" sm="3" Justify="JustifyContent.Center">
-								<FluentCard>
-									<FluentIcon Value="@(Icon.FromImageUrl(Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)))" />
-									<span>@eachService.DisplayName</span>
-									<br /><br />
-									<div style="text-align: right;">
-										<FluentButton style="cursor: pointer;" Appearance="Appearance.Neutral" @onclick="() => Model.GenerateSandboxDocumentAsync(string.Empty, eachService)">
-											<FluentEmoji Value="@(new Emojis.Symbols.Color.Default.PlayButton())" />
-										</FluentButton>
-									</div>
-								</FluentCard>
-							</FluentGridItem>
-						}
-					</FluentGrid>
-				</fluent-accordion-item>
-			}
-		</FluentAccordion>
+        <div class="service-accordion">
+            @foreach (var eachGroup in ServiceGroup)
+            {
+                <details class="service-group" open>
+                    <summary>
+                        <h3 id="@eachGroup.First().Category.ToLowerInvariant()" data-scroll-target>
+                            @Model.DisplayCategoryName(eachGroup.Key)
+                        </h3>
+                    </summary>
+                    <div class="service-grid">
+                        @foreach (var eachService in eachGroup)
+                        {
+                            <div class="service-card">
+                                <img src="@Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)" alt="@eachService.DisplayName" class="service-icon" />
+                                <span class="service-name">@eachService.DisplayName</span>
+                                <div class="service-actions">
+                                    <button class="service-button" @onclick="() => Model.GenerateSandboxDocumentAsync(string.Empty, eachService)">
+                                        <span class="play-icon">▶️</span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </details>
+            }
+        </div>
     }
     else
     {
         <p>불러오는 중입니다...</p>
     }
 </div>
+
+<style>
+    .service-accordion {
+        margin-top: 20px;
+    }
+
+    .service-group {
+        margin-bottom: 20px;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 8px;
+        background: var(--card-bg, white);
+        padding: 16px;
+    }
+
+    .service-group summary {
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+    }
+
+    .service-group summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .service-group summary h3 {
+        margin: 0;
+        padding: 8px 0;
+        font-size: 1.3rem;
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .service-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .service-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 12px;
+        background: var(--card-bg, white);
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .service-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .service-icon {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        margin-bottom: 12px;
+    }
+
+    .service-name {
+        text-align: center;
+        margin-bottom: 16px;
+        font-weight: 500;
+        color: var(--primary-text, #212529);
+    }
+
+    .service-actions {
+        margin-top: auto;
+        width: 100%;
+        text-align: right;
+    }
+
+    .service-button {
+        background: var(--secondary-bg, #f3f2f1);
+        border: 1px solid var(--border-color, #e0e0e0);
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 16px;
+    }
+
+    .service-button:hover {
+        background: var(--accent-color, #e1dfdd);
+        transform: scale(1.05);
+    }
+
+    .play-icon {
+        display: inline-block;
+    }
+
+    @@media (max-width: 768px) {
+        .service-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .service-card {
+            padding: 16px;
+        }
+    }
+</style>
