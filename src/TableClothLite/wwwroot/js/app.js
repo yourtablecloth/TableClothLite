@@ -870,5 +870,362 @@ window.showInstallPrompt = function() {
     }
 };
 
+// 드롭다운 외부 클릭 감지
+window.setupDropdownClickOutside = function(dotNetHelper) {
+    // 기존 리스너가 있다면 제거
+    if (window.dropdownClickHandler) {
+        document.removeEventListener('click', window.dropdownClickHandler);
+    }
+    
+    window.dropdownClickHandler = function(e) {
+        // 드롭다운 토글 버튼 클릭인지 확인
+        const toggleButton = e.target.closest('.header-action-btn, .dropdown-toggle');
+        
+        // 토글 버튼 클릭이면 아무것도 하지 않음 (Blazor가 토글 처리)
+        if (toggleButton) {
+            return;
+        }
+        
+        // 드롭다운 메뉴 내부 클릭인지 확인
+        const dropdownMenu = e.target.closest('.menu-dropdown-content, .dropdown-menu');
+        
+        // 드롭다운 메뉴 내부 클릭이 아니면 모든 드롭다운 닫기
+        if (!dropdownMenu) {
+            if (dotNetHelper) {
+                try {
+                    dotNetHelper.invokeMethodAsync('HideConversationActionsDropdown');
+                    dotNetHelper.invokeMethodAsync('HideMenuDropdown');
+                } catch (error) {
+                    // 메서드가 없는 경우 무시
+                    console.log('드롭다운 닫기 실패:', error);
+                }
+            }
+        }
+    };
+    
+    // 이벤트 리스너 등록 (약간의 지연을 두어 초기화 완료 후 등록)
+    setTimeout(() => {
+        document.addEventListener('click', window.dropdownClickHandler);
+        console.log('드롭다운 외부 클릭 감지 설정 완료');
+    }, 100);
+};
+
 // 초기화 완료 로그
 console.log('식탁보 AI JavaScript 모듈 로드 완료 ✅');
+
+// 토스트 알림 표시 함수
+window.showToast = function(message, type = 'info') {
+    // 기존 토스트가 있으면 제거
+    const existingToast = document.querySelector('.toast-notification');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    // 토스트 엘리먼트 생성
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    
+    // 아이콘 선택
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    else if (type === 'error') icon = '❌';
+    else if (type === 'warning') icon = '⚠️';
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // 스타일 적용
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 400px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // 다크 모드 지원
+    if (document.body.getAttribute('data-theme') === 'dark') {
+        toast.style.background = '#1f2937';
+        toast.style.color = '#f9fafb';
+        toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+    }
+    
+    // 타입별 색상
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#3b82f6'
+    };
+    toast.style.borderLeft = `4px solid ${colors[type] || colors.info}`;
+    
+    document.body.appendChild(toast);
+    
+    // 5초 후 자동 제거
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+};
+
+// CSS 애니메이션 추가
+if (!document.getElementById('toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+        
+        .toast-notification {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .toast-message {
+            flex: 1;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        
+        .toast-close:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .toast-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// 인쇄 미리보기 함수
+window.showPrintPreview = function(htmlContent) {
+    if (!htmlContent) {
+        console.error('인쇄할 내용이 없습니다.');
+        return;
+    }
+    
+    // 새 창에서 인쇄 미리보기
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        window.showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+        return;
+    }
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // 문서 로드 후 인쇄 다이얼로그 표시
+    printWindow.onload = function() {
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+    };
+    
+    // 인쇄 후 창 닫기 (사용자가 인쇄를 취소하거나 완료한 후)
+    printWindow.onafterprint = function() {
+        printWindow.close();
+    };
+};
+
+// 대화 내용을 텍스트 파일로 내보내기
+window.exportConversationAsText = function(jsonData) {
+    try {
+        const data = JSON.parse(jsonData);
+        
+        // 텍스트 형식으로 변환
+        let textContent = '식탁보 AI 대화 기록\n';
+        textContent += `생성일: ${data.exportDate}\n`;
+        textContent += '='.repeat(50) + '\n\n';
+        
+        data.messages.forEach((msg, index) => {
+            const sender = msg.isUser ? '사용자' : 'AI';
+            textContent += `[${index + 1}] ${sender}:\n`;
+            textContent += msg.content.trim() + '\n\n';
+        });
+        
+        textContent += '='.repeat(50) + '\n';
+        textContent += '식탁보 AI - https://yourtablecloth.app\n';
+        
+        // Blob 생성 및 다운로드
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        
+        // 파일명 생성 (날짜 포함)
+        const date = new Date();
+        const filename = `tablecloth-ai-chat-${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}.txt`;
+        
+        // 다운로드 트리거
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // 메모리 정리
+        URL.revokeObjectURL(url);
+        
+        window.showToast('대화 내용이 텍스트 파일로 저장되었습니다.', 'success');
+        return true;
+    } catch (error) {
+        console.error('텍스트 내보내기 오류:', error);
+        window.showToast('텍스트 파일 내보내기에 실패했습니다.', 'error');
+        return false;
+    }
+};
+
+// 대화 내용 공유 함수
+window.shareContent = async function(shareData) {
+    const result = {
+        success: false,
+        method: '',
+        error: null
+    };
+    
+    try {
+        // 방법 1: Web Share API 사용 (모바일 및 최신 브라우저)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: shareData.title,
+                    text: shareData.text
+                });
+                result.success = true;
+                result.method = 'webshare';
+                return result;
+            } catch (shareError) {
+                // 사용자가 공유를 취소한 경우
+                if (shareError.name === 'AbortError') {
+                    result.error = 'cancelled';
+                    return result;
+                }
+                console.log('Web Share API 실패, 클립보드 시도:', shareError);
+            }
+        }
+        
+        // 방법 2: 클립보드 API 사용
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(shareData.text);
+                result.success = true;
+                result.method = 'clipboard';
+                return result;
+            } catch (clipboardError) {
+                console.log('클립보드 API 실패:', clipboardError);
+            }
+        }
+        
+        // 방법 3: 레거시 복사 방법
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = shareData.text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-999999px';
+            textarea.style.top = '-999999px';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            if (successful) {
+                result.success = true;
+                result.method = 'clipboard';
+                return result;
+            }
+        } catch (legacyError) {
+            console.log('레거시 복사 실패:', legacyError);
+        }
+        
+        // 모든 방법 실패
+        result.error = 'unsupported';
+        return result;
+        
+    } catch (error) {
+        console.error('공유 중 오류:', error);
+        result.error = error.message;
+        return result;
+    }
+};
+
+// version.json을 가져오는 함수 (캐시 무효화 포함)
+window.fetchVersionJson = async function(url) {
+    try {
+        const response = await fetch(url, {
+            cache: 'no-cache',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return JSON.stringify(data);
+        }
+        return null;
+    } catch (error) {
+        console.error('version.json 가져오기 실패:', error);
+        return null;
+    }
+};
