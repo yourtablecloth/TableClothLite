@@ -294,15 +294,12 @@
 }
 
 @* WSB 다운로드 가이드 모달 *@
-@if (SandboxService.ShowWsbDownloadGuide)
+@if (_showWsbDownloadGuide && _currentService != null)
 {
-    <WsbDownloadGuideModal IsWindows="@SandboxService.IsWindows"
-                           IsDesktop="@SandboxService.IsDesktop"
-                           AllowDownloadAnyway="true"
-                           ServiceUrl="@SandboxService.PendingServiceInfo?.Url"
-                           ServiceDisplayName="@SandboxService.PendingServiceInfo?.DisplayName"
+    <WsbDownloadGuideModal ServiceUrl="@_currentService.Url"
+                           ServiceDisplayName="@_currentService.DisplayName"
                            OnClose="CloseWsbDownloadGuide"
-                           OnDownloadAnyway="DownloadWsbAnyway" />
+                           OnDownloadWsb="DownloadWsbAnyway" />
 }
 
 @* 서비스 목록 모달 *@

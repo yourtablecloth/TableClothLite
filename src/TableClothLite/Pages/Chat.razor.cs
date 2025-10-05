@@ -50,6 +50,10 @@ public partial class Chat : IDisposable
     // Windows Sandbox 가이드 모달 상태 관리
     private bool _showSandboxGuide = false;
     private bool _isWindowsOS = true;
+    
+    // WSB 다운로드 가이드 모달 상태 관리
+    private bool _showWsbDownloadGuide = false;
+    private ServiceInfo? _currentService = null;
 
     // 서비스 목록 모달 상태 관리
     private bool _showServicesModal = false;
@@ -102,6 +106,9 @@ public partial class Chat : IDisposable
             return;
         }
 
+        // 이벤트 구독
+        SandboxService.ShowWsbDownloadGuideRequested += OnShowWsbDownloadGuideRequested;
+
         _markdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
             .UseBootstrap()
@@ -113,6 +120,13 @@ public partial class Chat : IDisposable
                 ServiceGroup = SandboxService.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
                 await InvokeAsync(StateHasChanged);
             });
+    }
+
+    private void OnShowWsbDownloadGuideRequested(object? sender, ServiceInfo serviceInfo)
+    {
+        _currentService = serviceInfo;
+        _showWsbDownloadGuide = true;
+        InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnInitializedAsync()
@@ -798,6 +812,8 @@ public partial class Chat : IDisposable
     // WSB 다운로드 가이드 모달 닫기
     private void CloseWsbDownloadGuide()
     {
+        _showWsbDownloadGuide = false;
+        _currentService = null;
         SandboxService.CloseWsbDownloadGuide();
         StateHasChanged();
     }
@@ -806,11 +822,16 @@ public partial class Chat : IDisposable
     private async Task DownloadWsbAnyway()
     {
         await SandboxService.DownloadPendingFileAsync();
+        _showWsbDownloadGuide = false;
+        _currentService = null;
         StateHasChanged();
     }
 
     public void Dispose()
     {
+        // 이벤트 구독 해제
+        SandboxService.ShowWsbDownloadGuideRequested -= OnShowWsbDownloadGuideRequested;
+        
         // 스트리밍 작업 취소 및 정리
         _streamingCancellationTokenSource?.Cancel();
         _streamingCancellationTokenSource?.Dispose();

@@ -14,15 +14,27 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     public bool IsServiceSectionRendered = false;
     private IJSObjectReference? module;
+    private bool _showWsbDownloadGuide = false;
+    private ServiceInfo? _currentService = null;
     
     protected override void OnInitialized()
     {
+        // 이벤트 구독
+        SandboxService.ShowWsbDownloadGuideRequested += OnShowWsbDownloadGuideRequested;
+        
         // 비동기로 하면 화면 상호작용이 막히기 때문에 OnInitializedAsync 방식에서 변경
         SandboxService.LoadCatalogAsync()
             .ContinueWith(async (task) => {
                 ServiceGroup = SandboxService.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
                 await InvokeAsync(StateHasChanged);
             });
+    }
+
+    private void OnShowWsbDownloadGuideRequested(object? sender, ServiceInfo serviceInfo)
+    {
+        _currentService = serviceInfo;
+        _showWsbDownloadGuide = true;
+        InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -45,6 +57,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
     // WSB 다운로드 가이드 모달 닫기
     private void CloseWsbDownloadGuide()
     {
+        _showWsbDownloadGuide = false;
+        _currentService = null;
         SandboxService.CloseWsbDownloadGuide();
         StateHasChanged();
     }
@@ -53,11 +67,16 @@ public partial class Home : ComponentBase, IAsyncDisposable
     private async Task DownloadWsbAnyway()
     {
         await SandboxService.DownloadPendingFileAsync();
+        _showWsbDownloadGuide = false;
+        _currentService = null;
         StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()
     {
+        // 이벤트 구독 해제
+        SandboxService.ShowWsbDownloadGuideRequested -= OnShowWsbDownloadGuideRequested;
+        
         if (module is not null)
             await module.DisposeAsync();
     }

@@ -64,16 +64,13 @@
 </div>
 
 @* WSB 다운로드 가이드 모달 *@
-@if (SandboxService.ShowWsbDownloadGuide && SandboxService.PendingServiceInfo != null)
+@if (_showWsbDownloadGuide && _currentService != null)
 {
     <WsbDownloadGuideModal 
-        IsWindows="@SandboxService.IsWindows"
-        IsDesktop="@SandboxService.IsDesktop"
-        AllowDownloadAnyway="true"
-        ServiceUrl="@SandboxService.PendingServiceInfo?.Url"
-        ServiceDisplayName="@SandboxService.PendingServiceInfo?.DisplayName"
+        ServiceUrl="@_currentService.Url"
+        ServiceDisplayName="@_currentService.DisplayName"
         OnClose="CloseWsbDownloadGuide"
-        OnDownloadAnyway="DownloadWsbAnyway" />
+        OnDownloadWsb="DownloadWsbAnyway" />
 }
 
 <style>

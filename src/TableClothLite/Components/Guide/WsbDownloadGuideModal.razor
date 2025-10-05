@@ -1,108 +1,48 @@
-@using Microsoft.AspNetCore.Components
 @using Microsoft.JSInterop
-@using TableClothLite.Shared.Models
 
 <div class="wsb-download-guide-modal" @onclick="HandleBackdropClick">
     <div class="modal-content" @onclick:stopPropagation="true">
         <div class="modal-header">
-            <h3>Windows Sandbox 필요</h3>
+            <h3>WSB 다운로드</h3>
             <button class="close-btn" @onclick="Close" type="button">✕</button>
         </div>
         
         <div class="modal-body">
             <div class="guide-content">
                 <div class="icon-section">
-                    <span class="warning-icon">⚠️</span>
-                    <h4>WSB 파일 다운로드 안내</h4>
+                    <span class="info-icon">📦</span>
+                    <h4>@ServiceDisplayName</h4>
                 </div>
                 
                 <div class="info-box">
-                    <p><strong>Windows Sandbox는 Windows 데스크톱 전용 기능입니다.</strong></p>
-                    <p>WSB 파일은 Windows 10/11 데스크톱 환경에서만 실행할 수 있습니다.</p>
+                    <p><strong>Windows Sandbox 파일 다운로드</strong></p>
+                    <p>WSB 파일을 다운로드하거나 사이트에 직접 접속할 수 있습니다.</p>
                 </div>
                 
-                <div class="current-environment">
-                    <h5>현재 환경</h5>
-                    <ul>
-                        @if (!IsWindows)
-                        {
-                            <li>🖥️ 운영체제: @GetCurrentOS()</li>
-                            <li>⚠️ Windows가 아닙니다</li>
-                        }
-                        @if (!IsDesktop)
-                        {
-                            <li>📱 디바이스: 모바일 또는 태블릿</li>
-                            <li>⚠️ 데스크톱 환경이 아닙니다</li>
-                        }
-                    </ul>
-                </div>
-                
-                @if (!string.IsNullOrEmpty(ServiceUrl))
-                {
-                    <div class="alternative-action">
-                        <h5>지금 바로 접속하기</h5>
-                        <p>Windows Sandbox를 사용하지 않고 해당 사이트에 직접 접속할 수 있습니다.</p>
-                        <button class="btn btn-primary" @onclick="OpenServiceUrl" type="button">
-                            🌐 @ServiceDisplayName 사이트로 이동
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-download" @onclick="DownloadWsb" type="button">
+                        <span class="btn-icon">📥</span>
+                        <span class="btn-text">WSB 다운로드</span>
+                    </button>
+                    
+                    @if (!string.IsNullOrEmpty(ServiceUrl))
+                    {
+                        <button class="btn btn-secondary btn-open" @onclick="OpenServiceUrl" type="button">
+                            <span class="btn-icon">🌐</span>
+                            <span class="btn-text">새 창으로 열기</span>
                         </button>
-                        <p class="alternative-note">
-                            ⚠️ 새 창에서 열립니다. 보안을 위해 샌드박스 사용을 권장합니다.
-                        </p>
-                    </div>
-                }
-                
-                <div class="steps">
-                    <h5>WSB 파일을 사용하려면:</h5>
-                    
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h6>Windows PC 준비</h6>
-                            <p>Windows 10 Pro/Enterprise/Education 또는 Windows 11이 설치된 데스크톱 PC를 준비하세요.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h6>Windows Sandbox 설치</h6>
-                            <p>Windows PC에서 "Windows 기능 켜기/끄기"를 통해 Windows Sandbox를 활성화하세요.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h6>WSB 파일 다운로드</h6>
-                            <p>Windows PC에서 이 페이지에 다시 접속하여 WSB 파일을 다운로드하세요.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <h6>WSB 파일 실행</h6>
-                            <p>다운로드받은 .wsb 파일을 더블클릭하여 안전한 샌드박스 환경에서 실행하세요.</p>
-                        </div>
-                    </div>
+                    }
                 </div>
                 
-                @if (AllowDownloadAnyway)
-                {
-                    <div class="download-anyway-section">
-                        <button class="btn btn-warning" @onclick="DownloadAnyway" type="button">
-                            그래도 다운로드하기
-                        </button>
-                        <p class="download-anyway-note">
-                            다운로드한 파일은 Windows PC로 전송하여 사용할 수 있습니다.
-                        </p>
-                    </div>
-                }
+                <div class="info-note">
+                    <p>💡 <strong>WSB 파일이란?</strong></p>
+                    <p>Windows Sandbox 설정 파일로, Windows 10/11에서 안전한 샌드박스 환경을 제공합니다.</p>
+                </div>
             </div>
         </div>
         
         <div class="modal-footer">
-            <button class="btn btn-secondary" @onclick="Close" type="button">
+            <button class="btn btn-cancel" @onclick="Close" type="button">
                 닫기
             </button>
         </div>
@@ -122,38 +62,27 @@
         justify-content: center;
         z-index: 10000;
         padding: 20px;
-        /* Safe Area 지원 */
         padding-top: max(20px, calc(var(--safe-area-inset-top) + 20px));
         padding-right: max(20px, calc(var(--safe-area-inset-right) + 20px));
         padding-bottom: max(20px, calc(var(--safe-area-inset-bottom) + 20px));
         padding-left: max(20px, calc(var(--safe-area-inset-left) + 20px));
-        animation: fadeIn 0.2s ease;
-    }
-
-    @@keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
     }
 
     .modal-content {
-        background: var(--card-bg, white);
-        color: var(--primary-text, #2c3e50);
-        border-radius: 12px;
-        max-width: 600px;
+        background: var(--modal-bg, white);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
         width: 100%;
         max-height: 90vh;
-        max-height: calc(100vh - max(40px, var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 40px));
         overflow-y: auto;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        animation: slideUp 0.3s ease;
-        /* iOS에서 부드러운 스크롤 */
-        -webkit-overflow-scrolling: touch;
+        animation: modalSlideIn 0.3s ease-out;
     }
 
-    @@keyframes slideUp {
+    @@keyframes modalSlideIn {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(-20px);
         }
         to {
             opacity: 1;
@@ -162,7 +91,7 @@
     }
 
     .modal-header {
-        padding: 24px 24px 16px;
+        padding: 20px 24px;
         border-bottom: 1px solid var(--border-color, #e9ecef);
         display: flex;
         justify-content: space-between;
@@ -171,9 +100,9 @@
 
     .modal-header h3 {
         margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
         color: var(--primary-text, #2c3e50);
+        font-size: 20px;
+        font-weight: 600;
     }
 
     .close-btn {
@@ -182,26 +111,36 @@
         font-size: 24px;
         cursor: pointer;
         color: var(--secondary-text, #6c757d);
-        padding: 4px;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 4px;
         transition: all 0.2s ease;
     }
 
     .close-btn:hover {
-        background: var(--secondary-bg, #f8f9fa);
-        color: var(--primary-text, #495057);
+        background: var(--hover-bg, #f8f9fa);
+        color: var(--primary-text, #2c3e50);
     }
 
     .modal-body {
         padding: 24px;
     }
 
-    .icon-section {
-        text-align: center;
-        margin-bottom: 24px;
+    .guide-content {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
     }
 
-    .warning-icon {
+    .icon-section {
+        text-align: center;
+    }
+
+    .icon-section .info-icon {
         font-size: 48px;
         display: block;
         margin-bottom: 12px;
@@ -209,141 +148,92 @@
 
     .icon-section h4 {
         margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
         color: var(--primary-text, #2c3e50);
+        font-size: 18px;
+        font-weight: 600;
     }
 
     .info-box {
-        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-        border: 1px solid #ffeaa7;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%);
+        border-left: 4px solid #667eea;
         padding: 16px;
-        margin-bottom: 24px;
+        border-radius: 8px;
     }
 
     .info-box p {
         margin: 0 0 8px 0;
-        color: #856404;
+        color: var(--primary-text, #2c3e50);
+        line-height: 1.6;
     }
 
     .info-box p:last-child {
         margin-bottom: 0;
     }
 
-    .info-box strong {
-        font-weight: 600;
-    }
-
-    .current-environment {
-        background: var(--secondary-bg, #f8f9fa);
-        border: 1px solid var(--border-color, #e9ecef);
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 24px;
-    }
-
-    .current-environment h5 {
-        margin: 0 0 12px 0;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--primary-text, #2c3e50);
-    }
-
-    .current-environment ul {
-        margin: 0;
-        padding-left: 20px;
-        color: var(--secondary-text, #6c757d);
-    }
-
-    .current-environment li {
-        margin-bottom: 6px;
-    }
-
-    .steps h5 {
-        margin: 0 0 16px 0;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--primary-text, #2c3e50);
-    }
-
-    .step {
+    .action-buttons {
         display: flex;
-        margin-bottom: 20px;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .step-number {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
+    .btn {
+        padding: 14px 24px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 14px;
-        flex-shrink: 0;
-        margin-right: 16px;
-        margin-top: 2px;
-        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+        gap: 8px;
     }
 
-    .step-content h6 {
-        margin: 0 0 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--primary-text, #2c3e50);
+    .btn-icon {
+        font-size: 20px;
     }
 
-    .step-content p {
-        margin: 0;
-        color: var(--secondary-text, #6c757d);
-        line-height: 1.5;
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
     }
 
-    .download-anyway-section {
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid var(--border-color, #e9ecef);
-        text-align: center;
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
     }
 
-    .download-anyway-note {
-        margin-top: 12px;
-        font-size: 13px;
-        color: var(--secondary-text, #6c757d);
-        font-style: italic;
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
 
-    .alternative-action {
-        background: var(--secondary-bg, #f8f9fa);
-        border: 2px solid var(--accent-color, #007bff);
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #5a6268 0%, #545b62 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(108, 117, 125, 0.4);
+    }
+
+    .info-note {
+        background: var(--note-bg, #f8f9fa);
+        padding: 16px;
         border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 24px;
-        text-align: center;
+        border: 1px solid var(--border-color, #e9ecef);
     }
 
-    .alternative-action h5 {
-        margin: 0 0 12px 0;
-        font-size: 1rem;
-        font-weight: 600;
+    .info-note p {
+        margin: 0 0 8px 0;
         color: var(--primary-text, #2c3e50);
+        font-size: 14px;
+        line-height: 1.6;
     }
 
-    .alternative-action p {
-        margin: 0 0 16px 0;
-        color: var(--secondary-text, #6c757d);
-        line-height: 1.5;
-    }
-
-    .alternative-note {
-        margin-top: 12px !important;
-        font-size: 12px !important;
-        color: var(--secondary-text, #6c757d) !important;
-        font-style: italic;
+    .info-note p:last-child {
+        margin-bottom: 0;
     }
 
     .modal-footer {
@@ -353,64 +243,27 @@
         justify-content: center;
     }
 
-    .btn {
+    .btn-cancel {
         padding: 10px 24px;
         border-radius: 6px;
-        border: 1px solid;
+        border: 1px solid var(--border-color, #dee2e6);
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
         transition: all 0.2s ease;
+        background: var(--modal-bg, white);
+        color: var(--secondary-text, #6c757d);
     }
 
-    .btn-secondary {
-        background: var(--secondary-text, #6c757d);
+    .btn-cancel:hover {
+        background: var(--hover-bg, #f8f9fa);
         border-color: var(--secondary-text, #6c757d);
-        color: white;
-    }
-
-    .btn-secondary:hover {
-        background: #5a6268;
-        border-color: #545b62;
         transform: translateY(-1px);
-    }
-
-    .btn-warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        border-color: #f59e0b;
-        color: white;
-        padding: 12px 28px;
-        font-size: 15px;
-        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-    }
-
-    .btn-warning:hover {
-        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-        border-color: #d97706;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        border-color: #007bff;
-        color: white;
-        padding: 12px 28px;
-        font-size: 15px;
-        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-        border-color: #0056b3;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
     }
 
     @@media (max-width: 768px) {
         .wsb-download-guide-modal {
             padding: 10px;
-            /* 모바일에서 Safe Area 강조 */
             padding-top: max(10px, calc(var(--safe-area-inset-top) + 10px));
             padding-right: max(10px, calc(var(--safe-area-inset-right) + 10px));
             padding-bottom: max(10px, calc(var(--safe-area-inset-bottom) + 10px));
@@ -427,26 +280,17 @@
             padding-right: 16px;
         }
 
-        .icon-section .warning-icon {
+        .icon-section .info-icon {
             font-size: 40px;
-        }
-
-        .step-number {
-            width: 28px;
-            height: 28px;
-            font-size: 12px;
         }
     }
 </style>
 
 @code {
-    [Parameter] public bool IsWindows { get; set; } = true;
-    [Parameter] public bool IsDesktop { get; set; } = true;
-    [Parameter] public bool AllowDownloadAnyway { get; set; } = true;
     [Parameter] public string? ServiceUrl { get; set; }
     [Parameter] public string? ServiceDisplayName { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
-    [Parameter] public EventCallback OnDownloadAnyway { get; set; }
+    [Parameter] public EventCallback OnDownloadWsb { get; set; }
 
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
@@ -460,9 +304,9 @@
         await Close();
     }
 
-    private async Task DownloadAnyway()
+    private async Task DownloadWsb()
     {
-        await OnDownloadAnyway.InvokeAsync();
+        await OnDownloadWsb.InvokeAsync();
         await Close();
     }
 
@@ -472,16 +316,5 @@
         {
             await JSRuntime.InvokeVoidAsync("open", ServiceUrl, "_blank");
         }
-    }
-
-    private string GetCurrentOS()
-    {
-        if (!IsWindows)
-        {
-            // 실제 OS는 JavaScript에서 감지한 값을 사용하지만,
-            // 여기서는 간단하게 표시
-            return "Windows가 아님";
-        }
-        return "Unknown";
     }
 }

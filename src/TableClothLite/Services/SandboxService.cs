@@ -36,8 +36,6 @@ public sealed class SandboxService
 
     public bool IsDesktop { get; private set; } = true;
 
-    public bool ShowWsbDownloadGuide { get; private set; } = false;
-
     // 대기 중인 다운로드 정보를 저장
     private MemoryStream? _pendingDownloadStream;
     private string? _pendingFileName;
@@ -48,6 +46,11 @@ public sealed class SandboxService
     /// 대기 중인 서비스 정보를 가져옵니다.
     /// </summary>
     public ServiceInfo? PendingServiceInfo => _pendingServiceInfo;
+
+    /// <summary>
+    /// WSB 다운로드 모달 표시 요청 이벤트
+    /// </summary>
+    public event EventHandler<ServiceInfo>? ShowWsbDownloadGuideRequested;
 
     /// <summary>
     /// 환경 감지를 수행합니다.
@@ -79,81 +82,38 @@ public sealed class SandboxService
         }
     }
 
-    public async Task GenerateSandboxDocumentAsync(
+    public Task GenerateSandboxDocumentAsync(
         string targetUrl,
         ServiceInfo serviceInfo,
         Action? onStateChanged = null,
         CancellationToken cancellationToken = default)
     {
-        // OS 감지를 먼저 동기적으로 실행 (사용자 상호작용 컨텍스트 유지)
-        bool isWindows = true;
-        bool isDesktop = true;
+        // 항상 가이드 모달 표시
+        _logger.LogInformation("WSB 다운로드 가이드 모달 표시 - 서비스: {ServiceName}", serviceInfo.DisplayName);
+
+        // 서비스 정보 저장
+        _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
+        _pendingServiceInfo = serviceInfo;
+        _pendingTargetUrl = targetUrl;
+
+        // 이벤트 발생으로 모달 표시 요청
+        ShowWsbDownloadGuideRequested?.Invoke(this, serviceInfo);
         
-        try
-        {
-            // JavaScript를 통해 OS 감지 - 동기적으로 실행
-            var osInfo = await _jsRuntime.InvokeAsync<OsDetectionResult>("detectOS");
-            isWindows = osInfo?.IsWindows ?? true;
-
-            // 화면 너비로 데스크톱 여부 감지 (768px 이상을 데스크톱으로 간주)
-            var windowWidth = await _jsRuntime.InvokeAsync<int>("getWindowWidth");
-            isDesktop = windowWidth >= 768;
-            
-            IsWindows = isWindows;
-            IsDesktop = isDesktop;
-
-            _logger.LogInformation(
-                "환경 감지 완료 - OS: {Os}, Desktop: {IsDesktop}, Width: {Width}",
-                isWindows ? "Windows" : "Non-Windows",
-                isDesktop,
-                windowWidth);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "환경 감지 중 오류 발생. 기본값 사용.");
-            // 오류 발생 시 안전하게 기본값 사용
-            isWindows = true;
-            isDesktop = true;
-            IsWindows = true;
-            IsDesktop = true;
-        }
-
-        // Windows 데스크톱 환경이 아닌 경우 가이드 모달 표시
-        if (!isWindows || !isDesktop)
-        {
-            _logger.LogInformation(
-                "비호환 환경 감지 - OS: {Os}, Desktop: {IsDesktop}. 가이드 모달 즉시 표시.",
-                isWindows ? "Windows" : "Non-Windows",
-                isDesktop);
-
-            // 서비스 정보만 저장하고, 가이드 모달을 즉시 표시
-            // 파일 생성은 사용자가 "그래도 다운로드" 버튼을 클릭할 때 수행
-            _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
-            _pendingServiceInfo = serviceInfo;
-            _pendingTargetUrl = targetUrl;
-
-            // 가이드 모달을 즉시 표시 (사용자 상호작용 컨텍스트 내)
-            ShowWsbDownloadGuide = true;
-            onStateChanged?.Invoke();
-            return;
-        }
-
-        // Windows 데스크톱 환경인 경우 바로 다운로드
-        await DownloadWsbFileDirectlyAsync(targetUrl, serviceInfo, cancellationToken);
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// 가이드 모달에서 "그래도 다운로드" 버튼을 눌렀을 때 호출됩니다.
+    /// 가이드 모달에서 "WSB 다운로드" 버튼을 눌렀을 때 호출됩니다.
     /// </summary>
     public async Task DownloadPendingFileAsync(CancellationToken cancellationToken = default)
     {
         if (_pendingServiceInfo != null && _pendingFileName != null)
         {
-            _logger.LogInformation("사용자가 비호환 환경에서 WSB 파일 다운로드를 선택했습니다.");
+            _logger.LogInformation("사용자가 WSB 파일 다운로드를 선택했습니다.");
             
             try
             {
-                // 이제 파일을 생성합니다
+                // 파일을 생성합니다
                 var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
                     this, _pendingTargetUrl ?? string.Empty, _pendingServiceInfo, cancellationToken).ConfigureAwait(false);
                 
@@ -180,28 +140,6 @@ public sealed class SandboxService
                 throw;
             }
         }
-
-        ShowWsbDownloadGuide = false;
-    }
-
-    /// <summary>
-    /// WSB 파일을 직접 다운로드합니다.
-    /// </summary>
-    private async Task DownloadWsbFileDirectlyAsync(
-        string targetUrl,
-        ServiceInfo serviceInfo,
-        CancellationToken cancellationToken = default)
-    {
-        var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
-            this, targetUrl, serviceInfo, cancellationToken).ConfigureAwait(false);
-        
-        using var memStream = new MemoryStream();
-        doc.Save(memStream);
-        memStream.Position = 0L;
-
-        await _fileDownloadService.DownloadFileAsync(
-            memStream, $"{serviceInfo.ServiceId}.wsb", "application/xml",
-            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -209,8 +147,6 @@ public sealed class SandboxService
     /// </summary>
     public void CloseWsbDownloadGuide()
     {
-        ShowWsbDownloadGuide = false;
-        
         // 대기 중인 다운로드 정리
         _pendingDownloadStream?.Dispose();
         _pendingDownloadStream = null;
