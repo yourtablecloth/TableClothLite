@@ -809,26 +809,12 @@ main[b-3zwydhbc4h] {
     }
 }
 
-/* 모바일: 포커스 또는 active 상태일 때 복사 버튼 표시 */
+/* 모바일: 항상 복사 버튼 표시 */
 @media (hover: none) or (pointer: coarse) {
-    .message-group:focus-within .copy-message-btn[b-1eksyvqne5],
-    .message-group:active .copy-message-btn[b-1eksyvqne5],
-    .message-group.show-actions .copy-message-btn[b-1eksyvqne5] {
+    .copy-message-btn[b-1eksyvqne5] {
         opacity: 1;
         visibility: visible;
     }
-
-    /* 모바일에서 메시지 그룹을 터치 가능하게 */
-    .message-group[b-1eksyvqne5] {
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-    }
-}
-
-/* 클릭된 상태 표시 */
-.message-group.clicked .copy-message-btn[b-1eksyvqne5] {
-    opacity: 1;
-    visibility: visible;
 }
 /* /Pages/Home.razor.rz.scp.css */
 .service-section[b-5coph13hgo] {
