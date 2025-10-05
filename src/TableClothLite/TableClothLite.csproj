@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <Folder Include="ViewModels\" />
-    <Folder Include="wwwroot\data\" />
   </ItemGroup>
 
   <!-- ��� �� ����ȭ�� version.json �ڵ� ���� -->

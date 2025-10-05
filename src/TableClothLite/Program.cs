@@ -29,6 +29,7 @@ builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<ThemeService>(); // 테마 서비스 추가
 
 builder.Services.AddScoped<OpenRouterAuthService>();
+builder.Services.AddScoped<IntentBasedContextService>(); // 멀티 턴 프롬프트 서비스 추가
 builder.Services.AddScoped<OpenAIChatService>();
 builder.Services.AddScoped<FileDownloadService>();
 
