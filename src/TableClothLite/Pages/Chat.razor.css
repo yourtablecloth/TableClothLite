@@ -728,24 +728,10 @@
     }
 }
 
-/* 모바일: 포커스 또는 active 상태일 때 복사 버튼 표시 */
+/* 모바일: 항상 복사 버튼 표시 */
 @media (hover: none) or (pointer: coarse) {
-    .message-group:focus-within .copy-message-btn,
-    .message-group:active .copy-message-btn,
-    .message-group.show-actions .copy-message-btn {
+    .copy-message-btn {
         opacity: 1;
         visibility: visible;
     }
-
-    /* 모바일에서 메시지 그룹을 터치 가능하게 */
-    .message-group {
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-    }
-}
-
-/* 클릭된 상태 표시 */
-.message-group.clicked .copy-message-btn {
-    opacity: 1;
-    visibility: visible;
 }
