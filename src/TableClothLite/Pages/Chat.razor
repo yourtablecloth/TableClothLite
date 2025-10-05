@@ -19,7 +19,6 @@
 @inject NavigationManager NavigationManager
 @inject FileDownloadService FileDownloader
 @inject SandboxComposerService SandboxComposer
-@inject SandboxViewModel Model
 
 <PageTitle>식탁보 AI</PageTitle>
 
@@ -295,13 +294,13 @@
 }
 
 @* WSB 다운로드 가이드 모달 *@
-@if (Model.ShowWsbDownloadGuide)
+@if (SandboxService.ShowWsbDownloadGuide)
 {
-    <WsbDownloadGuideModal IsWindows="@Model.IsWindows"
-                           IsDesktop="@Model.IsDesktop"
+    <WsbDownloadGuideModal IsWindows="@SandboxService.IsWindows"
+                           IsDesktop="@SandboxService.IsDesktop"
                            AllowDownloadAnyway="true"
-                           ServiceUrl="@Model.PendingServiceInfo?.Url"
-                           ServiceDisplayName="@Model.PendingServiceInfo?.DisplayName"
+                           ServiceUrl="@SandboxService.PendingServiceInfo?.Url"
+                           ServiceDisplayName="@SandboxService.PendingServiceInfo?.DisplayName"
                            OnClose="CloseWsbDownloadGuide"
                            OnDownloadAnyway="DownloadWsbAnyway" />
 }

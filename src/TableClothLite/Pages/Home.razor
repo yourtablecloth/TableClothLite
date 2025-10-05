@@ -1,6 +1,5 @@
 @page "/services"
 @inject IJSRuntime JSRuntime
-@inject SandboxViewModel Model
 
 @using TableClothLite.Components.Guide
 
@@ -20,13 +19,13 @@
     <p>&nbsp;</p>
 
     <div class="service-section">
-        @if (Model.Services.Any())
+        @if (SandboxService.Services.Any())
         {
             <nav class="scroll-nav">
                 @foreach (var eachGroup in ServiceGroup)
                 {
                     <a class="scroll-anchor" href="@($"#{@eachGroup.First().Category.ToLowerInvariant()}")" data-scroll-target-by>
-                        @Model.DisplayCategoryName(eachGroup.Key)
+                        @SandboxService.DisplayCategoryName(eachGroup.Key)
                     </a>
                 }
             </nav>
@@ -36,17 +35,17 @@
                     <details class="service-group" open>
                         <summary>
                             <h3 id="@eachGroup.First().Category.ToLowerInvariant()" data-scroll-target>
-                                @Model.DisplayCategoryName(eachGroup.Key)
+                                @SandboxService.DisplayCategoryName(eachGroup.Key)
                             </h3>
                         </summary>
                         <div class="service-grid">
                             @foreach (var eachService in eachGroup)
                             {
                                 <div class="service-card">
-                                    <img src="@Model.CalculateAbsoluteUrl(eachService.ImageRelativePath)" alt="@eachService.DisplayName" class="service-icon" />
+                                    <img src="@SandboxService.CalculateAbsoluteUrl(eachService.ImageRelativePath)" alt="@eachService.DisplayName" class="service-icon" />
                                     <span class="service-name">@eachService.DisplayName</span>
                                     <div class="service-actions">
-                                        <button class="service-button" @onclick="() => Model.GenerateSandboxDocumentAsync(string.Empty, eachService)">
+                                        <button class="service-button" @onclick="() => SandboxService.GenerateSandboxDocumentAsync(string.Empty, eachService, StateHasChanged)">
                                             <span class="play-icon">▶️</span>
                                         </button>
                                     </div>
@@ -65,16 +64,16 @@
 </div>
 
 @* WSB 다운로드 가이드 모달 *@
-@if (Model.ShowWsbDownloadGuide && Model.PendingServiceInfo != null)
+@if (SandboxService.ShowWsbDownloadGuide && SandboxService.PendingServiceInfo != null)
 {
     <WsbDownloadGuideModal 
-        IsWindows="@Model.IsWindows"
-        IsDesktop="@Model.IsDesktop"
+        IsWindows="@SandboxService.IsWindows"
+        IsDesktop="@SandboxService.IsDesktop"
         AllowDownloadAnyway="true"
-        ServiceUrl="@Model.PendingServiceInfo.Url"
-        ServiceDisplayName="@Model.PendingServiceInfo.DisplayName"
-        OnClose="@(() => Model.CloseWsbDownloadGuide())"
-        OnDownloadAnyway="@(async () => await Model.DownloadPendingFileAsync())" />
+        ServiceUrl="@SandboxService.PendingServiceInfo?.Url"
+        ServiceDisplayName="@SandboxService.PendingServiceInfo?.DisplayName"
+        OnClose="CloseWsbDownloadGuide"
+        OnDownloadAnyway="DownloadWsbAnyway" />
 }
 
 <style>

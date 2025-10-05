@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using TableClothLite;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
-using TableClothLite.ViewModels;
 using TG.Blazor.IndexedDB;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -33,8 +32,7 @@ builder.Services.AddScoped<OpenRouterAuthService>();
 builder.Services.AddScoped<OpenAIChatService>();
 builder.Services.AddScoped<FileDownloadService>();
 
-builder.Services.AddScoped<SandboxViewModel>();
-builder.Services.AddScoped<SandboxSettingsViewModel>();
+builder.Services.AddScoped<SandboxService>();
 
 builder.Services.AddScoped(sp =>
 {

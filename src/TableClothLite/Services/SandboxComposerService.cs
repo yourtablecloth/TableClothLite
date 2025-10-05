@@ -1,7 +1,6 @@
-﻿using System.Text;
+using System.Text;
 using System.Xml;
 using TableClothLite.Shared.Models;
-using TableClothLite.ViewModels;
 
 namespace TableClothLite.Services;
 
@@ -16,7 +15,7 @@ public sealed class SandboxComposerService
     private readonly ConfigService _configService;
 
     public async Task<XmlDocument> CreateSandboxDocumentAsync(
-        SandboxViewModel viewModel,
+        SandboxService sandboxService,
         string? targetUrl,
         ServiceInfo? serviceInfo,
         CancellationToken cancellationToken = default)

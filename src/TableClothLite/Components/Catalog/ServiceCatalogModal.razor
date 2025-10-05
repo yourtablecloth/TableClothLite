@@ -538,7 +538,7 @@
 
 @code {
     [Parameter] public EventCallback OnClose { get; set; }
-    [Inject] private SandboxViewModel Model { get; set; } = default!;
+    [Inject] private SandboxService Model { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
     private string _searchText = string.Empty;
@@ -600,7 +600,7 @@
     {
         if (!Model.Services.Any())
         {
-            Model.LoadCatalogCommand.ExecuteAsync(this)
+            Model.LoadCatalogAsync()
                 .ContinueWith(async (task) => {
                     await InvokeAsync(StateHasChanged);
                 });
@@ -675,7 +675,7 @@
             await Task.Delay(100);
             
             // WSB 파일 생성 및 다운로드 (또는 가이드 모달 표시)
-            await Model.GenerateSandboxDocumentAsync(string.Empty, service);
+            await Model.GenerateSandboxDocumentAsync(string.Empty, service, StateHasChanged);
         }
         catch (Exception ex)
         {

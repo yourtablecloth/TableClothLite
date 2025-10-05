@@ -14,12 +14,14 @@ namespace TableClothLite.Pages;
 
 public partial class Chat : IDisposable
 {
+    [Inject] private SandboxService SandboxService { get; set; } = default!;
+    
     public IEnumerable<IGrouping<string, ServiceInfo>> ServiceGroup =
         Enumerable.Empty<IGrouping<string, ServiceInfo>>();
 
     private DotNetObjectReference<Chat>? dotNetHelper;
     private string _sessionId = Guid.NewGuid().ToString();
-    private List<ChatMessage> _messages = [];
+    private List<ChatMessageModel> _messages = [];
     private string _userInput = string.Empty;
     private bool _isStreaming = false;
     private string _currentStreamedMessage = string.Empty;
@@ -106,9 +108,9 @@ public partial class Chat : IDisposable
             .DisableHtml()
             .Build();
 
-        Model.LoadCatalogCommand.ExecuteAsync(this)
+        SandboxService.LoadCatalogAsync()
             .ContinueWith(async (task) => {
-                ServiceGroup = Model.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
+                ServiceGroup = SandboxService.Services.GroupBy(x => x.Category.Trim().ToLowerInvariant());
                 await InvokeAsync(StateHasChanged);
             });
     }
@@ -317,7 +319,7 @@ public partial class Chat : IDisposable
 
             Console.WriteLine($"샌드박스에서 URL 열기: {url}");
             
-            // SandboxViewModel을 통해 샌드박스에서 URL 열기
+            // SandboxService를 통해 샌드박스에서 URL 열기
             // URL만 있는 경우 기본 서비스 정보 생성
             var defaultService = new ServiceInfo(
                 ServiceId: "web-browser",
@@ -327,7 +329,7 @@ public partial class Chat : IDisposable
                 CompatNotes: "AI 채팅에서 생성된 링크"
             );
             
-            await Model.GenerateSandboxDocumentAsync(url, defaultService);
+            await SandboxService.GenerateSandboxDocumentAsync(url, defaultService, StateHasChanged);
             
             // 모달이 표시되도록 StateHasChanged 호출
             StateHasChanged();
@@ -699,7 +701,7 @@ public partial class Chat : IDisposable
         if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
             return;
 
-        var userMessage = new ChatMessage { Content = _userInput, IsUser = true };
+        var userMessage = new ChatMessageModel { Content = _userInput, IsUser = true };
         _messages.Add(userMessage);
 
         var input = _userInput;
@@ -731,7 +733,7 @@ public partial class Chat : IDisposable
                 await Task.Delay(10); // 자연스러운 타이핑 효과
             }
 
-            _messages.Add(new ChatMessage { Content = _currentStreamedMessage, IsUser = false });
+            _messages.Add(new ChatMessageModel { Content = _currentStreamedMessage, IsUser = false });
         }
         catch (OperationCanceledException)
         {
@@ -740,7 +742,7 @@ public partial class Chat : IDisposable
         }
         catch (Exception ex)
         {
-            _messages.Add(new ChatMessage
+            _messages.Add(new ChatMessageModel
             {
                 Content = $"죄송합니다. 오류가 발생했습니다: {ex.Message}",
                 IsUser = false
@@ -791,6 +793,42 @@ public partial class Chat : IDisposable
         html = document.Body.InnerHtml;
 
         return (MarkupString)html;
+    }
+
+    // WSB 다운로드 가이드 모달 닫기
+    private void CloseWsbDownloadGuide()
+    {
+        SandboxService.CloseWsbDownloadGuide();
+        StateHasChanged();
+    }
+
+    // WSB 파일을 어쨌든 다운로드
+    private async Task DownloadWsbAnyway()
+    {
+        await SandboxService.DownloadPendingFileAsync();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // 스트리밍 작업 취소 및 정리
+        _streamingCancellationTokenSource?.Cancel();
+        _streamingCancellationTokenSource?.Dispose();
+
+        // beforeunload 핸들러 정리
+        try
+        {
+            JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
+        }
+        catch
+        {
+            // Disposal 중 오류는 무시
+        }
+
+        // 타이머 정리
+        _updateCheckTimer?.Dispose();
+
+        dotNetHelper?.Dispose();
     }
 
     private async Task ResetConversationAsync()
@@ -907,309 +945,20 @@ public partial class Chat : IDisposable
         await SafeInvokeJSAsync("showPrintPreview", printHtml);
     }
 
-    // 인쇄용 HTML 생성
+    // 인쇄용 HTML 생성 (간단한 버전)
     private string GeneratePrintHtml()
     {
         var html = new System.Text.StringBuilder();
+        html.AppendLine($"<h1>식탁보 AI 대화 기록</h1>");
+        html.AppendLine($"<p>생성일: {DateTime.Now:yyyy-MM-dd HH:mm}</p>");
         
-        // HTML 헤더
-        html.AppendLine("<!DOCTYPE html>");
-        html.AppendLine("<html lang='ko'>");
-        html.AppendLine("<head>");
-        html.AppendLine("<meta charset='UTF-8'>");
-        html.AppendLine("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        html.AppendLine("<title>식탁보 AI 대화 기록</title>");
-        html.AppendLine("<style>");
-        html.AppendLine(GetPrintStyles());
-        html.AppendLine("</style>");
-        html.AppendLine("</head>");
-        html.AppendLine("<body>");
-        
-        // 헤더 정보
-        html.AppendLine("<div class='print-header'>");
-        html.AppendLine("<h1>식탁보 AI 대화 기록</h1>");
-        html.AppendLine($"<p class='print-date'>생성일: {DateTime.Now:yyyy년 MM월 dd일 HH:mm}</p>");
-        html.AppendLine($"<p class='print-info'>총 {_messages.Count}개의 메시지</p>");
-        html.AppendLine("</div>");
-        
-        // 대화 내용
-        html.AppendLine("<div class='conversation'>");
-        
-        for (int i = 0; i < _messages.Count; i++)
+        foreach (var message in _messages)
         {
-            var message = _messages[i];
-            var messageClass = message.IsUser ? "user-message" : "assistant-message";
-            var sender = message.IsUser ? "사용자" : "식탁보 AI";
-            
-            html.AppendLine($"<div class='message {messageClass}'>");
-            html.AppendLine($"<div class='message-header'>");
-            html.AppendLine($"<span class='sender'>{sender}</span>");
-            html.AppendLine($"<span class='message-number'>#{i + 1}</span>");
-            html.AppendLine("</div>");
-            html.AppendLine($"<div class='message-content'>");
-            
-            // 마크다운을 HTML로 변환하되 인쇄용로 정리
-            var content = ConvertMarkdownForPrint(message.Content);
-            html.AppendLine(content);
-            
-            html.AppendLine("</div>");
-            html.AppendLine("</div>");
+            var sender = message.IsUser ? "사용자" : "AI";
+            html.AppendLine($"<div><strong>{sender}:</strong> {message.Content}</div>");
         }
-        
-        html.AppendLine("</div>");
-        
-        // 푸터
-        html.AppendLine("<div class='print-footer'>");
-        html.AppendLine("<p>식탁보 AI - 금융과 공공 부문 AI 어시스턴트</p>");
-        html.AppendLine("<p>https://yourtablecloth.app</p>");
-        html.AppendLine("</div>");
-        
-        html.AppendLine("</body>");
-        html.AppendLine("</html>");
         
         return html.ToString();
-    }
-
-    // 인쇄용 CSS 스타일
-    private string GetPrintStyles()
-    {
-        return @"
-            @media screen {
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    line-height: 1.6;
-                    color: #333;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    background: #f9f9f9;
-                }
-            }
-            
-            @media print {
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    line-height: 1.5;
-                    color: #000;
-                    margin: 0;
-                    padding: 15mm;
-                    background: white;
-                }
-                
-                .print-header {
-                    border-bottom: 2px solid #333;
-                    padding-bottom: 10px;
-                    margin-bottom: 20px;
-                }
-                
-                .message {
-                    page-break-inside: avoid;
-                    break-inside: avoid;
-                }
-                
-                .print-footer {
-                    position: fixed;
-                    bottom: 10mm;
-                    left: 15mm;
-                    right: 15mm;
-                    border-top: 1px solid #ccc;
-                    padding-top: 5px;
-                    font-size: 0.8em;
-                    text-align: center;
-                    color: #666;
-                }
-            }
-            
-            .print-header h1 {
-                margin: 0 0 10px 0;
-                font-size: 24px;
-                color: #2563eb;
-            }
-            
-            .print-date, .print-info {
-                margin: 5px 0;
-                color: #666;
-                font-size: 14px;
-            }
-            
-            .conversation {
-                margin: 20px 0;
-            }
-            
-            .message {
-                margin-bottom: 20px;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                overflow: hidden;
-            }
-            
-            .message-header {
-                background: #f3f4f6;
-                padding: 8px 12px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 12px;
-                color: #6b7280;
-            }
-            
-            .user-message .message-header {
-                background: #eff6ff;
-            }
-            
-            .assistant-message .message-header {
-                background: #f9fafb;
-            }
-            
-            .sender {
-                font-weight: 600;
-                color: #374151;
-            }
-            
-            .user-message .sender {
-                color: #2563eb;
-            }
-            
-            .assistant-message .sender {
-                color: #059669;
-            }
-            
-            .message-number {
-                font-size: 11px;
-                color: #9ca3af;
-            }
-            
-            .message-content {
-                padding: 12px;
-                background: white;
-            }
-            
-            .message-content h1, .message-content h2, .message-content h3,
-            .message-content h4, .message-content h5, .message-content h6 {
-                margin-top: 0;
-                margin-bottom: 10px;
-                color: #374151;
-            }
-            
-            .message-content p {
-                margin: 0 0 10px 0;
-            }
-            
-            .message-content ul, .message-content ol {
-                margin: 0 0 10px 20px;
-                padding-left: 0;
-            }
-            
-            .message-content li {
-                margin-bottom: 5px;
-            }
-            
-            .message-content pre {
-                background: #f3f4f6;
-                padding: 10px;
-                border-radius: 4px;
-                overflow-x: auto;
-                font-size: 12px;
-                margin: 10px 0;
-            }
-            
-            .message-content code {
-                background: #f3f4f6;
-                padding: 2px 4px;
-                border-radius: 3px;
-                font-size: 13px;
-            }
-            
-            .message-content blockquote {
-                border-left: 3px solid #d1d5db;
-                margin: 10px 0;
-                padding: 5px 0 5px 15px;
-                color: #6b7280;
-                font-style: italic;
-            }
-            
-            .message-content table {
-                border-collapse: collapse;
-                width: 100%;
-                margin: 10px 0;
-                font-size: 13px;
-            }
-            
-            .message-content th, .message-content td {
-                border: 1px solid #d1d5db;
-                padding: 6px 8px;
-                text-align: left;
-            }
-            
-            .message-content th {
-                background: #f9fafb;
-                font-weight: 600;
-            }
-            
-            .print-footer p {
-                margin: 2px 0;
-            }
-            
-            @page {
-                margin: 15mm;
-                size: A4;
-            }
-        ";
-    }
-
-    // 마크다운을 인쇄용 HTML로 변환
-    private string ConvertMarkdownForPrint(string markdown)
-    {
-        if (string.IsNullOrWhiteSpace(markdown))
-            return string.Empty;
-
-        try
-        {
-            // 마크다운을 HTML로 변환
-            var html = Markdown.ToHtml(markdown, _markdownPipeline);
-            var document = _htmlParser.ParseDocument(html);
-
-            if (document.Body == null)
-                return WebUtility.HtmlEncode(markdown);
-
-            // 인쇄용으로 링크 처리 (href 제거하고 텍스트로 표시)
-            foreach (var anchor in document.QuerySelectorAll("a"))
-            {
-                var href = anchor.GetAttribute("href") ?? string.Empty;
-                if (!string.IsNullOrEmpty(href))
-                {
-                    anchor.RemoveAttribute("href");
-                    anchor.RemoveAttribute("onclick");
-                    anchor.SetAttribute("style", "color: #2563eb; text-decoration: underline;");
-                    
-                    // 링크 URL을 텍스트 뒤에 괄호로 추가
-                    if (anchor.TextContent != href)
-                    {
-                        anchor.InnerHtml = $"{anchor.InnerHtml} ({WebUtility.HtmlEncode(href)})";
-                    }
-                }
-            }
-
-            // 이미지 처리 (alt 텍스트로 대체)
-            foreach (var img in document.QuerySelectorAll("img"))
-            {
-                var alt = img.GetAttribute("alt") ?? "이미지";
-                var src = img.GetAttribute("src") ?? "";
-                
-                var replacement = document.CreateElement("span");
-                replacement.SetAttribute("style", "background: #f3f4f6; padding: 4px 8px; border-radius: 4px; font-style: italic;");
-                replacement.TextContent = $"[이미지: {alt}]";
-                
-                img.ParentElement?.ReplaceChild(replacement, img);
-            }
-
-            return document.Body.InnerHtml;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"마크다운 변환 중 오류: {ex.Message}");
-            return WebUtility.HtmlEncode(markdown);
-        }
     }
 
     // 대화 내용을 텍스트 파일로 내보내기 - alert을 토스트로 변경 가능
@@ -1324,20 +1073,6 @@ public partial class Chat : IDisposable
         StateHasChanged();
     }
 
-    // WSB 다운로드 가이드 모달 닫기
-    private void CloseWsbDownloadGuide()
-    {
-        Model.CloseWsbDownloadGuide();
-        StateHasChanged();
-    }
-
-    // WSB 파일을 어쨌든 다운로드
-    private async Task DownloadWsbAnyway()
-    {
-        await Model.DownloadPendingFileAsync();
-        StateHasChanged();
-    }
-
     // 서비스 목록 모달 닫기
     private void CloseServicesModal()
     {
@@ -1397,27 +1132,5 @@ public partial class Chat : IDisposable
             Console.WriteLine($"메시지 복사 중 오류: {ex.Message}");
             await SafeInvokeJSAsync("showToast", "복사하지 못했습니다.", "error");
         }
-    }
-
-    public void Dispose()
-    {
-        // 스트리밍 작업 취소 및 정리
-        _streamingCancellationTokenSource?.Cancel();
-        _streamingCancellationTokenSource?.Dispose();
-
-        // beforeunload 핸들러 정리
-        try
-        {
-            JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
-        }
-        catch
-        {
-            // Disposal 중 오류는 무시
-        }
-
-        // 타이머 정리
-        _updateCheckTimer?.Dispose();
-
-        dotNetHelper?.Dispose();
     }
 }

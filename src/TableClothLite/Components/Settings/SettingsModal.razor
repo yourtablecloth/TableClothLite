@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Components
 @using TableClothLite.Services
-@using TableClothLite.ViewModels
+@using TableClothLite.Models
 @using TableClothLite.Components
 @implements IDisposable
 
@@ -794,7 +794,7 @@
 @code {
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public string InitialTab { get; set; } = "theme";
-    [Inject] private SandboxSettingsViewModel SettingsModel { get; set; } = default!;
+    [Inject] private SandboxSettingsModel SettingsModel { get; set; } = default!;
     [Inject] private ConfigService ConfigService { get; set; } = default!;
     [Inject] private ThemeService ThemeService { get; set; } = default!;
 
@@ -852,7 +852,7 @@
         try
         {
             var config = await ConfigService.LoadAsync();
-            SettingsModel.ImportFromSandboxConfig(config);
+            SettingsModel.FromSandboxConfig(config);
         }
         catch (Exception ex)
         {
@@ -881,7 +881,7 @@
 
         try
         {
-            var config = SettingsModel.ExportToSandboxConfig();
+            var config = SettingsModel.ToSandboxConfig();
             await ConfigService.SaveAsync(config);
             
             _statusMessage = "설정이 성공적으로 저장되었습니다.";

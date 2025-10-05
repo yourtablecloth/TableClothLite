@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -21,7 +21,7 @@ public sealed class OpenRouterAuthService
         _jsRuntime = jsRuntime;
     }
 
-    public PkceChallenge GeneratePkce()
+    public PkceChallengeModel GeneratePkce()
     {
         // Generate a random code verifier
         byte[] buffer = new byte[32];
@@ -35,7 +35,7 @@ public sealed class OpenRouterAuthService
         byte[] challengeBytes = sha256.ComputeHash(new UTF8Encoding(false).GetBytes(codeVerifier));
         string codeChallenge = Base64UrlEncode(challengeBytes);
 
-        return new PkceChallenge(codeChallenge, codeVerifier);
+        return new PkceChallengeModel(codeChallenge, codeVerifier);
     }
 
     private static string Base64UrlEncode(byte[] input)
