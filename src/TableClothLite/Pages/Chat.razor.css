@@ -309,6 +309,13 @@
     margin-bottom: 24px;
 }
 
+.message-avatar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
 .message-avatar {
     width: 32px;
     height: 32px;
@@ -681,9 +688,6 @@
 
 /* 메시지 복사 버튼 스타일 */
 .copy-message-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
     background: var(--secondary-bg);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -693,7 +697,12 @@
     opacity: 0;
     visibility: hidden;
     transition: all 0.2s ease;
-    z-index: 10;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
     .copy-message-btn:hover {

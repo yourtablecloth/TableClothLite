@@ -144,7 +144,7 @@
                         <div class="logo-container">
                             🤖
                         </div>
-                        <h1>식탁보 AI에 오신 것을 환영합니다</h1>
+                        <h1>식탁보 AI에 오신 것을 환환합니다</h1>
                         <p class="welcome-subtitle">금융과 공공 부문에 관한 질문에 답변해 드립니다</p>
                         
                         @if (_hasApiKey)
@@ -188,19 +188,16 @@
                 @foreach (var message in _messages)
                 {
                     <div class="message-group @(message.IsUser ? "user-group" : "assistant-group")">
-                        <div class="message-avatar">
-                            @if (message.IsUser)
-                            {
-                                <div class="user-avatar">👤</div>
-                            }
-                            else
-                            {
-                                <div class="assistant-avatar">🤖</div>
-                            }
-                        </div>
-                        <div class="message-content">
-                            <div class="message-text">
-                                @FormatMessage(message.Content)
+                        <div class="message-avatar-column">
+                            <div class="message-avatar">
+                                @if (message.IsUser)
+                                {
+                                    <div class="user-avatar">👤</div>
+                                }
+                                else
+                                {
+                                    <div class="assistant-avatar">🤖</div>
+                                }
                             </div>
                             <button class="copy-message-btn" 
                                     @onclick="() => CopyMessageAsync(message.Content)" 
@@ -209,14 +206,21 @@
                                 📋
                             </button>
                         </div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                @FormatMessage(message.Content)
+                            </div>
+                        </div>
                     </div>
                 }
                 
                 @if (_isStreaming)
                 {
                     <div class="message-group assistant-group">
-                        <div class="message-avatar">
-                            <div class="assistant-avatar">🤖</div>
+                        <div class="message-avatar-column">
+                            <div class="message-avatar">
+                                <div class="assistant-avatar">🤖</div>
+                            </div>
                         </div>
                         <div class="message-content">
                             <div class="message-text">
