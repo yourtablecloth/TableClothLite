@@ -801,6 +801,20 @@ main[b-3zwydhbc4h] {
     flex: 1;
 }
 
+/* 처리 상태 표시 스타일 */
+.processing-status[b-1eksyvqne5] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.status-text[b-1eksyvqne5] {
+    font-size: 14px;
+    color: var(--secondary-text);
+    font-style: italic;
+}
+
 /* PC: hover 시 복사 버튼 표시 */
 @media (hover: hover) and (pointer: fine) {
     .message-group:hover .copy-message-btn[b-1eksyvqne5] {
