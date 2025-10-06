@@ -9,6 +9,7 @@ using TableClothLite.Models;
 using TableClothLite.Shared.Models;
 using TableClothLite.Services;
 using TableClothLite.Components;
+using TableClothLite.Components.Chat;
 
 namespace TableClothLite.Pages;
 

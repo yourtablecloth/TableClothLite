@@ -1,12 +1,10 @@
 using Blazored.LocalStorage;
-using KristofferStrube.Blazor.FileSystemAccess;
 using Markdig;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using TableClothLite;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
-using TG.Blazor.IndexedDB;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -21,7 +19,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddHttpClient();
 builder.Services.AddBlazoredLocalStorageAsSingleton();
-builder.Services.AddFileSystemAccessService();
 
 builder.Services.AddSingleton<SandboxComposerService>();
 builder.Services.AddSingleton<CatalogService>();
@@ -47,23 +44,6 @@ builder.Services.AddHttpClient("OpenRouter")
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
     .AddHttpMessageHandler(() => new OpenRouterHeaderManipHandler())
     .AddDefaultLogger();
-
-builder.Services.AddIndexedDB(dbStore =>
-{
-    dbStore.DbName = "TableClothLite";
-    dbStore.Version = 1;
-
-    dbStore.Stores.Add(new StoreSchema
-    {
-        Name = "certificates",
-        PrimaryKey = new IndexSpec
-        {
-            Name = "path",
-            KeyPath = "path",
-            Auto = true,
-        },
-    });
-});
 
 builder.Services.AddScoped(sp =>
 {

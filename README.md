@@ -43,10 +43,8 @@
 - **주요 패키지**:
   - `OpenAI` - AI 채팅 기능
   - `Blazored.LocalStorage` - 로컬 데이터 저장
-  - `KristofferStrube.Blazor.FileSystemAccess` - 파일 다운로드
   - `Markdig` - 마크다운 렌더링
   - `AngleSharp` - HTML 파싱
-  - `CommunityToolkit.Mvvm` - MVVM 패턴
 - **배포**: GitHub Pages를 통한 자동 배포
 - **설계 목표**: 빠른 빌드와 배포, 최소한의 설치 요구사항
 
