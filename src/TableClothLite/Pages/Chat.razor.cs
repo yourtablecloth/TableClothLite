@@ -343,12 +343,13 @@ public partial class Chat : IDisposable
             
             // SandboxService를 통해 샌드박스에서 URL 열기
             // URL만 있는 경우 기본 서비스 정보 생성
+            // TODO: Catalog XML 파일과 일치시켜 정확한 DisplayName 찾기
             var defaultService = new ServiceInfo(
-                ServiceId: "web-browser",
-                DisplayName: "웹 브라우저", 
+                ServiceId: $"web-site-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}",
+                DisplayName: "샌드박스에서 웹 사이트 열기", 
                 Category: "other",
                 Url: url,
-                CompatNotes: "AI 채팅에서 생성된 링크"
+                CompatNotes: string.Empty
             );
             
             await SandboxService.GenerateSandboxDocumentAsync(url, defaultService, StateHasChanged);
@@ -362,7 +363,7 @@ public partial class Chat : IDisposable
             
             // 오류 발생 시 사용자에게 알림
             await SafeInvokeJSAsync("showToast", 
-                "샌드박스에서 링크를 열 수 없습니다. Windows Sandbox가 설치되어 있는지 확인해주세요.", 
+                "샌드박스에서 링크를 열 수 없습니다.", 
                 "error");
         }
     }
