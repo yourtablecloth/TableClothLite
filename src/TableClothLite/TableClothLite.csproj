@@ -28,25 +28,20 @@
     <Folder Include="ViewModels\" />
   </ItemGroup>
 
-  <!-- ��� �� ����ȭ�� version.json �ڵ� ���� -->
   <Target Name="GenerateVersionJson" BeforeTargets="Build">
-    <!-- Git ���� �������� -->
     <PropertyGroup>
       <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"))</BuildTimestamp>
       <VersionString>$([System.DateTime]::UtcNow.ToString("yyyy.MM.dd.HHmm"))</VersionString>
     </PropertyGroup>
     
-    <!-- Git commit hash �������� -->
     <Exec Command="git rev-parse HEAD" ContinueOnError="true" ConsoleToMSBuild="true" Condition="Exists('.git')">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
     </Exec>
     
-    <!-- Git branch �������� -->
     <Exec Command="git rev-parse --abbrev-ref HEAD" ContinueOnError="true" ConsoleToMSBuild="true" Condition="Exists('.git')">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitBranchName" />
     </Exec>
     
-    <!-- CI ȯ�濡���� �� ��� (GitHub Actions, Azure DevOps ��) -->
     <PropertyGroup>
       <GitCommit Condition="'$(GitCommitHash)' != ''">$(GitCommitHash)</GitCommit>
       <GitCommit Condition="'$(GitCommit)' == '' AND '$(BUILD_SOURCEVERSION)' != ''">$(BUILD_SOURCEVERSION)</GitCommit>
@@ -59,7 +54,6 @@
       <GitBranch Condition="'$(GitBranch)' == ''">main</GitBranch>
     </PropertyGroup>
     
-    <!-- ����ȭ�� JSON ���� ���� -->
     <PropertyGroup>
       <VersionJsonContent>
 {
