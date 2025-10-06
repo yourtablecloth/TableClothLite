@@ -794,14 +794,17 @@
 @code {
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public string InitialTab { get; set; } = "theme";
-    [Inject] private SandboxSettingsModel SettingsModel { get; set; } = default!;
-    [Inject] private ConfigService ConfigService { get; set; } = default!;
+    [Inject] private SettingsService SettingsService { get; set; } = default!;
     [Inject] private ThemeService ThemeService { get; set; } = default!;
 
+    private SandboxSettingsModel _settingsModel = new();
     private bool _isLoading = false;
     private string _statusMessage = string.Empty;
     private bool _isError = false;
     private string _activeTab = "theme";
+
+    // _settingsModel에 대한 참조를 제공
+    private SandboxSettingsModel SettingsModel => _settingsModel;
 
     protected override async Task OnInitializedAsync()
     {
@@ -851,13 +854,13 @@
     {
         try
         {
-            var config = await ConfigService.LoadAsync();
-            SettingsModel.FromSandboxConfig(config);
+            _settingsModel = await SettingsService.GetSettingsAsync();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"설정 로드 중 오류: {ex.Message}");
-            ResetToDefaults();
+            _settingsModel = new SandboxSettingsModel();
         }
     }
 
@@ -881,8 +884,7 @@
 
         try
         {
-            var config = SettingsModel.ToSandboxConfig();
-            await ConfigService.SaveAsync(config);
+            await SettingsService.SaveSettingsAsync(_settingsModel);
             
             _statusMessage = "설정이 성공적으로 저장되었습니다.";
             _isError = false;
@@ -899,16 +901,12 @@
         }
     }
 
-    private void ResetToDefaults()
+    private async Task ResetToDefaults()
     {
         try
         {
-            SettingsModel.EnableNetworking = true;
-            SettingsModel.EnableAudioInput = true;
-            SettingsModel.EnableVideoInput = true;
-            SettingsModel.EnablePrinterRedirection = true;
-            SettingsModel.EnableClipboardRedirection = true;
-            SettingsModel.OpenRouterModel = "meta-llama/llama-3.1-8b-instruct:free";
+            await SettingsService.ResetToDefaultsAsync();
+            _settingsModel = await SettingsService.GetSettingsAsync();
             
             _statusMessage = "설정이 기본값으로 복원되었습니다.";
             _isError = false;
