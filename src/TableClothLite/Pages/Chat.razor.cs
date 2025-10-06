@@ -25,6 +25,7 @@ public partial class Chat : IDisposable
     private string _userInput = string.Empty;
     private bool _isStreaming = false;
     private string _currentStreamedMessage = string.Empty;
+    private string? _processingStatus = null; // 멀티턴 처리 상태 메시지
     private OpenAIClient? _client;
     private MarkdownPipeline? _markdownPipeline;
     private HtmlParser _htmlParser = new HtmlParser();
@@ -108,6 +109,7 @@ public partial class Chat : IDisposable
 
         // 이벤트 구독
         SandboxService.ShowWsbDownloadGuideRequested += OnShowWsbDownloadGuideRequested;
+        ChatService.ProcessingStatusChanged += OnProcessingStatusChanged;
 
         _markdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
@@ -126,6 +128,12 @@ public partial class Chat : IDisposable
     {
         _currentService = serviceInfo;
         _showWsbDownloadGuide = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnProcessingStatusChanged(object? sender, ProcessingStatusEventArgs e)
+    {
+        _processingStatus = e.Status;
         InvokeAsync(StateHasChanged);
     }
 
@@ -831,6 +839,7 @@ public partial class Chat : IDisposable
     {
         // 이벤트 구독 해제
         SandboxService.ShowWsbDownloadGuideRequested -= OnShowWsbDownloadGuideRequested;
+        ChatService.ProcessingStatusChanged -= OnProcessingStatusChanged;
         
         // 스트리밍 작업 취소 및 정리
         _streamingCancellationTokenSource?.Cancel();

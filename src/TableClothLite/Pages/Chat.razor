@@ -224,14 +224,28 @@
                         </div>
                         <div class="message-content">
                             <div class="message-text">
-                                @FormatMessage(_currentStreamedMessage)
-                                @if (string.IsNullOrEmpty(_currentStreamedMessage))
+                                @if (!string.IsNullOrEmpty(_processingStatus))
                                 {
-                                    <div class="typing-indicator">
-                                        <span class="dot">●</span>
-                                        <span class="dot">●</span>
-                                        <span class="dot">●</span>
+                                    <div class="processing-status">
+                                        <div class="typing-indicator">
+                                            <span class="dot">●</span>
+                                            <span class="dot">●</span>
+                                            <span class="dot">●</span>
+                                        </div>
+                                        <span class="status-text">@_processingStatus</span>
                                     </div>
+                                }
+                                else
+                                {
+                                    @FormatMessage(_currentStreamedMessage)
+                                    @if (string.IsNullOrEmpty(_currentStreamedMessage))
+                                    {
+                                        <div class="typing-indicator">
+                                            <span class="dot">●</span>
+                                            <span class="dot">●</span>
+                                            <span class="dot">●</span>
+                                        </div>
+                                    }
                                 }
                             </div>
                         </div>

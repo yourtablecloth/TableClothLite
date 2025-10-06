@@ -14,6 +14,9 @@ public sealed class OpenAIChatService
     private readonly IntentBasedContextService _contextService;
     private readonly Dictionary<string, List<ChatMessage>> _conversationHistory = new();
 
+    // 멀티턴 처리 상태 변경 이벤트
+    public event EventHandler<ProcessingStatusEventArgs>? ProcessingStatusChanged;
+
     public OpenAIChatService(
         IHttpClientFactory httpClientFactory, 
         ConfigService configService,
@@ -71,6 +74,7 @@ public sealed class OpenAIChatService
         try
         {
             Console.WriteLine("🔍 1단계: 사용자 의도 분석 중...");
+            RaiseProcessingStatus("생각 중입니다...");
             
             // 1단계: 사용자 의도 분석
             var intentResult = await _contextService.AnalyzeUserIntentAsync(
@@ -81,6 +85,7 @@ public sealed class OpenAIChatService
             {
                 Console.WriteLine($"✅ 사이트 정보 필요: {string.Join(", ", intentResult.Domains)}");
                 Console.WriteLine("🔍 2단계: 매칭되는 사이트 검색 중...");
+                RaiseProcessingStatus("관련 정보를 조사하고 있습니다...");
 
                 // 2단계: 매칭되는 사이트 찾기
                 var matchedSites = await _contextService.FindMatchingSitesAsync(
@@ -90,6 +95,7 @@ public sealed class OpenAIChatService
                 {
                     Console.WriteLine($"✅ {matchedSites.Count}개 사이트 매칭 완료");
                     Console.WriteLine("🔍 3단계: 컨텍스트 프롬프트 구성 중...");
+                    RaiseProcessingStatus("정확한 답변을 준비하고 있습니다...");
 
                     // 3단계: 컨텍스트가 풍부한 프롬프트 생성
                     finalMessage = _contextService.BuildContextualPrompt(message, matchedSites);
@@ -104,6 +110,9 @@ public sealed class OpenAIChatService
             {
                 Console.WriteLine($"ℹ️ 기본 모드로 진행: {intentResult.Reason}");
             }
+            
+            // 처리 완료 - 상태 초기화
+            RaiseProcessingStatus(null);
         }
         catch (Exception ex)
         {
@@ -111,6 +120,8 @@ public sealed class OpenAIChatService
             Console.WriteLine("ℹ️ 기본 모드로 진행합니다.");
             // 오류 발생 시 원본 메시지 사용
             finalMessage = message;
+            // 처리 완료 - 상태 초기화
+            RaiseProcessingStatus(null);
         }
         // === 멀티 턴 프롬프트 전략 종료 ===
 
@@ -230,5 +241,23 @@ public sealed class OpenAIChatService
     {
         var options = new ChatCompletionOptions() { };
         return options;
+    }
+
+    private void RaiseProcessingStatus(string? status)
+    {
+        ProcessingStatusChanged?.Invoke(this, new ProcessingStatusEventArgs(status));
+    }
+}
+
+/// <summary>
+/// 처리 상태 변경 이벤트 인자
+/// </summary>
+public class ProcessingStatusEventArgs : EventArgs
+{
+    public string? Status { get; }
+    
+    public ProcessingStatusEventArgs(string? status)
+    {
+        Status = status;
     }
 }

@@ -117,7 +117,7 @@ public class IntentBasedContextService
         {
             NeedsSiteInfo = false,
             Domains = new List<string>(),
-            Reason = "분석 실패 - 기본 모드로 진행"
+            Reason = "기본 모드로 진행"
         };
     }
 
@@ -129,6 +129,7 @@ public class IntentBasedContextService
         CancellationToken cancellationToken = default)
     {
         var allSites = await LoadAllSitesAsync(cancellationToken);
+        Console.WriteLine("추론된 도메인 목록: " + string.Join(", ", domains));
 
         if (!domains.Any())
             return new List<SiteInfo>();
