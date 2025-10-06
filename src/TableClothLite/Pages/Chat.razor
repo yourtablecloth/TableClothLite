@@ -227,12 +227,12 @@
                                 @if (!string.IsNullOrEmpty(_processingStatus))
                                 {
                                     <div class="processing-status">
+                                        <span class="status-text">@_processingStatus</span>
                                         <div class="typing-indicator">
                                             <span class="dot">●</span>
                                             <span class="dot">●</span>
                                             <span class="dot">●</span>
                                         </div>
-                                        <span class="status-text">@_processingStatus</span>
                                     </div>
                                 }
                                 else
