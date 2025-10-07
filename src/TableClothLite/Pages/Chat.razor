@@ -151,15 +151,12 @@
                         @if (_hasApiKey)
                         {
                             <div class="example-prompts">
-                                <div class="example-prompt" @onclick='() => SetExamplePrompt("인터넷 뱅킹 보안에 대해 알려주세요")'>
-                                    💳 인터넷 뱅킹 보안에 대해 알려주세요
-                                </div>
-                                <div class="example-prompt" @onclick='() => SetExamplePrompt("공공기관 사이트 이용 시 주의사항은?")'>
-                                    🏛️ 공공기관 사이트 이용 시 주의사항은?
-                                </div>
-                                <div class="example-prompt" @onclick='() => SetExamplePrompt("Windows Sandbox의 장점은?")'>
-                                    🛡️ Windows Sandbox의 장점은?
-                                </div>
+                                @foreach (var prompt in GetExamplePrompts())
+                                {
+                                    <div class="example-prompt" @onclick='() => SetExamplePrompt(prompt.Text)'>
+                                        @prompt.Icon @prompt.Text
+                                    </div>
+                                }
                             </div>
                         }
                         else
