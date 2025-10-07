@@ -43,13 +43,14 @@ public sealed class OpenAIChatService
         return new OpenAIClient(credential, options);
     }
 
-    public async Task CreateNewSessionAsync(string sessionId, CancellationToken cancellationToken = default)
+    public Task CreateNewSessionAsync(string sessionId, CancellationToken cancellationToken = default)
     {
         if (!_conversationHistory.ContainsKey(sessionId))
         {
-            var messages = await GetSystemMessagesAsync(cancellationToken).ConfigureAwait(false);
+            var messages = GetSystemMessages();
             _conversationHistory[sessionId] = [.. messages];
         }
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -171,25 +172,21 @@ public sealed class OpenAIChatService
     }
 
     // 세션 초기화
-    public async Task ClearSessionAsync(string sessionId, CancellationToken cancellationToken = default)
+    public Task ClearSessionAsync(string sessionId, CancellationToken cancellationToken = default)
     {
-        if (!_conversationHistory.ContainsKey(sessionId))
-            return;
-
-        _conversationHistory[sessionId].Clear();
-        var messages = await GetSystemMessagesAsync(cancellationToken).ConfigureAwait(false);
-        _conversationHistory[sessionId].AddRange(messages);
+        if (_conversationHistory.ContainsKey(sessionId))
+        {
+            _conversationHistory[sessionId].Clear();
+            var messages = GetSystemMessages();
+            _conversationHistory[sessionId].AddRange(messages);
+        }
+        return Task.CompletedTask;
     }
 
-    private async Task<IEnumerable<ChatMessage>> GetSystemMessagesAsync(
-        CancellationToken cancellationToken = default)
+    private IEnumerable<ChatMessage> GetSystemMessages()
     {
-        var url = $"https://raw.githubusercontent.com/yourtablecloth/TableClothCatalog/refs/heads/main/docs/instruction.md?ts={DateTime.UtcNow.Ticks}";
-        var httpClient = _httpClientFactory.CreateClient();
-        var systemPrompt = await httpClient.GetStringAsync(url, cancellationToken).ConfigureAwait(false);
-
         return [
-            ChatMessage.CreateSystemMessage(systemPrompt + AiSystemPrompts.ConstraintsAndSafetyGuidelines),
+            ChatMessage.CreateSystemMessage(AiSystemPrompts.ConstraintsAndSafetyGuidelines),
         ];
     }
 
