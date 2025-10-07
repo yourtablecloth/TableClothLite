@@ -209,6 +209,12 @@
     margin-bottom: 24px;
 }
 
+.welcome-logo {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
 .welcome-content h1 {
     font-size: 28px;
     font-weight: 600;
@@ -332,8 +338,9 @@
 }
 
 .user-avatar {
-    background: var(--chat-user-bg);
-    color: white;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--primary-text);
 }
 
 .assistant-avatar {
