@@ -59,33 +59,7 @@ public class IntentBasedContextService
     {
         var chatClient = client.GetChatClient(modelName);
 
-        var intentAnalysisPrompt = @"
-당신은 사용자의 질문 의도를 분석하는 전문가입니다.
-
-**목표**: 사용자가 특정 금융기관/공공기관 웹사이트에 대한 정보를 원하는지 판단합니다.
-
-**판단 기준**:
-1. **사이트 정보 필요 (needsSiteInfo: true)**:
-   - 특정 금융기관/공공기관 이름이 명확히 언급됨
-   - 해당 사이트의 로그인, 서비스, 페이지 위치 등을 물어봄
-   - 예: ""KB국민은행 로그인 방법"", ""홈택스 세금 신고 페이지"", ""신한은행 공인인증서 발급""
-
-2. **사이트 정보 불필요 (needsSiteInfo: false)**:
-   - 일반적인 개념 질문
-   - 특정 사이트와 무관한 질문
-   - 예: ""Windows Sandbox란?"", ""인터넷 뱅킹 보안 팁"", ""공인인증서가 뭐예요?""
-
-**응답 형식 (JSON만 반환)**:
-```json
-{
-  ""needsSiteInfo"": true/false,
-  ""domains"": [""domain1.com"", ""domain2.go.kr""],
-  ""reason"": ""판단 이유""
-}
-```
-
-**사용자 질문**:
-" + userMessage;
+        var intentAnalysisPrompt = AiSystemPrompts.IntentAnalysisPrompt + userMessage;
 
         var messages = new[]
         {
@@ -159,10 +133,7 @@ public class IntentBasedContextService
             return originalMessage;
 
         var contextBuilder = new StringBuilder();
-        contextBuilder.AppendLine("## 📋 관련 사이트 상세 정보");
-        contextBuilder.AppendLine();
-        contextBuilder.AppendLine("아래는 사용자 질문과 관련된 웹사이트의 상세 정보입니다. 이 정보를 **우선적으로 참고**하여 정확한 URL과 서비스 위치를 안내해주세요.");
-        contextBuilder.AppendLine();
+        contextBuilder.Append(AiSystemPrompts.ContextualPromptHeader);
 
         foreach (var site in matchedSites)
         {
@@ -186,11 +157,9 @@ public class IntentBasedContextService
             contextBuilder.AppendLine();
         }
 
-        contextBuilder.AppendLine("---");
+        contextBuilder.AppendLine(AiSystemPrompts.ContextualPromptFooter);
         contextBuilder.AppendLine();
         contextBuilder.AppendLine($"**사용자 질문**: {originalMessage}");
-        contextBuilder.AppendLine();
-        contextBuilder.AppendLine("위 사이트 정보를 바탕으로 정확한 URL과 함께 친절하게 안내해주세요.");
 
         return contextBuilder.ToString();
     }
