@@ -345,6 +345,9 @@
 .message-content {
     position: relative;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .message-text {
@@ -694,8 +697,8 @@
     padding: 6px 10px;
     font-size: 14px;
     cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
+    opacity: 1;
+    visibility: visible;
     transition: all 0.2s ease;
     width: 32px;
     height: 32px;
@@ -703,6 +706,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+    align-self: flex-start;
 }
 
     .copy-message-btn:hover {
@@ -712,6 +716,16 @@
 
     .copy-message-btn:active {
         transform: scale(0.95);
+    }
+
+    .copy-message-btn.copied {
+        background: #10b981;
+        border-color: #059669;
+        color: white;
+    }
+
+    .copy-message-btn.copied:hover {
+        background: #059669;
     }
 
 /* 메시지 컨텐츠 영역 */
@@ -732,20 +746,4 @@
     font-size: 14px;
     color: var(--secondary-text);
     font-style: italic;
-}
-
-/* PC: hover 시 복사 버튼 표시 */
-@media (hover: hover) and (pointer: fine) {
-    .message-group:hover .copy-message-btn {
-        opacity: 1;
-        visibility: visible;
-    }
-}
-
-/* 모바일: 항상 복사 버튼 표시 */
-@media (hover: none) or (pointer: coarse) {
-    .copy-message-btn {
-        opacity: 1;
-        visibility: visible;
-    }
 }

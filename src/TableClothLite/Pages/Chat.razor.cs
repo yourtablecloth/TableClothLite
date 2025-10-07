@@ -1145,24 +1145,46 @@ public partial class Chat : IDisposable
     }
 
     // 개별 메시지 복사
-    private async Task CopyMessageAsync(string content)
+    private Dictionary<int, bool> _copiedStates = new();
+    
+    private async Task CopyMessageAsync(string content, int messageIndex)
     {
         try
         {
             var success = await JSRuntime.InvokeAsync<bool>("copyToClipboard", content);
             if (success)
             {
+                // 복사 성공 - 상태 업데이트
+                _copiedStates[messageIndex] = true;
+                StateHasChanged();
+                
                 await SafeInvokeJSAsync("showToast", "메시지가 클립보드에 복사되었습니다.", "success");
+                
+                // 2초 후 상태 초기화
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(2000);
+                    await InvokeAsync(() =>
+                    {
+                        _copiedStates[messageIndex] = false;
+                        StateHasChanged();
+                    });
+                });
             }
             else
             {
-                await SafeInvokeJSAsync("showToast", "복사하지 못했습니다. 다시 시도해주세요.", "error");
+                await SafeInvokeJSAsync("showToast", "복사하지 않으면 문제가 발생했습니다. 다시 시도해 주세요.", "error");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"메시지 복사 중 오류: {ex.Message}");
-            await SafeInvokeJSAsync("showToast", "복사하지 못했습니다.", "error");
+            await SafeInvokeJSAsync("showToast", "복사하지 않으면 문제가 발생했습니다.", "error");
         }
+    }
+    
+    private bool IsCopied(int messageIndex)
+    {
+        return _copiedStates.TryGetValue(messageIndex, out var isCopied) && isCopied;
     }
 }

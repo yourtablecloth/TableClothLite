@@ -145,7 +145,7 @@
                         <div class="logo-container">
                             🤖
                         </div>
-                        <h1>식탁보 AI에 오신 것을 환환합니다</h1>
+                        <h1>식탁보 AI에 오신 것을 환환습니다</h1>
                         <p class="welcome-subtitle">금융과 공공 부문에 관한 질문에 답변해 드립니다</p>
                         
                         @if (_hasApiKey)
@@ -186,12 +186,12 @@
             }
 
             <div class="messages-list">
-                @foreach (var message in _messages)
+                @foreach (var message in _messages.Select((msg, idx) => new { Message = msg, Index = idx }))
                 {
-                    <div class="message-group @(message.IsUser ? "user-group" : "assistant-group")">
+                    <div class="message-group @(message.Message.IsUser ? "user-group" : "assistant-group")">
                         <div class="message-avatar-column">
                             <div class="message-avatar">
-                                @if (message.IsUser)
+                                @if (message.Message.IsUser)
                                 {
                                     <div class="user-avatar">👤</div>
                                 }
@@ -200,17 +200,24 @@
                                     <div class="assistant-avatar">🤖</div>
                                 }
                             </div>
-                            <button class="copy-message-btn" 
-                                    @onclick="() => CopyMessageAsync(message.Content)" 
-                                    title="메시지 복사"
-                                    type="button">
-                                📋
-                            </button>
                         </div>
                         <div class="message-content">
                             <div class="message-text">
-                                @FormatMessage(message.Content)
+                                @FormatMessage(message.Message.Content)
                             </div>
+                            <button class="copy-message-btn @(IsCopied(message.Index) ? "copied" : "")" 
+                                    @onclick="() => CopyMessageAsync(message.Message.Content, message.Index)" 
+                                    title="@(IsCopied(message.Index) ? "복사됨!" : "메시지 복사")"
+                                    type="button">
+                                @if (IsCopied(message.Index))
+                                {
+                                    <span>✓</span>
+                                }
+                                else
+                                {
+                                    <span>📋</span>
+                                }
+                            </button>
                         </div>
                     </div>
                 }
