@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "0EU5DHCR",
+  "version": "X+F0YkIc",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -250,15 +250,15 @@ self.assetsManifest = {
       "url": "_framework/System.Xml.ReaderWriter.quabxu3brg.wasm"
     },
     {
-      "hash": "sha256-+k0ptsr/i0hTLdDhZOPaHD8NwKbCf1hQbILldKRQCXo=",
-      "url": "_framework/TableClothLite.Shared.2axa3x8cy4.wasm"
+      "hash": "sha256-eUxL6lZR5PDavFX/QenoWgdrgytE6aSmZrAXNA6s/mQ=",
+      "url": "_framework/TableClothLite.7kjudmrce6.wasm"
     },
     {
-      "hash": "sha256-TQoH7pg1DcSHYowQC8tsApJzu3cj8G/dDZxP2OzHMcM=",
-      "url": "_framework/TableClothLite.zwljkzwoa9.wasm"
+      "hash": "sha256-ssc8mZbmkCUDysK/qGJWbeHPHybkUdKClfrftJduBT8=",
+      "url": "_framework/TableClothLite.Shared.2w7fuxr1hj.wasm"
     },
     {
-      "hash": "sha256-L3TlUoyGVOrUxlmCOBI+4AzoaiBTX9NKzMuEGSadqko=",
+      "hash": "sha256-AS9ZAL9Vo3ou5L0m9piH0neDblCwVxLcvmJmLW9yZiA=",
       "url": "_framework/blazor.boot.json"
     },
     {
