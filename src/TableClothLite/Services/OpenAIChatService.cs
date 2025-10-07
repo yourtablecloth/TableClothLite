@@ -74,7 +74,7 @@ public sealed class OpenAIChatService
         try
         {
             Console.WriteLine("🔍 1단계: 사용자 의도 분석 중...");
-            RaiseProcessingStatus("생각 중입니다...");
+            RaiseProcessingStatus("자료 조사가 필요할지 생각하고 있습니다...");
             
             // 1단계: 사용자 의도 분석
             var intentResult = await _contextService.AnalyzeUserIntentAsync(
@@ -110,9 +110,6 @@ public sealed class OpenAIChatService
             {
                 Console.WriteLine($"ℹ️ 기본 모드로 진행: {intentResult.Reason}");
             }
-            
-            // 처리 완료 - 상태 초기화
-            RaiseProcessingStatus(null);
         }
         catch (Exception ex)
         {
@@ -120,16 +117,19 @@ public sealed class OpenAIChatService
             Console.WriteLine("ℹ️ 기본 모드로 진행합니다.");
             // 오류 발생 시 원본 메시지 사용
             finalMessage = message;
-            // 처리 완료 - 상태 초기화
-            RaiseProcessingStatus(null);
         }
         // === 멀티 턴 프롬프트 전략 종료 ===
 
         // 사용자 메시지 추가 (최종 메시지 사용)
         _conversationHistory[sessionId].Add(ChatMessage.CreateUserMessage(finalMessage));
 
+        // AI 응답 대기 중 상태 표시
+        Console.WriteLine("🤖 AI 응답 대기 중...");
+        RaiseProcessingStatus("생각 중입니다...");
+
         // 대화 기록 전체를 넘겨 컨텍스트 유지
         var responseBuilder = new StringBuilder();
+        bool isFirstChunk = true;
 
         await foreach (var completionUpdate in chatClient.CompleteChatStreamingAsync(
             _conversationHistory[sessionId].ToArray(),
@@ -137,6 +137,13 @@ public sealed class OpenAIChatService
         {
             if (completionUpdate.ContentUpdate.Count < 1)
                 continue;
+
+            // 첫 번째 청크를 받으면 상태 메시지 제거
+            if (isFirstChunk)
+            {
+                RaiseProcessingStatus(null);
+                isFirstChunk = false;
+            }
 
             // 텍스트 청크를 즉시 반환하여 UI에 즉각 렌더링
             var textChunk = completionUpdate.ContentUpdate[0].Text;
