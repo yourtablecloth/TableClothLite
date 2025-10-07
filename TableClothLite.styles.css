@@ -290,6 +290,12 @@ main[b-3zwydhbc4h] {
     margin-bottom: 24px;
 }
 
+.welcome-logo[b-1eksyvqne5] {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
 .welcome-content h1[b-1eksyvqne5] {
     font-size: 28px;
     font-weight: 600;
@@ -413,8 +419,9 @@ main[b-3zwydhbc4h] {
 }
 
 .user-avatar[b-1eksyvqne5] {
-    background: var(--chat-user-bg);
-    color: white;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--primary-text);
 }
 
 .assistant-avatar[b-1eksyvqne5] {
@@ -426,6 +433,9 @@ main[b-3zwydhbc4h] {
 .message-content[b-1eksyvqne5] {
     position: relative;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .message-text[b-1eksyvqne5] {
@@ -775,8 +785,8 @@ main[b-3zwydhbc4h] {
     padding: 6px 10px;
     font-size: 14px;
     cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
+    opacity: 1;
+    visibility: visible;
     transition: all 0.2s ease;
     width: 32px;
     height: 32px;
@@ -784,6 +794,7 @@ main[b-3zwydhbc4h] {
     align-items: center;
     justify-content: center;
     padding: 0;
+    align-self: flex-start;
 }
 
     .copy-message-btn:hover[b-1eksyvqne5] {
@@ -793,6 +804,16 @@ main[b-3zwydhbc4h] {
 
     .copy-message-btn:active[b-1eksyvqne5] {
         transform: scale(0.95);
+    }
+
+    .copy-message-btn.copied[b-1eksyvqne5] {
+        background: #10b981;
+        border-color: #059669;
+        color: white;
+    }
+
+    .copy-message-btn.copied:hover[b-1eksyvqne5] {
+        background: #059669;
     }
 
 /* 메시지 컨텐츠 영역 */
@@ -813,20 +834,4 @@ main[b-3zwydhbc4h] {
     font-size: 14px;
     color: var(--secondary-text);
     font-style: italic;
-}
-
-/* PC: hover 시 복사 버튼 표시 */
-@media (hover: hover) and (pointer: fine) {
-    .message-group:hover .copy-message-btn[b-1eksyvqne5] {
-        opacity: 1;
-        visibility: visible;
-    }
-}
-
-/* 모바일: 항상 복사 버튼 표시 */
-@media (hover: none) or (pointer: coarse) {
-    .copy-message-btn[b-1eksyvqne5] {
-        opacity: 1;
-        visibility: visible;
-    }
 }
