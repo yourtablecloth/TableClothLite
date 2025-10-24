@@ -26,30 +26,6 @@
 <div class="chat-app">
     <!-- 메인 채팅 영역 -->
     <div class="chat-main">
-        <!-- Gentle Update Notification -->
-        @if (_showUpdateNotification && _pendingUpdate is not null)
-        {
-            <div class="update-notification">
-                <div class="update-notification-content">
-                    <div class="update-info">
-                        <span class="update-icon">🎉</span>
-                        <div class="update-text">
-                            <strong>새 버전이 있습니다!</strong>
-                            <div class="version-details">@_pendingUpdate.Version</div>
-                        </div>
-                    </div>
-                    <div class="update-actions">
-                        <button @onclick="ApplyUpdateAsync" class="update-btn primary" type="button">
-                            업데이트
-                        </button>
-                        <button @onclick="DismissUpdateNotification" class="update-btn secondary" type="button">
-                            나중에
-                        </button>
-                    </div>
-                </div>
-            </div>
-        }
-
         <!-- 상단 헤더 -->
         <div class="chat-header">
             <div class="header-left">
@@ -145,7 +121,7 @@
                         <div class="logo-container">
                             <img src="/icon-512.png" alt="식탁보 AI" class="welcome-logo" />
                         </div>
-                        <h1>식탁보 AI에 오신 것을 환환습니다</h1>
+                        <h1>식탁보 AI에 오신 것을 환영합니다</h1>
                         <p class="welcome-subtitle">언제나 안전하고 똑똑하게! - AI와 함께하는 인터넷 뱅킹 보안 어시스턴트</p>
                         
                         @if (_hasApiKey)

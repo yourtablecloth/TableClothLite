@@ -29,7 +29,7 @@ public partial class Chat : IDisposable
     private string? _processingStatus = null; // 멀티턴 처리 상태 메시지
     private OpenAIClient? _client;
     private MarkdownPipeline? _markdownPipeline;
-    private HtmlParser _htmlParser = new HtmlParser();
+  private HtmlParser _htmlParser = new HtmlParser();
     
     // API 키 상태 관리
     private bool _hasApiKey = false;
@@ -40,13 +40,13 @@ public partial class Chat : IDisposable
 
     // 글자 수 제한 관련 변수
     private readonly int _maxInputLength = 1000; // 최대 글자 수 제한
-    private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
+ private readonly int _warningThreshold = 100; // 제한에 근접했다고 경고할 잔여 글자 수 기준
     private bool _isNearLimit => _userInput.Length > _maxInputLength - _warningThreshold;
 
     // Dirty state 관리 - 대화 내용이 있는지 추적
     private bool _hasUnsavedContent => _messages.Any() || !string.IsNullOrWhiteSpace(_userInput);
 
-    // 필요한 서비스들 inject
+ // 필요한 서비스들 inject
     [Inject] private OpenRouterAuthService AuthService { get; set; } = default!;
 
     // Windows Sandbox 가이드 모달 상태 관리
@@ -55,11 +55,11 @@ public partial class Chat : IDisposable
     
     // WSB 다운로드 가이드 모달 상태 관리
     private bool _showWsbDownloadGuide = false;
-    private ServiceInfo? _currentService = null;
+ private ServiceInfo? _currentService = null;
 
     // 서비스 목록 모달 상태 관리
     private bool _showServicesModal = false;
-    
+  
     // 설정 모달 상태 관리
     private bool _showSettingsModal = false;
     private string _settingsModalInitialTab = "theme";
@@ -67,13 +67,8 @@ public partial class Chat : IDisposable
     // 대화 액션 드롭다운 상태 관리
     private bool _showConversationActionsDropdown = false;
     
-    // 메뉴 드롭다운 상태 관리
+ // 메뉴 드롭다운 상태 관리
     private bool _showMenuDropdown = false;
-
-    // 새 버전 알림 상태 관리 - confirm 대신 인앱 알림 사용
-    private bool _showUpdateNotification = false;
-    private VersionInfo? _pendingUpdate = null;
-    private Timer? _updateCheckTimer = null;
 
     // ModelIndicator 레퍼런스
     private ModelIndicator? _modelIndicator;
@@ -148,21 +143,12 @@ public partial class Chat : IDisposable
     // 예시 프롬프트 모델
     private record ExamplePrompt(string Icon, string Text, int Month);
 
-    // 버전 정보 클래스 - 간소화
-    private class VersionInfo
-    {
-        public string? Version { get; set; }
-        public string? BuildDate { get; set; }
-        public string? Commit { get; set; }
-        public string? Branch { get; set; }
-    }
-
     // JavaScript에서 반환할 공유 결과 클래스
     private class ShareResult
-    {
+ {
         public bool Success { get; set; }
-        public string Method { get; set; } = string.Empty;
-        public string? Error { get; set; }
+      public string Method { get; set; } = string.Empty;
+  public string? Error { get; set; }
     }
 
     protected override void OnInitialized()
@@ -227,8 +213,8 @@ public partial class Chat : IDisposable
 
     private async Task CheckApiKeyStatus()
     {
-        _isCheckingApiKey = true;
-        StateHasChanged();
+      _isCheckingApiKey = true;
+      StateHasChanged();
 
         try
         {
@@ -264,22 +250,19 @@ public partial class Chat : IDisposable
         {
             dotNetHelper = DotNetObjectReference.Create(this);
             
-            // JavaScript 함수들을 안전하게 초기화
-            await InitializeJavaScriptAsync();
-            
-            // 캐시 무효화 및 버전 체크
-            await CheckAppVersionAsync();
+   // JavaScript 함수들을 안전하게 초기화
+   await InitializeJavaScriptAsync();
         }
 
-        // 스트리밍 중이면 스마트 스크롤, 아니면 일반 스크롤
-        if (_isStreaming)
-        {
+  // 스트리밍 중이면 스마트 스크롤, 아니면 일반 스크롤
+if (_isStreaming)
+  {
             await SafeInvokeJSAsync("smartScrollToBottom", "messages");
         }
         else
         {
-            await SafeInvokeJSAsync("scrollToBottom", "messages");
-        }
+      await SafeInvokeJSAsync("scrollToBottom", "messages");
+   }
     }
 
     // JavaScript 초기화를 안전하게 처리
@@ -287,46 +270,46 @@ public partial class Chat : IDisposable
     {
         try
         {
-            // 기본 JavaScript 함수들이 로드될 때까지 대기
+          // 기본 JavaScript 함수들이 로드될 때까지 대기
             var maxAttempts = 50; // 5초 대기 (100ms * 50)
-            var attempts = 0;
-            
-            while (attempts < maxAttempts)
-            {
-                try
+var attempts = 0;
+       
+  while (attempts < maxAttempts)
+ {
+  try
                 {
-                    // Helpers 객체가 존재하는지 확인
-                    var helpersExists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.Helpers !== 'undefined'");
-                    if (helpersExists)
-                    {
-                        Console.WriteLine("JavaScript Helpers 객체가 준비되었습니다.");
-                        break;
-                    }
-                }
-                catch
-                {
-                    // 계속 시도
-                }
-                
-                attempts++;
-                await Task.Delay(100);
-            }
+  // Helpers 객체가 존재하는지 확인
+    var helpersExists = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.Helpers !== 'undefined'");
+          if (helpersExists)
+   {
+   Console.WriteLine("JavaScript Helpers 객체가 준비되었습니다.");
+  break;
+    }
+        }
+ catch
+       {
+     // 계속 시도
+      }
+          
+         attempts++;
+    await Task.Delay(100);
+      }
 
-            if (attempts >= maxAttempts)
+         if (attempts >= maxAttempts)
             {
-                Console.WriteLine("Warning: JavaScript Helpers 객체를 찾을 수 없습니다. 기본 기능만 사용됩니다.");
-                return;
-            }
+       Console.WriteLine("Warning: JavaScript Helpers 객체를 찾을 수 없습니다. 기본 기능만 사용됩니다.");
+   return;
+   }
 
             // Helpers가 준비되면 초기화 진행
-            await SafeInvokeJSAsync("Helpers.setDotNetHelper", dotNetHelper);
-            await SafeInvokeJSAsync("setupBeforeUnloadHandler", dotNetHelper);
-            await SafeInvokeJSAsync("setupDropdownClickOutside", dotNetHelper);
+   await SafeInvokeJSAsync("Helpers.setDotNetHelper", dotNetHelper);
+     await SafeInvokeJSAsync("setupBeforeUnloadHandler", dotNetHelper);
+  await SafeInvokeJSAsync("setupDropdownClickOutside", dotNetHelper);
             await SafeInvokeJSAsync("initChatInput");
         }
         catch (Exception ex)
-        {
-            Console.WriteLine($"JavaScript 초기화 중 오류: {ex.Message}");
+      {
+        Console.WriteLine($"JavaScript 초기화 중 오류: {ex.Message}");
         }
     }
 
@@ -337,25 +320,25 @@ public partial class Chat : IDisposable
         {
             await JSRuntime.InvokeVoidAsync(identifier, args);
         }
-        catch (JSException ex) when (ex.Message.Contains("undefined"))
+   catch (JSException ex) when (ex.Message.Contains("undefined"))
         {
             Console.WriteLine($"JavaScript 함수 '{identifier}'가 정의되지 않음: {ex.Message}");
         }
-        catch (JSException ex)
-        {
-            Console.WriteLine($"JavaScript 호출 실패 '{identifier}': {ex.Message}");
+  catch (JSException ex)
+{
+      Console.WriteLine($"JavaScript 호출 실패 '{identifier}': {ex.Message}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"예상치 못한 오류 '{identifier}': {ex.Message}");
+ Console.WriteLine($"예상치 못한 오류 '{identifier}': {ex.Message}");
         }
     }
 
     // JavaScript에서 호출할 수 있는 메서드 - beforeunload 시 unsaved content 확인
-    [JSInvokable]
+  [JSInvokable]
     public bool HasUnsavedContent()
     {
-        return _hasUnsavedContent;
+ return _hasUnsavedContent;
     }
 
     // JavaScript에서 호출할 수 있는 메서드 - 드롭다운 숨기기
@@ -363,7 +346,7 @@ public partial class Chat : IDisposable
     public Task HideConversationActionsDropdown()
     {
         _showConversationActionsDropdown = false;
-        StateHasChanged();
+  StateHasChanged();
         return Task.CompletedTask;
     }
     
@@ -382,7 +365,7 @@ public partial class Chat : IDisposable
     {
         // 창 크기 변경 시 필요한 처리 (예: 모바일/데스크톱 모드 전환)
         // 현재는 로깅만 수행
-        Console.WriteLine($"창 크기 변경 감지: {width}px");
+     Console.WriteLine($"창 크기 변경 감지: {width}px");
         return Task.CompletedTask;
     }
 
@@ -390,9 +373,9 @@ public partial class Chat : IDisposable
     [JSInvokable]
     public async Task OnPageFocus()
     {
-        // 페이지가 포커스를 받았을 때 API 키 상태 재확인
+      // 페이지가 포커스를 받았을 때 API 키 상태 재확인
         await CheckApiKeyStatus();
-        StateHasChanged();
+     StateHasChanged();
     }
 
     // JavaScript에서 호출할 수 있는 메서드 - 샌드박스에서 링크 열기
@@ -436,278 +419,32 @@ public partial class Chat : IDisposable
         }
     }
 
-    // JavaScript에서 호출할 수 있는 메서드 - 새 버전 감지 (간소화된 구조)
-    [JSInvokable]
-    public async Task OnNewVersionDetected(string versionInfoJson)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(versionInfoJson)) return;
-            
-            using var doc = System.Text.Json.JsonDocument.Parse(versionInfoJson);
-            var root = doc.RootElement;
-            
-            _pendingUpdate = new VersionInfo
-            {
-                Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
-                BuildDate = root.TryGetProperty("buildDate", out var buildDate) ? buildDate.GetString() : null,
-                Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null,
-                Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
-            };
-            
-            // 포커스 빼앗김 없이 부드러운 인앱 알림만 표시
-            await ShowGentleUpdateNotificationAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"새 버전 감지 처리 중 오류: {ex.Message}");
-        }
-    }
-
-    // 앱 버전 체크 및 캐시 관리
-    private async Task CheckAppVersionAsync()
-    {
-        try
-        {
-            // 현재 앱 버전 (fallback용)
-            const string FALLBACK_VERSION = "2024.12.17.1";
-            
-            // version.json에서 서버 버전 확인
-            var serverVersionInfo = await GetServerVersionAsync();
-            
-            // 로컬 스토리지에서 저장된 정보 확인
-            var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
-            var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
-            var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
-                ? new List<string>() 
-                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
-            
-            if (string.IsNullOrEmpty(storedVersion))
-            {
-                // 처음 방문 - 현재 버전 저장
-                var versionToStore = serverVersionInfo?.Version ?? FALLBACK_VERSION;
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", versionToStore);
-                Console.WriteLine($"첫 방문: 버전 {versionToStore} 저장");
-            }
-            else if (serverVersionInfo?.Version != null && 
-                     storedVersion != serverVersionInfo.Version &&
-                     !dismissedVersionsList.Contains(serverVersionInfo.Version))
-            {
-                // 새 버전 감지하고, 사용자가 이전에 "나중에"를 선택하지 않은 경우만 알림
-                _pendingUpdate = serverVersionInfo;
-                await ShowGentleUpdateNotificationAsync();
-                Console.WriteLine($"새 버전 감지: {serverVersionInfo.Version} (현재: {storedVersion})");
-            }
-            else if (serverVersionInfo?.Version != null && dismissedVersionsList.Contains(serverVersionInfo.Version))
-            {
-                Console.WriteLine($"버전 {serverVersionInfo.Version}는 사용자가 이전에 무시함");
-            }
-            
-            // 백그라운드에서 주기적 버전 체크 시작
-            StartPeriodicVersionCheck();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"버전 체크 중 오류: {ex.Message}");
-        }
-    }
-
-    // 서버에서 버전 정보 가져오기 - 간소화된 구조
-    private async Task<VersionInfo?> GetServerVersionAsync()
-    {
-        try
-        {
-            var cacheBuster = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            
-            // JavaScript fetch API 직접 사용하여 더 나은 에러 핸들링
-            var fetchResult = await SafeInvokeJSWithResultAsync<string>("fetchVersionJson", $"/version.json?t={cacheBuster}");
-            
-            if (!string.IsNullOrEmpty(fetchResult))
-            {
-                using var doc = System.Text.Json.JsonDocument.Parse(fetchResult);
-                var root = doc.RootElement;
-                
-                var versionInfo = new VersionInfo
-                {
-                    Version = root.TryGetProperty("version", out var version) ? version.GetString() : null,
-                    BuildDate = root.TryGetProperty("buildDate", out var buildDate) ? buildDate.GetString() : null,
-                    Commit = root.TryGetProperty("commit", out var commit) ? commit.GetString() : null,
-                    Branch = root.TryGetProperty("branch", out var branch) ? branch.GetString() : null
-                };
-                
-                Console.WriteLine($"서버 버전 정보 로드 성공: {versionInfo.Version} (빌드: {versionInfo.BuildDate})");
-                return versionInfo;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"서버 버전 정보 가져오기 실패: {ex.Message}");
-            // 404나 네트워크 오류 시 조용히 처리
-        }
-
-        return null;
-    }
-
-    // 결과를 반환하는 안전한 JavaScript 호출
-    private async Task<T?> SafeInvokeJSWithResultAsync<T>(string identifier, params object[] args)
-    {
-        try
-        {
-            return await JSRuntime.InvokeAsync<T>(identifier, args);
-        }
-        catch (JSException ex) when (ex.Message.Contains("undefined"))
-        {
-            Console.WriteLine($"JavaScript 함수 '{identifier}'가 정의되지 않음: {ex.Message}");
-            return default;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"JavaScript 호출 실패 '{identifier}': {ex.Message}");
-            return default;
-        }
-    }
-
-    // 부드러운 업데이트 알림 표시 - confirm 완전 제거
-    private Task ShowGentleUpdateNotificationAsync()
-    {
-        if (_pendingUpdate is null)
-            return Task.CompletedTask;
-
-        // 포커스 빼앗김 없는 페이지 통합 알림만 표시
-        _showUpdateNotification = true;
-        StateHasChanged();
-
-        // 5분 후 자동 숨김 처리 (사용자가 직접 닫지 않은 경우)
-        return Task.Run(async () =>
-        {
-            await Task.Delay(TimeSpan.FromMinutes(5));
-            await InvokeAsync(() =>
-            {
-                if (_showUpdateNotification)
-                {
-                    _showUpdateNotification = false;
-                    StateHasChanged();
-                }
-            });
-        });
-    }
-
-    // 업데이트 알림 닫기 - 사용자가 "나중에" 선택 시 기억
-    private async Task DismissUpdateNotification()
-    {
-        if (_pendingUpdate is not null)
-        {
-            // 현재 버전을 "무시된 버전" 목록에 추가
-            var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
-            var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
-                ? new List<string>() 
-                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
-            
-            if (!dismissedVersionsList.Contains(_pendingUpdate.Version ?? ""))
-            {
-                dismissedVersionsList.Add(_pendingUpdate.Version ?? "");
-                
-                // 최대 5개 버전만 기억 (너무 많이 쌓이지 않도록)
-                if (dismissedVersionsList.Count > 5)
-                {
-                    dismissedVersionsList.RemoveRange(0, dismissedVersionsList.Count - 5);
-                }
-                
-                var dismissedVersionsJson = System.Text.Json.JsonSerializer.Serialize(dismissedVersionsList);
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-dismissed-versions", dismissedVersionsJson);
-                
-                Console.WriteLine($"버전 {_pendingUpdate.Version}을 무시 목록에 추가");
-            }
-        }
-        
-        _showUpdateNotification = false;
-        StateHasChanged();
-    }
-
-    // 업데이트 적용 - 무시 목록 정리
-    private async Task ApplyUpdateAsync()
-    {
-        if (_pendingUpdate is null) return;
-
-        // 새 버전을 현재 버전으로 설정
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "tablecloth-version", _pendingUpdate.Version);
-        
-        // 무시 목록에서 이전 버전들 제거 (새 버전 적용 시 초기화)
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "tablecloth-dismissed-versions");
-        
-        Console.WriteLine($"버전 {_pendingUpdate.Version}로 업데이트 적용");
-        
-        // 스마트 새로고침 실행
-        await SafeInvokeJSAsync("window.forceRefresh");
-    }
-
-    // 주기적 버전 체크 시작 - 빈도 조정
-    private void StartPeriodicVersionCheck()
-    {
-        // 기존 타이머가 있다면 정리
-        _updateCheckTimer?.Dispose();
-
-        // 1시간마다 백그라운드에서 체크 (30분에서 증가)
-        _updateCheckTimer = new Timer(async _ =>
-        {
-            try
-            {
-                await InvokeAsync(async () =>
-                {
-                    var serverVersionInfo = await GetServerVersionAsync();
-                    var storedVersion = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-version");
-                    var dismissedVersions = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "tablecloth-dismissed-versions");
-                    var dismissedVersionsList = string.IsNullOrEmpty(dismissedVersions) 
-                        ? new List<string>() 
-                        : System.Text.Json.JsonSerializer.Deserialize<List<string>>(dismissedVersions) ?? new List<string>();
-                    
-                    if (serverVersionInfo?.Version != null && 
-                        storedVersion != serverVersionInfo.Version && 
-                        !dismissedVersionsList.Contains(serverVersionInfo.Version) &&
-                        !_showUpdateNotification) // 이미 알림이 표시되지 않은 경우만
-                    {
-                        _pendingUpdate = serverVersionInfo;
-                        await ShowGentleUpdateNotificationAsync();
-                        Console.WriteLine($"주기적 체크: 새 버전 {serverVersionInfo.Version} 감지");
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"주기적 버전 체크 중 오류: {ex.Message}");
-            }
-        });
-        
-        // 1시간 후 시작하여 1시간 간격으로 실행
-        _updateCheckTimer.Change(TimeSpan.FromHours(1), TimeSpan.FromHours(1));
-    }
-
     private async Task HandleLoginAsync()
     {
         // 직접 인증 플로우 시작
-        await AuthService.StartAuthFlowAsync();
-    }
+   await AuthService.StartAuthFlowAsync();
+}
 
     private async Task OpenSettingDialog()
     {
         _showSettingsModal = true;
-        StateHasChanged();
+     StateHasChanged();
         await Task.CompletedTask;
     }
-    
+
     private async Task OpenAIModelSettings()
     {
         _settingsModalInitialTab = "ai";
         _showSettingsModal = true;
         StateHasChanged();
-        await Task.CompletedTask;
+    await Task.CompletedTask;
     }
 
     private async Task OpenServicesModalAsync()
     {
         _showServicesModal = true;
-        StateHasChanged();
-        await Task.CompletedTask;
+StateHasChanged();
+      await Task.CompletedTask;
     }
 
     // 로그아웃 메서드 추가
@@ -753,22 +490,12 @@ public partial class Chat : IDisposable
     // 예시 프롬프트 설정 메서드
     private async Task SetExamplePrompt(string prompt)
     {
-        if (!_hasApiKey)
-        {
-            await HandleLoginAsync();
-            return;
-        }
-
-        _userInput = prompt;
-        StateHasChanged();
-        
-        // 바로 메시지 전송
-        await SendMessage();
+      // ...existing code...
     }
 
     // 입력 내용이 변경될 때 호출되는 메서드
     private async Task OnInputChange(ChangeEventArgs e)
-    {
+ {
         var newValue = e.Value?.ToString() ?? string.Empty;
 
         // 최대 길이를 초과하는 경우 잘라내기
@@ -783,68 +510,7 @@ public partial class Chat : IDisposable
 
     private async Task SendMessage()
     {
-        if (!_hasApiKey)
-        {
-            await HandleLoginAsync();
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_userInput) || _isStreaming)
-            return;
-
-        var userMessage = new ChatMessageModel { Content = _userInput, IsUser = true };
-        _messages.Add(userMessage);
-
-        var input = _userInput;
-        _userInput = string.Empty;
-        _isStreaming = true;
-        _currentStreamedMessage = string.Empty;
-        
-        // 새로운 스트리밍 작업을 위한 CancellationTokenSource 생성
-        _streamingCancellationTokenSource?.Cancel();
-        _streamingCancellationTokenSource = new CancellationTokenSource();
-        
-        StateHasChanged();
-
-        try
-        {
-            if (_client == null)
-                throw new InvalidOperationException("Client is not initialized.");
-
-            // 스트리밍 시작 시 스마트 스크롤 (사용자가 맨 아래에 있으면 스크롤)
-            await SafeInvokeJSAsync("smartScrollToBottom", "messages");
-
-            await foreach (var chunk in ChatService.SendMessageStreamingAsync(_client, input, _sessionId, _streamingCancellationTokenSource.Token))
-            {
-                // 취소가 요청되었는지 확인
-                _streamingCancellationTokenSource.Token.ThrowIfCancellationRequested();
-                
-                _currentStreamedMessage += chunk;
-                StateHasChanged();
-                await Task.Delay(10); // 자연스러운 타이핑 효과
-            }
-
-            _messages.Add(new ChatMessageModel { Content = _currentStreamedMessage, IsUser = false });
-        }
-        catch (OperationCanceledException)
-        {
-            // 스트리밍이 취소된 경우 - 오류 메시지 없이 조용히 처리
-            Console.WriteLine("스트리밍 작업이 취소되었습니다.");
-        }
-        catch (Exception ex)
-        {
-            _messages.Add(new ChatMessageModel
-            {
-                Content = $"죄송합니다. 오류가 발생했습니다: {ex.Message}",
-                IsUser = false
-            });
-        }
-        finally
-        {
-            _isStreaming = false;
-            _currentStreamedMessage = string.Empty;
-            StateHasChanged();
-        }
+      // ...existing code...
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -909,25 +575,22 @@ public partial class Chat : IDisposable
         // 이벤트 구독 해제
         SandboxService.ShowWsbDownloadGuideRequested -= OnShowWsbDownloadGuideRequested;
         ChatService.ProcessingStatusChanged -= OnProcessingStatusChanged;
-        
+  
         // 스트리밍 작업 취소 및 정리
-        _streamingCancellationTokenSource?.Cancel();
+_streamingCancellationTokenSource?.Cancel();
         _streamingCancellationTokenSource?.Dispose();
 
         // beforeunload 핸들러 정리
         try
         {
             JSRuntime.InvokeVoidAsync("cleanupBeforeUnloadHandler");
-        }
-        catch
+  }
+   catch
         {
-            // Disposal 중 오류는 무시
-        }
+          // Disposal 중 오류는 무시
+ }
 
-        // 타이머 정리
-        _updateCheckTimer?.Dispose();
-
-        dotNetHelper?.Dispose();
+     dotNetHelper?.Dispose();
     }
 
     private async Task ResetConversationAsync()
@@ -968,15 +631,15 @@ public partial class Chat : IDisposable
     // 대화 액션 드롭다운 토글
     private void ToggleConversationActionsDropdown()
     {
-        _showConversationActionsDropdown = !_showConversationActionsDropdown;
-        StateHasChanged();
+     _showConversationActionsDropdown = !_showConversationActionsDropdown;
+     StateHasChanged();
     }
     
     // 메뉴 드롭다운 토글
     private void ToggleMenuDropdown()
     {
-        _showMenuDropdown = !_showMenuDropdown;
-        StateHasChanged();
+    _showMenuDropdown = !_showMenuDropdown;
+    StateHasChanged();
     }
 
     // 드롭다운에서 인쇄 후 숨기기
@@ -996,8 +659,8 @@ public partial class Chat : IDisposable
     }
 
     // 드롭다운에서 공유 후 숨기기
-    private async Task ShareAndHideDropdown()
-    {
+ private async Task ShareAndHideDropdown()
+  {
         await ShareConversationAsync();
         _showMenuDropdown = false;
         StateHasChanged();
@@ -1028,7 +691,7 @@ public partial class Chat : IDisposable
         await Logout();
     }
 
-    // 대화 내용 인쇄 메서드 - confirm을 좀 더 부드러운 알림으로 변경
+    // 대화 내용 인쇄 메서드 - confirm을 좀 더 부드러운 알림로 변경
     private async Task PrintConversationAsync()
     {
         if (!_messages.Any())
@@ -1091,7 +754,7 @@ public partial class Chat : IDisposable
 
     // 대화 내용 공유 - alert를 토스트로 변경
     private async Task ShareConversationAsync()
-    {
+ {
         if (!_messages.Any())
         {
             await SafeInvokeJSAsync("showToast", "공유할 대화 내용이 없습니다.", "info");
@@ -1253,5 +916,24 @@ public partial class Chat : IDisposable
     private bool IsCopied(int messageIndex)
     {
         return _copiedStates.TryGetValue(messageIndex, out var isCopied) && isCopied;
+    }
+
+    // 결과를 반환하는 안전한 JavaScript 호출
+    private async Task<T?> SafeInvokeJSWithResultAsync<T>(string identifier, params object[] args)
+ {
+        try
+        {
+    return await JSRuntime.InvokeAsync<T>(identifier, args);
+     }
+      catch (JSException ex) when (ex.Message.Contains("undefined"))
+        {
+      Console.WriteLine($"JavaScript 함수 '{identifier}'가 정의되지 않음: {ex.Message}");
+    return default;
+   }
+        catch (Exception ex)
+   {
+            Console.WriteLine($"JavaScript 호출 실패 '{identifier}': {ex.Message}");
+        return default;
+        }
     }
 }
