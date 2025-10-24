@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "J0b91D05",
+  "version": "PTT1l+B0",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -14,7 +14,7 @@ self.assetsManifest = {
       "url": "PWA-ICONS-GUIDE.md"
     },
     {
-      "hash": "sha256-1IZ7LljFojxEtuui4sSVjNruHS7Gilql7b7jVbSCpd0=",
+      "hash": "sha256-IlD+oxDQy7mGJm4kc5/SRyihRIaclwXrr5jGuYvgebg=",
       "url": "TableClothLite.styles.css"
     },
     {
@@ -62,11 +62,11 @@ self.assetsManifest = {
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-KKUZuXaKqtTuL12uije1HPgO4XAfMHQtOAd7CHaleP0=",
+      "hash": "sha256-ZFB3nB5KL0T2zb5WK9AqTBozylG0zujzDvZybVNT1ys=",
       "url": "index.html"
     },
     {
-      "hash": "sha256-aIoDGefaR2k2vcFFxQeNk/kiKpZmicu0KgS8nnXSlHc=",
+      "hash": "sha256-NRAa6W0vebprliRFU5S+2l9FzPkacS01DifiudYGKFQ=",
       "url": "js/app.js"
     },
     {
