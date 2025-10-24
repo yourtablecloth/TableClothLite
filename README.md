@@ -67,8 +67,8 @@ src/
 
 ### 개발 환경 설정
 
-1. **.NET 9 SDK 설치**
-   - [https://dotnet.microsoft.com/download/dotnet/9.0](https://dotnet.microsoft.com/download/dotnet/9.0)
+1. **.NET 10 SDK 설치**
+   - [https://dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 2. **소스 코드 클론**
    ```bash

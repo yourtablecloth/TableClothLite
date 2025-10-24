@@ -14,7 +14,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.x"
+          dotnet-version: "10.x"
 
       - name: Publish Installer Project
         run: |
@@ -37,7 +37,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.x"
+          dotnet-version: "10.x"
 
       - name: Publish Blazor Project
         run: dotnet publish ./src/TableClothLite/TableClothLite.csproj -c Release -o release --nologo
@@ -50,7 +50,7 @@ jobs:
 
   deploy-to-github-pages:
     runs-on: ubuntu-latest
-    needs: [build-installer, build-blazor] # µÎ ÀÛ¾÷ÀÌ ¸ğµÎ ³¡³­ ÈÄ ½ÇÇà
+    needs: [build-installer, build-blazor] # ë‘ ì‘ì—…ì´ ëª¨ë‘ ëë‚œ í›„ ì‹¤í–‰
     steps:
       - uses: actions/checkout@v4
 
