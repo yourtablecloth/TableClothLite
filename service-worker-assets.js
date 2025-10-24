@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "PTT1l+B0",
+  "version": "WWxoxFd/",
   "assets": [
     {
       "hash": "sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
@@ -8,10 +8,6 @@ self.assetsManifest = {
     {
       "hash": "sha256-Na6CFBNlQ4ZciMeS87cK2F+oZYWqnb9r0DnvC8t7olM=",
       "url": "404.html"
-    },
-    {
-      "hash": "sha256-qcRVQXdJpbEfGnOMpwrQPm8dszwSxeC+TSfsLGzXgkM=",
-      "url": "PWA-ICONS-GUIDE.md"
     },
     {
       "hash": "sha256-IlD+oxDQy7mGJm4kc5/SRyihRIaclwXrr5jGuYvgebg=",
