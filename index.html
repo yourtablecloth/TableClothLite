@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>식탁보 AI</title>
     <base href="/" />
-    
+
     <!-- PWA 메타 태그 -->
     <meta name="description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
     <meta name="keywords" content="식탁보, AI, 챗봇, Windows Sandbox, PWA, 오픈라우터" />
@@ -22,10 +22,10 @@
     <meta name="msapplication-TileColor" content="#03173d" />
     <meta name="msapplication-tap-highlight" content="no" />
     <meta name="format-detection" content="telephone=no" />
-    
+
     <!-- iOS 스플래시 스크린 (선택적) -->
     <link rel="apple-touch-startup-image" href="icon-512.png" />
-    
+
     <!-- Open Graph 메타 태그 -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="식탁보 AI" />
@@ -33,20 +33,20 @@
     <meta property="og:url" content="https://yourtablecloth.app/" />
     <meta property="og:image" content="https://yourtablecloth.app/icon-512.png" />
     <meta property="og:site_name" content="식탁보 AI" />
-    
+
     <!-- Twitter Card 메타 태그 -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="식탁보 AI" />
     <meta name="twitter:description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
     <meta name="twitter:image" content="https://yourtablecloth.app/icon-512.png" />
-    
+
     <!-- 테마 초기 로딩 스크립트 (FOUC 방지) -->
     <script>
-        (function() {
+        (function () {
             const savedTheme = localStorage.getItem('theme-preference') || 'Auto';
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-            
+
             // 시스템 테마 상세 정보
             const systemThemeInfo = {
                 mediaQuerySupported: !!window.matchMedia,
@@ -57,10 +57,10 @@
                 platform: getPlatform(),
                 currentTime: new Date().toLocaleString()
             };
-            
+
             let shouldApplyDark = false;
             let reason = '';
-            
+
             if (savedTheme === 'Dark') {
                 shouldApplyDark = true;
                 reason = '사용자가 다크 모드를 선택함';
@@ -69,18 +69,18 @@
                 reason = '사용자가 라이트 모드를 선택함';
             } else if (savedTheme === 'Auto') {
                 shouldApplyDark = prefersDark;
-                reason = prefersDark ? 
-                    '자동 모드: 시스템에서 다크 모드를 선호함' : 
+                reason = prefersDark ?
+                    '자동 모드: 시스템에서 다크 모드를 선호함' :
                     '자동 모드: 시스템에서 라이트 모드를 선호함 (또는 선호도 없음)';
             }
-            
+
             console.log('🎨 테마 초기 로딩 상세 정보:', {
                 savedTheme,
                 shouldApplyDark,
                 reason,
                 systemInfo: systemThemeInfo
             });
-            
+
             // 플랫폼 감지 함수
             function getPlatform() {
                 const ua = navigator.userAgent;
@@ -91,7 +91,7 @@
                 if (ua.includes('Linux')) return 'Linux';
                 return 'Unknown';
             }
-            
+
             if (shouldApplyDark) {
                 document.documentElement.classList.add('dark-theme');
                 document.documentElement.classList.remove('light-theme');
@@ -101,7 +101,7 @@
                 document.documentElement.classList.remove('dark-theme');
                 console.log('✅ 라이트 테마 클래스 적용');
             }
-            
+
             // 적용된 클래스와 CSS 변수 확인
             setTimeout(() => {
                 console.log('📋 HTML 클래스 목록:', document.documentElement.className);
@@ -111,7 +111,7 @@
                     '--primary-text': computedStyle.getPropertyValue('--primary-text').trim(),
                     '--accent-color': computedStyle.getPropertyValue('--accent-color').trim()
                 });
-                
+
                 // 시스템 테마 변경 감지 설정
                 if (window.matchMedia) {
                     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -125,29 +125,50 @@
             }, 100);
         })();
     </script>
-    
+
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    
+
     <!-- PWA 매니페스트 -->
     <link href="manifest.webmanifest" rel="manifest" />
-    
+
     <!-- Apple 터치 아이콘 -->
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    
+
     <!-- Favicon 다양한 크기 -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
-    
+
     <!-- TODO: MSBuild로 이전 검토 -->
     <link href="https://yourtablecloth.app/TableClothCatalog/Catalog.xml" rel="prefetch" />
     <link href="TableClothLite.styles.css" rel="stylesheet" />
-    
+
     <!-- HTML만 캐시 방지 - 리소스는 조건부 캐시 허용 -->
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
+
+    <link href="_framework/dotnet.hgrpccefmh.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-v8zn4E6dy6axL8hKxv0+oW4FZQAQsPrKnYuzcj1knNk=" />
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.0o6sltz4v8.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.hgrpccefmh.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.ki06310okv.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.580eknzmmv.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.0o6sltz4v8.js": "sha256-QPblb0B3n+m0u11HG4nhpAiOn39aNT2Jm/OQ+6wpU4s=",
+    "./_framework/blazor.webassembly.js": "sha256-QPblb0B3n+m0u11HG4nhpAiOn39aNT2Jm/OQ+6wpU4s=",
+    "./_framework/dotnet.hgrpccefmh.js": "sha256-v8zn4E6dy6axL8hKxv0+oW4FZQAQsPrKnYuzcj1knNk=",
+    "./_framework/dotnet.js": "sha256-v8zn4E6dy6axL8hKxv0+oW4FZQAQsPrKnYuzcj1knNk=",
+    "./_framework/dotnet.native.js": "sha256-5DC+ewufH06dHFvNe2ShXJ4rJ2xXTbIwIok5p1WtB8o=",
+    "./_framework/dotnet.native.ki06310okv.js": "sha256-5DC+ewufH06dHFvNe2ShXJ4rJ2xXTbIwIok5p1WtB8o=",
+    "./_framework/dotnet.runtime.580eknzmmv.js": "sha256-pfhJg2MOkVUy58SVr89By9FVqxss2F2M68vNi5p7Yc0=",
+    "./_framework/dotnet.runtime.js": "sha256-pfhJg2MOkVUy58SVr89By9FVqxss2F2M68vNi5p7Yc0="
+  }
+}</script>
 </head>
 
 <body>
@@ -339,7 +360,7 @@
         })();
     </script>
 
-    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_framework/blazor.webassembly.0o6sltz4v8.js"></script>
     <script>
         // Service Worker 등록 - 포커스 빼앗김 없는 업데이트 처리
         if ('serviceWorker' in navigator) {
