@@ -14,7 +14,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.x"
+          dotnet-version: "10.0.100-rc.1.25451.107" # 10.x 버전으로 추후 변경
 
       - name: Publish Installer Project
         run: |
@@ -37,7 +37,7 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.x"
+          dotnet-version: "10.0.100-rc.1.25451.107" # 10.x 버전으로 추후 변경
 
       - name: Publish Blazor Project
         run: dotnet publish ./src/TableClothLite/TableClothLite.csproj -c Release -o release --nologo
