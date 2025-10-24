@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>식탁보 AI</title>
     <base href="/" />
-    
+
     <!-- PWA 메타 태그 -->
     <meta name="description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
     <meta name="keywords" content="식탁보, AI, 챗봇, Windows Sandbox, PWA, 오픈라우터" />
@@ -22,10 +22,10 @@
     <meta name="msapplication-TileColor" content="#03173d" />
     <meta name="msapplication-tap-highlight" content="no" />
     <meta name="format-detection" content="telephone=no" />
-    
+
     <!-- iOS 스플래시 스크린 (선택적) -->
     <link rel="apple-touch-startup-image" href="icon-512.png" />
-    
+
     <!-- Open Graph 메타 태그 -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="식탁보 AI" />
@@ -33,20 +33,20 @@
     <meta property="og:url" content="https://yourtablecloth.app/" />
     <meta property="og:image" content="https://yourtablecloth.app/icon-512.png" />
     <meta property="og:site_name" content="식탁보 AI" />
-    
+
     <!-- Twitter Card 메타 태그 -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="식탁보 AI" />
     <meta name="twitter:description" content="AI 챗봇과 Windows Sandbox 설정을 한 곳에서 관리하는 PWA 앱" />
     <meta name="twitter:image" content="https://yourtablecloth.app/icon-512.png" />
-    
+
     <!-- 테마 초기 로딩 스크립트 (FOUC 방지) -->
     <script>
-        (function() {
+        (function () {
             const savedTheme = localStorage.getItem('theme-preference') || 'Auto';
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-            
+
             // 시스템 테마 상세 정보
             const systemThemeInfo = {
                 mediaQuerySupported: !!window.matchMedia,
@@ -57,10 +57,10 @@
                 platform: getPlatform(),
                 currentTime: new Date().toLocaleString()
             };
-            
+
             let shouldApplyDark = false;
             let reason = '';
-            
+
             if (savedTheme === 'Dark') {
                 shouldApplyDark = true;
                 reason = '사용자가 다크 모드를 선택함';
@@ -69,18 +69,18 @@
                 reason = '사용자가 라이트 모드를 선택함';
             } else if (savedTheme === 'Auto') {
                 shouldApplyDark = prefersDark;
-                reason = prefersDark ? 
-                    '자동 모드: 시스템에서 다크 모드를 선호함' : 
+                reason = prefersDark ?
+                    '자동 모드: 시스템에서 다크 모드를 선호함' :
                     '자동 모드: 시스템에서 라이트 모드를 선호함 (또는 선호도 없음)';
             }
-            
+
             console.log('🎨 테마 초기 로딩 상세 정보:', {
                 savedTheme,
                 shouldApplyDark,
                 reason,
                 systemInfo: systemThemeInfo
             });
-            
+
             // 플랫폼 감지 함수
             function getPlatform() {
                 const ua = navigator.userAgent;
@@ -91,7 +91,7 @@
                 if (ua.includes('Linux')) return 'Linux';
                 return 'Unknown';
             }
-            
+
             if (shouldApplyDark) {
                 document.documentElement.classList.add('dark-theme');
                 document.documentElement.classList.remove('light-theme');
@@ -101,7 +101,7 @@
                 document.documentElement.classList.remove('dark-theme');
                 console.log('✅ 라이트 테마 클래스 적용');
             }
-            
+
             // 적용된 클래스와 CSS 변수 확인
             setTimeout(() => {
                 console.log('📋 HTML 클래스 목록:', document.documentElement.className);
@@ -111,7 +111,7 @@
                     '--primary-text': computedStyle.getPropertyValue('--primary-text').trim(),
                     '--accent-color': computedStyle.getPropertyValue('--accent-color').trim()
                 });
-                
+
                 // 시스템 테마 변경 감지 설정
                 if (window.matchMedia) {
                     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -125,29 +125,61 @@
             }, 100);
         })();
     </script>
-    
+
+    <link href="_framework/blazor.webassembly.0o6sltz4v8.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-QPblb0B3n+m0u11HG4nhpAiOn39aNT2Jm/OQ+6wpU4s=" />
+<link href="_framework/dotnet.7idukd38rr.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-37cmZ6jFYxpHuNLizdHz58zSECF40vLI+PClN7gVtyU=" />
+<link href="_framework/dotnet.native.98v1chuo8c.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-p1ska6aoeHyBLfhCjNMQKR6Jm+Is1DOrHR1eLsY/1LI=" />
+<link href="_framework/dotnet.runtime.fn94ls2wwa.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-JbGaPjn+PC/jQhB3fqsJ8NF8MR3lOr+q49kJVeHNWhU=" />
+<link href="js/app.ge6osqpu0z.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-aIoDGefaR2k2vcFFxQeNk/kiKpZmicu0KgS8nnXSlHc=" />
+<link href="js/theme.tw7zf59lva.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-M3onquopaB/1woJqHcVA/rQNGj0qc4ZUnTJsHP7IZRk=" />
+<link href="lib/bootstrap/dist/js/bootstrap.5d0yzkekv5.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-pxYvfpIYKWykWk7yekBNOAboswBij3inSe8amhnFWsc=" />
+<link href="lib/bootstrap/dist/js/bootstrap.bundle.85dgjsq755.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-dBY/6wSUpBmYIBqYBzucAkgxE4Z9db2VFPtGOIkyKfo=" />
+<link href="lib/bootstrap/dist/js/bootstrap.bundle.min.493y06b0oq.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw=" />
+<link href="lib/bootstrap/dist/js/bootstrap.esm.min.jj8uyg4cgr.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-QZdFT1ZNdly4rmgUBtXmXFS9BU1FTa+sPe6h794sFRQ=" />
+<link href="lib/bootstrap/dist/js/bootstrap.esm.q49sru06i7.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-OtBaHKCppSkTX5/zt39QCHgcxIjf916OdtBLOzZ9Hbk=" />
+<link href="lib/bootstrap/dist/js/bootstrap.min.63fj8s7r0e.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-3gQJhtmj7YnV1fmtbVcnAV6eI4ws0Tr48bVZCThtCGQ=" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    
+
     <!-- PWA 매니페스트 -->
     <link href="manifest.webmanifest" rel="manifest" />
-    
+
     <!-- Apple 터치 아이콘 -->
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    
+
     <!-- Favicon 다양한 크기 -->
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
-    
+
     <!-- TODO: MSBuild로 이전 검토 -->
     <link href="https://yourtablecloth.app/TableClothCatalog/Catalog.xml" rel="prefetch" />
     <link href="TableClothLite.styles.css" rel="stylesheet" />
-    
+
     <!-- HTML만 캐시 방지 - 리소스는 조건부 캐시 허용 -->
     <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
+
+    <script type="importmap">{
+  "imports": {
+    "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.0o6sltz4v8.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.7idukd38rr.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.98v1chuo8c.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.fn94ls2wwa.js"
+  },
+  "scopes": {},
+  "integrity": {
+    "./_framework/blazor.webassembly.0o6sltz4v8.js": "sha256-QPblb0B3n+m0u11HG4nhpAiOn39aNT2Jm/OQ+6wpU4s=",
+    "./_framework/blazor.webassembly.js": "sha256-QPblb0B3n+m0u11HG4nhpAiOn39aNT2Jm/OQ+6wpU4s=",
+    "./_framework/dotnet.7idukd38rr.js": "sha256-37cmZ6jFYxpHuNLizdHz58zSECF40vLI+PClN7gVtyU=",
+    "./_framework/dotnet.js": "sha256-37cmZ6jFYxpHuNLizdHz58zSECF40vLI+PClN7gVtyU=",
+    "./_framework/dotnet.native.98v1chuo8c.js": "sha256-p1ska6aoeHyBLfhCjNMQKR6Jm+Is1DOrHR1eLsY/1LI=",
+    "./_framework/dotnet.native.js": "sha256-p1ska6aoeHyBLfhCjNMQKR6Jm+Is1DOrHR1eLsY/1LI=",
+    "./_framework/dotnet.runtime.fn94ls2wwa.js": "sha256-JbGaPjn+PC/jQhB3fqsJ8NF8MR3lOr+q49kJVeHNWhU=",
+    "./_framework/dotnet.runtime.js": "sha256-JbGaPjn+PC/jQhB3fqsJ8NF8MR3lOr+q49kJVeHNWhU="
+  }
+}</script>
 </head>
 
 <body>
@@ -161,33 +193,33 @@
 
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // https://github.com/rafrex/spa-github-pages
-      // Copyright (c) 2016 Rafael Pedicini, licensed under the MIT License
-      // ----------------------------------------------------------------------
-      // This script checks to see if a redirect is present in the query string
-      // and converts it back into the correct url and adds it to the
-      // browser's history using window.history.replaceState(...),
-      // which won't cause the browser to attempt to load the new url.
-      // When the single page app is loaded further down in this file,
-      // the correct url will be waiting in the browser's history for
-      // the single page app to route accordingly.
-      (function(l) {
-        if (l.search) {
-          var q = {};
-          l.search.slice(1).split('&').forEach(function(v) {
-            var a = v.split('=');
-            q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
-          });
-          if (q.p !== undefined) {
-            window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + (q.p || '') +
-              (q.q ? ('?' + q.q) : '') +
-              l.hash
-            );
-          }
-        }
-      }(window.location))
+        // Single Page Apps for GitHub Pages
+        // https://github.com/rafrex/spa-github-pages
+        // Copyright (c) 2016 Rafael Pedicini, licensed under the MIT License
+        // ----------------------------------------------------------------------
+        // This script checks to see if a redirect is present in the query string
+        // and converts it back into the correct url and adds it to the
+        // browser's history using window.history.replaceState(...),
+        // which won't cause the browser to attempt to load the new url.
+        // When the single page app is loaded further down in this file,
+        // the correct url will be waiting in the browser's history for
+        // the single page app to route accordingly.
+        (function (l) {
+            if (l.search) {
+                var q = {};
+                l.search.slice(1).split('&').forEach(function (v) {
+                    var a = v.split('=');
+                    q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+                });
+                if (q.p !== undefined) {
+                    window.history.replaceState(null, null,
+                        l.pathname.slice(0, -1) + (q.p || '') +
+                        (q.q ? ('?' + q.q) : '') +
+                        l.hash
+                    );
+                }
+            }
+        }(window.location))
     </script>
 
     <div id="blazor-error-ui">
@@ -202,9 +234,9 @@
     <!-- 스마트 캐시 관리 스크립트 -->
     <script>
         // 스마트 캐시 무효화 - 변경된 리소스만 갱신
-        (function() {
+        (function () {
             const buildVersion = '2024.1.0'; // GitHub Actions에서 자동 업데이트
-            
+
             // 리소스 해시 체크를 위한 함수
             async function getResourceHash(url) {
                 try {
@@ -214,82 +246,82 @@
                     return '';
                 }
             }
-            
+
             // 캐시된 리소스 해시 저장/조회
             function getCachedHash(url) {
                 return localStorage.getItem(`hash_${url}`) || '';
             }
-            
+
             function setCachedHash(url, hash) {
                 localStorage.setItem(`hash_${url}`, hash);
             }
-            
+
             // 조건부 캐시 버스터 - 변경된 리소스만
             async function addSmartCacheBuster(element, attribute) {
                 const originalUrl = element.getAttribute(attribute);
                 if (!originalUrl || originalUrl.startsWith('http') || originalUrl.includes('?')) {
                     return;
                 }
-                
+
                 const currentHash = await getResourceHash(originalUrl);
                 const cachedHash = getCachedHash(originalUrl);
-                
+
                 // 해시가 다르거나 처음 로드시에만 버전 파라미터 추가
                 if (!cachedHash || currentHash !== cachedHash) {
                     const separator = originalUrl.includes('?') ? '&' : '?';
                     element.setAttribute(attribute, originalUrl + separator + 'v=' + buildVersion);
-                    
+
                     if (currentHash) {
                         setCachedHash(originalUrl, currentHash);
                     }
-                    
+
                     console.log(`캐시 갱신: ${originalUrl}`);
                 } else {
                     console.log(`캐시 유지: ${originalUrl}`);
                 }
             }
-            
+
             // DOM 로드 후 스마트 캐시 적용
-            document.addEventListener('DOMContentLoaded', async function() {
+            document.addEventListener('DOMContentLoaded', async function () {
                 const promises = [];
-                
+
                 // CSS 파일들 체크
                 document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
                     if (!link.href.startsWith('http')) {
                         promises.push(addSmartCacheBuster(link, 'href'));
                     }
                 });
-                
+
                 // JavaScript 파일들 체크
                 document.querySelectorAll('script[src]').forEach(script => {
                     if (!script.src.startsWith('http') && !script.src.includes('_framework/blazor.webassembly.js')) {
                         promises.push(addSmartCacheBuster(script, 'src'));
                     }
                 });
-                
+
                 await Promise.all(promises);
             });
-            
+
             // 버전 체크 - 앱 전체 버전만 확인
             let lastVersionCheck = Date.now();
-            document.addEventListener('visibilitychange', function() {
+            document.addEventListener('visibilitychange', function () {
                 if (!document.hidden && Date.now() - lastVersionCheck > 600000) { // 10분마다 체크로 빈도 줄임
                     lastVersionCheck = Date.now();
                     checkForUpdates();
                 }
             });
-            
+
             // 앱 버전 업데이트 확인
             async function checkForUpdates() {
                 try {
-                    const response = await fetch('/version.json?t=' + new Date().getTime(), { 
+                    const response = await fetch('/version.json?t=' + new Date().getTime(), {
                         cache: 'no-cache'
                     });
-                    
+
                     if (response.ok) {
                         const serverInfo = await response.json();
                         const localVersion = localStorage.getItem('app-version');
-                        
+
                         if (localVersion && serverInfo.version && localVersion !== serverInfo.version) {
                             // Blazor 컴포넌트의 OnNewVersionDetected 호출 (포커스 빼앗김 없음)
                             if (window.DotNet && window.dotNetHelper) {
@@ -299,7 +331,7 @@
                                 console.log('새 버전 감지됨:', serverInfo.version);
                             }
                         }
-                        
+
                         if (serverInfo.version) {
                             localStorage.setItem('app-version', serverInfo.version);
                         }
@@ -308,31 +340,31 @@
                     console.log('Version check failed:', error);
                 }
             }
-            
+
             // confirm 제거 - Blazor 컴포넌트에서 처리하도록 변경
             function showUpdateNotification(newVersion) {
                 // 더 이상 confirm 사용하지 않음
                 console.log('업데이트 알림을 Blazor 컴포넌트로 전달:', newVersion);
             }
-            
+
             // 스마트 새로고침 - 선택적 캐시 클리어
             function smartRefresh() {
                 // Service Worker 업데이트
                 if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                        for(let registration of registrations) {
+                    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                        for (let registration of registrations) {
                             registration.update();
                         }
                     });
                 }
-                
+
                 // 앱 버전만 클리어 (리소스 해시는 유지)
                 localStorage.removeItem('app-version');
-                
+
                 // 부드러운 새로고침
                 window.location.reload();
             }
-            
+
             // 전역 함수로 노출
             window.forceRefresh = smartRefresh;
             window.checkForUpdates = checkForUpdates;
@@ -340,28 +372,29 @@
     </script>
 
     <script src="_framework/blazor.webassembly.js"></script>
+    <script type='module' src="main.js"></script>
     <script>
         // Service Worker 등록 - 포커스 빼앗김 없는 업데이트 처리
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
-                .then(function(registration) {
+                .then(function (registration) {
                     console.log('ServiceWorker registration successful');
-                    
+
                     // 업데이트 감지
-                    registration.addEventListener('updatefound', function() {
+                    registration.addEventListener('updatefound', function () {
                         const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', function() {
+                        newWorker.addEventListener('statechange', function () {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // 백그라운드에서 조용히 업데이트 - confirm 제거
                                 console.log('새 Service Worker가 설치되었습니다.');
-                                
+
                                 // Blazor 컴포넌트로 알림 전달 (포커스 빼앗김 없음)
                                 if (window.DotNet && window.dotNetHelper) {
                                     const updateInfo = {
                                         type: 'serviceWorker',
                                         message: '앱이 백그라운드에서 업데이트되었습니다.'
                                     };
-                                    
+
                                     // 5초 후 부드러운 알림
                                     setTimeout(() => {
                                         window.dotNetHelper.invokeMethodAsync('OnNewVersionDetected', JSON.stringify(updateInfo));
@@ -373,13 +406,13 @@
                             }
                         });
                     });
-                    
+
                     // 주기적 업데이트 체크 (30분마다)
                     setInterval(() => {
                         registration.update();
                     }, 30 * 60 * 1000);
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     console.log('ServiceWorker registration failed: ', err);
                 });
         }
