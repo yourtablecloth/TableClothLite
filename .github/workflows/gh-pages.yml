@@ -50,7 +50,7 @@ jobs:
 
   deploy-to-github-pages:
     runs-on: ubuntu-latest
-    needs: [build-installer, build-blazor] # ë‘ ì‘ì—…ì´ ëª¨ë‘ ëë‚œ í›„ ì‹¤í–‰
+    needs: [build-installer, build-blazor] # µÎ ÀÛ¾÷ÀÌ ¸ğµÎ ³¡³­ ÈÄ ½ÇÇà
     steps:
       - uses: actions/checkout@v4
 

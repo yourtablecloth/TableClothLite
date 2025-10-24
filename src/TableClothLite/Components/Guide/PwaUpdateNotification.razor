@@ -1,0 +1,201 @@
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@if (showUpdateNotification)
+{
+    <div class="update-notification" @onclick:stopPropagation="true">
+        <div class="update-content">
+            <div class="update-icon">🔄</div>
+            <div class="update-text">
+                <h4>새 버전이 있습니다!</h4>
+                <p>@updateMessage</p>
+            </div>
+            <div class="update-actions">
+                <button class="btn-update" @onclick="UpdateNow" type="button">
+                    지금 업데이트
+                </button>
+                <button class="btn-later" @onclick="UpdateLater" type="button">
+                    나중에
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showUpdateNotification = false;
+    private string updateMessage = string.Empty;
+    private DotNetObjectReference<PwaUpdateNotification>? dotNetHelper;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                dotNetHelper = DotNetObjectReference.Create(this);
+                // JavaScript에서 접근 가능한 전역 객체 생성
+                await JSRuntime.InvokeVoidAsync("eval", 
+                    "window.pwaUpdateHelper = window.pwaUpdateHelper || {}.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"PWA Update Notification 초기화 오류: {ex.Message}");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task ShowUpdateNotification(string message)
+    {
+        updateMessage = message;
+        showUpdateNotification = true;
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private async Task UpdateNow()
+    {
+        showUpdateNotification = false;
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("window.forceRefresh");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"업데이트 실패: {ex.Message}");
+            // fallback: 페이지 새로고침
+            await JSRuntime.InvokeVoidAsync("location.reload");
+        }
+    }
+
+    private void UpdateLater()
+    {
+        showUpdateNotification = false;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        dotNetHelper?.Dispose();
+        await Task.CompletedTask;
+    }
+}
+
+<style>
+    .update-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 400px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .update-content {
+        background: var(--card-bg, white);
+        color: var(--primary-text, #2c3e50);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        border: 2px solid var(--accent-color, #007bff);
+    }
+
+    .update-icon {
+        font-size: 32px;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .update-text h4 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .update-text p {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        color: var(--secondary-text, #7f8c8d);
+        line-height: 1.5;
+    }
+
+    .update-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .update-actions button {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .btn-update {
+        background: var(--accent-color, #007bff);
+        color: white;
+    }
+
+    .btn-update:hover {
+        background: var(--accent-hover, #0056b3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-later {
+        background: var(--secondary-bg, #e9ecef);
+        color: var(--primary-text, #2c3e50);
+    }
+
+    .btn-later:hover {
+        background: var(--hover-bg, #dee2e6);
+    }
+
+    @@media (max-width: 768px) {
+        .update-notification {
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+
+        .update-content {
+            padding: 16px;
+        }
+
+        .update-text h4 {
+            font-size: 16px;
+        }
+
+        .update-text p {
+            font-size: 13px;
+        }
+
+        .update-actions button {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+    }
+
+    /* 다크 테마 */
+    .dark-theme .update-content {
+        background: var(--card-bg, #1e1e1e);
+        color: var(--primary-text, #e0e0e0);
+    }
+</style>
