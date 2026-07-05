@@ -26,6 +26,7 @@ builder.Services.AddSingleton<SettingsService>();
 
 builder.Services.AddScoped<FileDownloadService>();
 builder.Services.AddScoped<SandboxService>();
+builder.Services.AddScoped<WebMcpInteropService>();
 
 builder.Services.AddScoped(sp =>
 {

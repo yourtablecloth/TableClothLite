@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using TableClothLite.Shared.Models;
 using TableClothLite.Services;
 using TableClothLite.Shared.Services;
@@ -30,6 +31,56 @@ public sealed class SandboxService
 
     public Task LoadCatalogAsync()
         => _catalogService.LoadCatalogDocumentAsync(Services);
+
+    private readonly SemaphoreSlim _catalogLock = new(1, 1);
+    private bool _catalogLoaded;
+
+    /// <summary>
+    /// 카탈로그가 로드되지 않았으면 한 번만 로드한다(중복 로드 방지). 이미 로드되어 있으면 즉시 반환.
+    /// </summary>
+    public async Task EnsureCatalogLoadedAsync()
+    {
+        if (_catalogLoaded || Services.Count > 0)
+        {
+            _catalogLoaded = true;
+            return;
+        }
+
+        await _catalogLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (!_catalogLoaded && Services.Count == 0)
+                await LoadCatalogAsync().ConfigureAwait(false);
+            _catalogLoaded = true;
+        }
+        finally
+        {
+            _catalogLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// 무설치 .wsb 문서를 만들어 (파일명, XML 문자열) 로 반환한다. 모달/다운로드 흐름 없이 직접 사용.
+    /// serviceInfo 가 null 이거나 ServiceId 가 비면 일반 런처.
+    /// </summary>
+    public async Task<(string FileName, string Xml)> BuildWsbAsync(
+        ServiceInfo? serviceInfo, CancellationToken cancellationToken = default)
+    {
+        var doc = await _sandboxComposerService
+            .CreateSandboxDocumentAsync(this, serviceInfo, cancellationToken)
+            .ConfigureAwait(false);
+
+        using var ms = new MemoryStream();
+        doc.Save(ms);
+        // UTF-8 BOM 이 앞에 붙는 경우 제거(있으면).
+        var xml = Encoding.UTF8.GetString(ms.ToArray()).TrimStart('﻿');
+
+        var fileName = serviceInfo != null && !string.IsNullOrWhiteSpace(serviceInfo.ServiceId)
+            ? $"{serviceInfo.ServiceId}.wsb"
+            : "TableCloth-NoInstall.wsb";
+
+        return (fileName, xml);
+    }
 
     // 환경 감지 결과를 저장하는 속성들
     public bool IsWindows { get; private set; } = true;

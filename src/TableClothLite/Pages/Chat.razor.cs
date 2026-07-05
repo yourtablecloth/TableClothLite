@@ -8,6 +8,7 @@ namespace TableClothLite.Pages;
 public partial class Chat : IDisposable
 {
     [Inject] private SandboxService SandboxService { get; set; } = default!;
+    [Inject] private WebMcpInteropService WebMcp { get; set; } = default!;
 
     private DotNetObjectReference<Chat>? dotNetHelper;
 
@@ -82,6 +83,9 @@ public partial class Chat : IDisposable
             await SafeInvokeJSAsync("Helpers.setDotNetHelper", dotNetHelper);
 
             await CheckAppVersionAsync();
+
+            // WebMCP 도구 등록 (지원 브라우저에서만, 미지원 시 조용히 폴백)
+            await WebMcp.InitializeAsync();
         }
     }
 
