@@ -1,6 +1,6 @@
 {
-  "name": "식탁보 AI",
-  "short_name": "식탁보 AI",
+  "name": "무설치 식탁보",
+  "short_name": "무설치 식탁보",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
@@ -59,20 +59,7 @@
       "name": "서비스 목록",
       "short_name": "서비스",
       "description": "Windows Sandbox 서비스 목록 보기",
-      "url": "/services",
-      "icons": [
-        {
-          "src": "icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "AI 채팅",
-      "short_name": "채팅",
-      "description": "AI 챗봇과 대화하기",
-      "url": "/chat",
+      "url": "/",
       "icons": [
         {
           "src": "icon-192.png",
