@@ -675,7 +675,7 @@
             await Task.Delay(100);
             
             // WSB 파일 생성 및 다운로드 (또는 가이드 모달 표시)
-            await Model.GenerateSandboxDocumentAsync(string.Empty, service, StateHasChanged);
+            await Model.GenerateSandboxDocumentAsync(service, StateHasChanged);
         }
         catch (Exception ex)
         {

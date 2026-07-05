@@ -9,7 +9,6 @@ public sealed partial class SandboxSettingsModel
     public bool EnableVideoInput { get; set; } = true;
     public bool EnablePrinterRedirection { get; set; } = true;
     public bool EnableClipboardRedirection { get; set; } = true;
-    public string OpenRouterModel { get; set; } = Constants.DefaultOpenRouterModel;
 
     public SandboxConfig ToSandboxConfig()
     {
@@ -20,7 +19,6 @@ public sealed partial class SandboxSettingsModel
             EnableVideoInput = EnableVideoInput,
             EnablePrinterRedirection = EnablePrinterRedirection,
             EnableClipboardRedirection = EnableClipboardRedirection,
-            OpenRouterModel = OpenRouterModel
         };
     }
 
@@ -31,6 +29,5 @@ public sealed partial class SandboxSettingsModel
         EnableVideoInput = config.EnableVideoInput;
         EnablePrinterRedirection = config.EnablePrinterRedirection;
         EnableClipboardRedirection = config.EnableClipboardRedirection;
-        OpenRouterModel = config.OpenRouterModel;
     }
 }

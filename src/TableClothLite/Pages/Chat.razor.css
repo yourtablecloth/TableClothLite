@@ -754,3 +754,194 @@
     color: var(--secondary-text);
     font-style: italic;
 }
+
+/* ===== 무설치 랜딩 ===== */
+.header-action-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    background: var(--primary-bg);
+    color: var(--primary-text);
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+    .header-action-btn:hover {
+        background: var(--secondary-bg);
+        border-color: var(--accent-color);
+    }
+
+.landing-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    background: var(--primary-bg);
+    padding: 32px 24px;
+    padding-left: max(24px, calc(var(--safe-area-inset-left) + 24px));
+    padding-right: max(24px, calc(var(--safe-area-inset-right) + 24px));
+    padding-bottom: max(32px, calc(var(--safe-area-inset-bottom) + 32px));
+}
+
+.landing-content {
+    max-width: 680px;
+    width: 100%;
+    text-align: center;
+}
+
+.landing-content h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: var(--primary-text);
+}
+
+/* AI 복귀 공지 배너 */
+.ai-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    padding: 16px 18px;
+    margin: 24px 0;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 12px;
+}
+
+.ai-notice-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.ai-notice-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--secondary-text);
+}
+
+    .ai-notice-text strong {
+        display: block;
+        color: var(--primary-text);
+        margin-bottom: 2px;
+    }
+
+/* 주요 동작 카드 */
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 8px 0 28px;
+}
+
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    text-align: left;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--secondary-bg);
+    color: var(--primary-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .action-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent-color);
+        box-shadow: 0 6px 18px var(--shadow-color);
+    }
+
+    .action-card.primary {
+        background: var(--accent-color);
+        border-color: var(--accent-color);
+        color: #fff;
+    }
+
+.action-icon {
+    font-size: 26px;
+}
+
+.action-title {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.action-desc {
+    font-size: 13px;
+    opacity: 0.85;
+    line-height: 1.5;
+}
+
+/* 사용 방법 단계 */
+.how-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    margin: 8px auto 24px;
+    max-width: 460px;
+}
+
+.how-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--primary-text);
+}
+
+.how-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.os-warning {
+    padding: 14px 16px;
+    margin: 4px 0 16px;
+    border-radius: 10px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: var(--primary-text);
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+}
+
+.disclaimer-note {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--secondary-text);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .landing-content h1 {
+        font-size: 24px;
+    }
+
+    .action-cards {
+        grid-template-columns: 1fr;
+    }
+}

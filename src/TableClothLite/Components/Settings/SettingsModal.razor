@@ -13,17 +13,12 @@
         
         <!-- 탭 네비게이션 -->
         <div class="tab-navigation">
-            <button class="tab-button @(_activeTab == "theme" ? "active" : "")" 
+            <button class="tab-button @(_activeTab == "theme" ? "active" : "")"
                     @onclick="@(() => SetActiveTab("theme"))" type="button">
                 <span class="tab-icon">🎨</span>
                 <span class="tab-label">테마</span>
             </button>
-            <button class="tab-button @(_activeTab == "ai" ? "active" : "")" 
-                    @onclick="@(() => SetActiveTab("ai"))" type="button">
-                <span class="tab-icon">🤖</span>
-                <span class="tab-label">AI 모델</span>
-            </button>
-            <button class="tab-button @(_activeTab == "sandbox" ? "active" : "")" 
+            <button class="tab-button @(_activeTab == "sandbox" ? "active" : "")"
                     @onclick="@(() => SetActiveTab("sandbox"))" type="button">
                 <span class="tab-icon">🪟</span>
                 <span class="tab-label">Sandbox</span>
@@ -88,46 +83,6 @@
                 </div>
             </div>
 
-            <!-- AI 모델 설정 탭 -->
-            <div class="tab-content @(_activeTab == "ai" ? "active" : "")">
-                <div class="settings-section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span class="section-icon">🤖</span>
-                            <h4>AI 모델 설정</h4>
-                        </div>
-                        <div class="section-description">
-                            채팅에 사용할 OpenRouter AI 모델을 선택합니다.
-                        </div>
-                    </div>
-                    
-                    <div class="setting-card">
-                        <div class="setting-item model-selection">
-                            <div class="setting-info">
-                                <div class="setting-name">AI 모델</div>
-                                <div class="setting-description">대화에 사용할 AI 모델을 선택하세요</div>
-                            </div>
-                            <div class="model-selector">
-                                <select class="model-select" @bind="SettingsModel.OpenRouterModel">
-                                    <optgroup label="무료 모델">
-                                        <option value="openai/gpt-oss-20b:free">openai/gpt-oss-20b:free</option>
-                                        <option value="meta-llama/llama-3.1-8b-instruct:free">meta-llama/llama-3.1-8b-instruct:free</option>
-                                    </optgroup>
-                                    <optgroup label="다른 모델">
-                                        <option value="anthropic/claude-sonnet-4.5">anthropic/claude-sonnet-4.5</option>
-                                        <option value="openai/gpt-5-mini">openai/gpt-5-mini</option>
-                                        <option value="google/gemini-2.5-flash">google/gemini-2.5-flash</option>
-                                    </optgroup>
-                                </select>
-                                <div class="model-info">
-                                    <span class="model-note">💡 모델 변경 후 새로운 채팅에서 적용됩니다</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Windows Sandbox 설정 탭 -->
             <div class="tab-content @(_activeTab == "sandbox" ? "active" : "")">
                 <div class="settings-section">
@@ -143,20 +98,6 @@
                     
                     <div class="setting-card">
                         <div class="settings-grid">
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <div class="setting-name">
-                                        <span class="setting-icon">🌐</span>
-                                        네트워크 사용
-                                    </div>
-                                    <div class="setting-description">인터넷 연결을 허용합니다</div>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" @bind="SettingsModel.EnableNetworking" />
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            
                             <div class="setting-item">
                                 <div class="setting-info">
                                     <div class="setting-name">

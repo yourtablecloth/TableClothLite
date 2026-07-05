@@ -40,7 +40,6 @@ public sealed class SandboxService
     private MemoryStream? _pendingDownloadStream;
     private string? _pendingFileName;
     private ServiceInfo? _pendingServiceInfo;
-    private string? _pendingTargetUrl;
 
     /// <summary>
     /// 대기 중인 서비스 정보를 가져옵니다.
@@ -82,24 +81,40 @@ public sealed class SandboxService
         }
     }
 
+    /// <summary>
+    /// 특정 서비스(사이트)를 사전 선택한 무설치 .wsb 생성을 준비하고 가이드 모달을 띄웁니다.
+    /// </summary>
     public Task GenerateSandboxDocumentAsync(
-        string targetUrl,
         ServiceInfo serviceInfo,
         Action? onStateChanged = null,
         CancellationToken cancellationToken = default)
     {
-        // 항상 가이드 모달 표시
         _logger.LogInformation("WSB 다운로드 가이드 모달 표시 - 서비스: {ServiceName}", serviceInfo.DisplayName);
 
-        // 서비스 정보 저장
-        _pendingFileName = $"{serviceInfo.ServiceId}.wsb";
+        _pendingFileName = string.IsNullOrWhiteSpace(serviceInfo.ServiceId)
+            ? "TableCloth-NoInstall.wsb"
+            : $"{serviceInfo.ServiceId}.wsb";
         _pendingServiceInfo = serviceInfo;
-        _pendingTargetUrl = targetUrl;
 
         // 이벤트 발생으로 모달 표시 요청
         ShowWsbDownloadGuideRequested?.Invoke(this, serviceInfo);
-        
+
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 사이트 사전 선택 없이 일반 런처용 무설치 .wsb 생성을 준비합니다.
+    /// </summary>
+    public Task GenerateGeneralLauncherAsync(Action? onStateChanged = null)
+    {
+        var general = new ServiceInfo(
+            ServiceId: string.Empty,
+            DisplayName: "무설치 식탁보 (일반 런처)",
+            Category: "other",
+            Url: string.Empty,
+            CompatNotes: string.Empty);
+
+        return GenerateSandboxDocumentAsync(general, onStateChanged);
     }
 
     /// <summary>
@@ -110,20 +125,20 @@ public sealed class SandboxService
         if (_pendingServiceInfo != null && _pendingFileName != null)
         {
             _logger.LogInformation("사용자가 WSB 파일 다운로드를 선택했습니다.");
-            
+
             try
             {
                 // 파일을 생성합니다
                 var doc = await _sandboxComposerService.CreateSandboxDocumentAsync(
-                    this, _pendingTargetUrl ?? string.Empty, _pendingServiceInfo, cancellationToken).ConfigureAwait(false);
-                
+                    this, _pendingServiceInfo, cancellationToken).ConfigureAwait(false);
+
                 _pendingDownloadStream = new MemoryStream();
                 doc.Save(_pendingDownloadStream);
                 _pendingDownloadStream.Position = 0L;
-                
+
                 await _fileDownloadService.DownloadFileAsync(
-                    _pendingDownloadStream, 
-                    _pendingFileName, 
+                    _pendingDownloadStream,
+                    _pendingFileName,
                     "application/xml",
                     cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -132,7 +147,6 @@ public sealed class SandboxService
                 _pendingDownloadStream = null;
                 _pendingFileName = null;
                 _pendingServiceInfo = null;
-                _pendingTargetUrl = null;
             }
             catch (Exception ex)
             {
@@ -152,7 +166,6 @@ public sealed class SandboxService
         _pendingDownloadStream = null;
         _pendingFileName = null;
         _pendingServiceInfo = null;
-        _pendingTargetUrl = null;
     }
 
     public string CalculateAbsoluteUrl(string relativePath)

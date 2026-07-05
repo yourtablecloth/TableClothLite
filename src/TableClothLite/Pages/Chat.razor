@@ -1,32 +1,20 @@
 @page "/"
 @page "/Chat"
 
-@using System.Text
-@using AngleSharp.Html.Parser
-@using OpenAI
-@using System.Xml
-@using System.Net
 @using TableClothLite.Components.Catalog
 @using TableClothLite.Components.Settings
 @using TableClothLite.Services
 @using TableClothLite.Components.Guide
 @using TableClothLite.Components.Chat
-@using TableClothLite.Components
-@using Markdig
 @using TableClothLite.Shared
 
-@inject OpenAIChatService ChatService
 @inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
-@inject FileDownloadService FileDownloader
-@inject SandboxComposerService SandboxComposer
 
-<PageTitle>식탁보 AI</PageTitle>
+<PageTitle>무설치 식탁보</PageTitle>
 
 <div class="chat-app">
-    <!-- 메인 채팅 영역 -->
     <div class="chat-main">
-        <!-- Gentle Update Notification -->
+        @* 부드러운 업데이트 알림 *@
         @if (_showUpdateNotification && _pendingUpdate is not null)
         {
             <div class="update-notification">
@@ -39,12 +27,8 @@
                         </div>
                     </div>
                     <div class="update-actions">
-                        <button @onclick="ApplyUpdateAsync" class="update-btn primary" type="button">
-                            업데이트
-                        </button>
-                        <button @onclick="DismissUpdateNotification" class="update-btn secondary" type="button">
-                            나중에
-                        </button>
+                        <button @onclick="ApplyUpdateAsync" class="update-btn primary" type="button">업데이트</button>
+                        <button @onclick="DismissUpdateNotification" class="update-btn secondary" type="button">나중에</button>
                     </div>
                 </div>
             </div>
@@ -54,49 +38,24 @@
         <div class="chat-header">
             <div class="header-left">
                 <div class="app-title-header">
-                    <img src="/favicon.png" alt="식탁보 AI" class="header-app-icon">
-                    <span class="app-name">식탁보 AI (Preview)</span>
+                    <img src="favicon.png" alt="식탁보" class="header-app-icon">
+                    <span class="app-name">무설치 식탁보</span>
                 </div>
-                @if (_hasApiKey && _messages.Any())
-                {
-                    <button @onclick="ResetConversationAsync" class="new-chat-btn-header" type="button" title="새로운 채팅 시작">
-                        + 새 채팅
-                    </button>
-                }
             </div>
             <div class="header-actions">
-                <!-- 통합 메뉴 드롭다운 -->
                 <div class="menu-dropdown">
-                    <button @onclick="ToggleMenuDropdown" class="header-action-btn" title="메뉴" type="button">
-                        ⋯
-                    </button>
+                    <button @onclick="ToggleMenuDropdown" class="header-action-btn" title="메뉴" type="button">⋯</button>
                     <div class="menu-dropdown-content @(_showMenuDropdown ? "show" : "")">
-                        @if (_hasApiKey && _messages.Any())
-                        {
-                            <!-- 로그인 + 대화 있을 때 -->
-                            <button @onclick="PrintAndHideDropdown" class="dropdown-item" type="button">
-                                🖨️ 인쇄하기
-                            </button>
-                            <button @onclick="ExportAndHideDropdown" class="dropdown-item" type="button">
-                                📄 텍스트로 내보내기
-                            </button>
-                            <button @onclick="ShareAndHideDropdown" class="dropdown-item" type="button">
-                                📤 공유하기
-                            </button>
-                            <div class="dropdown-divider"></div>
-                        }
-                        @if (_hasApiKey)
-                        {
-                            <!-- 로그인 상태에서만 보이는 메뉴 -->
-                            <button @onclick="OpenSettingDialogAndHideMenu" class="dropdown-item" type="button">
-                                ⚙️ 설정
-                            </button>
-                            <div class="dropdown-divider"></div>
-                        }
-                        <!-- 공통 메뉴 -->
                         <button @onclick="OpenServicesModalAndHideMenu" class="dropdown-item" type="button">
-                            🛒 서비스 목록
+                            🛒 지원 사이트 목록
                         </button>
+                        <button @onclick="OpenSandboxGuideAndHideMenu" class="dropdown-item" type="button">
+                            🪟 Windows Sandbox 안내
+                        </button>
+                        <button @onclick="OpenSettingDialogAndHideMenu" class="dropdown-item" type="button">
+                            ⚙️ 설정
+                        </button>
+                        <div class="dropdown-divider"></div>
                         <a href="https://github.com/sponsors/yourtablecloth" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
                             💝 개발 후원하기
                         </a>
@@ -106,202 +65,72 @@
                         <a href="https://yourtablecloth.app/" target="_blank" class="dropdown-item" @onclick="HideMenuDropdown">
                             🏠 식탁보 홈페이지
                         </a>
-                        @if (_hasApiKey)
-                        {
-                            <!-- 로그인 상태에서만 보이는 로그아웃 -->
-                            <div class="dropdown-divider"></div>
-                            <button @onclick="LogoutAndHideMenu" class="dropdown-item logout-item" type="button">
-                                ⏻ 로그아웃
-                            </button>
-                        }
                     </div>
                 </div>
-                
-                <!-- 테마 토글 버튼 -->
+
                 <ThemeToggle Compact="true" />
-                
-                <!-- 로그인 버튼 (로그아웃 상태일 때만 표시) -->
-                @if (_isCheckingApiKey)
-                {
-                    <button class="auth-btn-header checking" disabled type="button" title="로그인 상태 확인 중">
-                        ⏳
-                    </button>
-                }
-                else if (!_hasApiKey)
-                {
-                    <button @onclick="HandleLoginAsync" class="auth-btn-header login" type="button" title="로그인">
-                        🔑
-                    </button>
-                }
             </div>
         </div>
 
-        <!-- 메시지 컨테이너 -->
-        <div class="messages-container" id="messages">
-            @if (!_messages.Any())
-            {
-                <div class="welcome-screen">
-                    <div class="welcome-content">
-                        <div class="logo-container">
-                            <img src="/icon-512.png" alt="식탁보 AI" class="welcome-logo" />
-                        </div>
-                        <h1>식탁보 AI에 오신 것을 환환습니다</h1>
-                        <p class="welcome-subtitle">언제나 안전하고 똑똑하게! - AI와 함께하는 인터넷 뱅킹 보안 어시스턴트</p>
-                        
-                        @if (_hasApiKey)
-                        {
-                            <div class="example-prompts">
-                                @foreach (var prompt in GetExamplePrompts())
-                                {
-                                    <div class="example-prompt" @onclick='() => SetExamplePrompt(prompt.Text)'>
-                                        @prompt.Icon @prompt.Text
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="login-required-notice">
-                                <div class="lock-icon">🔒</div>
-                                <h3>로그인이 필요합니다</h3>
-                                <p>AI 채팅 기능을 사용하려면 OpenRouter 계정으로 로그인해주세요.</p>
-                            </div>
-                        }
-                        
-                        <div class="disclaimer" style="font-weight: bolder; color: red;">
-                            ⚠️ 사용 시 주의 사항: AI가 생성한 정보는 부정확할 수 있습니다. 중요한 결정은 전문가와 상담하세요. 민감 정보 및 개인 정보는 절대로 입력하지 마세요.
-                        </div>
-                        
-                        @if (!_sponsorBannerDismissed)
-                        {
-                            <div style="margin-top: 24px;">
-                                <SponsorBanner OnDismiss="DismissSponsorBanner" />
-                            </div>
-                        }
+        <!-- 랜딩 영역 -->
+        <div class="landing-container">
+            <div class="landing-content">
+                <div class="logo-container">
+                    <img src="icon-512.png" alt="식탁보" class="welcome-logo" />
+                </div>
+                <h1>설치 없이, 안전하게.</h1>
+                <p class="welcome-subtitle">
+                    Windows Sandbox만 있으면 은행·공공 웹 사이트를 격리된 일회용 환경에서 바로 이용할 수 있습니다.
+                </p>
+
+                @* AI 기능 복귀 공지 *@
+                <div class="ai-notice">
+                    <span class="ai-notice-icon">🤖</span>
+                    <div class="ai-notice-text">
+                        <strong>AI 기능은 잠시 자리를 비웁니다.</strong>
+                        기존 AI 채팅 기능은 종료되었으며, <b>더 나은 형태로 다시 찾아올 예정</b>입니다.
+                        그동안 무설치 식탁보 본연의 기능에 집중합니다.
                     </div>
                 </div>
-            }
 
-            <div class="messages-list">
-                @foreach (var message in _messages.Select((msg, idx) => new { Message = msg, Index = idx }))
-                {
-                    <div class="message-group @(message.Message.IsUser ? "user-group" : "assistant-group")">
-                        <div class="message-avatar-column">
-                            <div class="message-avatar">
-                                @if (message.Message.IsUser)
-                                {
-                                    <div class="user-avatar">👤</div>
-                                }
-                                else
-                                {
-                                    <div class="assistant-avatar">🤖</div>
-                                }
-                            </div>
-                        </div>
-                        <div class="message-content">
-                            <div class="message-text">
-                                @FormatMessage(message.Message.Content)
-                            </div>
-                            <button class="copy-message-btn @(IsCopied(message.Index) ? "copied" : "")" 
-                                    @onclick="() => CopyMessageAsync(message.Message.Content, message.Index)" 
-                                    title="@(IsCopied(message.Index) ? "복사됨!" : "메시지 복사")"
-                                    type="button">
-                                @if (IsCopied(message.Index))
-                                {
-                                    <span>✓</span>
-                                }
-                                else
-                                {
-                                    <span>📋</span>
-                                }
-                            </button>
-                        </div>
-                    </div>
-                }
-                
-                @if (_isStreaming)
-                {
-                    <div class="message-group assistant-group">
-                        <div class="message-avatar-column">
-                            <div class="message-avatar">
-                                <div class="assistant-avatar">🤖</div>
-                            </div>
-                        </div>
-                        <div class="message-content">
-                            <div class="message-text">
-                                @if (!string.IsNullOrEmpty(_processingStatus))
-                                {
-                                    <div class="processing-status">
-                                        <span class="status-text">@_processingStatus</span>
-                                        <div class="typing-indicator">
-                                            <span class="dot">●</span>
-                                            <span class="dot">●</span>
-                                            <span class="dot">●</span>
-                                        </div>
-                                    </div>
-                                }
-                                else
-                                {
-                                    @FormatMessage(_currentStreamedMessage)
-                                    @if (string.IsNullOrEmpty(_currentStreamedMessage))
-                                    {
-                                        <div class="typing-indicator">
-                                            <span class="dot">●</span>
-                                            <span class="dot">●</span>
-                                            <span class="dot">●</span>
-                                        </div>
-                                    }
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <!-- 입력 영역 -->
-        <div class="input-area">
-            <div class="input-container">
-                @if (!_hasApiKey)
-                {
-                    <div class="input-disabled-overlay">
-                        🔒 로그인 후 채팅을 시작할 수 있습니다
-                        <button @onclick="HandleLoginAsync" class="login-overlay-btn" type="button">
-                            👤 로그인
-                        </button>
-                    </div>
-                }
-                
-                <!-- Model Indicator -->
-                <ModelIndicator HasApiKey="_hasApiKey"
-                              OnOpenSettings="OpenSettingDialog"
-                              OnOpenAIModelSettings="OpenAIModelSettings"
-                              OnLogin="HandleLoginAsync"
-                              @ref="_modelIndicator" />
-                
-                <div class="input-wrapper @(!_hasApiKey ? "disabled" : "")">
-                    <textarea @oninput="OnInputChange"
-                             value="@_userInput"
-                             @onkeydown="HandleKeyDown"
-                             placeholder="@(_hasApiKey ? "메시지를 입력하세요..." : "로그인 후 사용할 수 있습니다")"
-                             disabled="@(_isStreaming || !_hasApiKey)"
-                             rows="1"
-                             maxlength="@_maxInputLength"
-                             id="chatTextArea"
-                             class="chat-input"></textarea>
-                    <button @onclick="SendMessage"
-                           disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_userInput) || !_hasApiKey)"
-                           class="send-button"
-                           type="button">
-                        ➤
+                @* 주요 동작 *@
+                <div class="action-cards">
+                    <button class="action-card primary" @onclick="DownloadGeneralLauncher" type="button">
+                        <span class="action-icon">📥</span>
+                        <span class="action-title">무설치 실행 파일 받기</span>
+                        <span class="action-desc">최신 식탁보를 자동으로 받아 실행하는 .wsb 파일</span>
+                    </button>
+                    <button class="action-card" @onclick="OpenServicesModal" type="button">
+                        <span class="action-icon">🛒</span>
+                        <span class="action-title">지원 사이트에서 선택</span>
+                        <span class="action-desc">원하는 은행·공공 사이트를 골라 바로 여는 .wsb 생성</span>
                     </button>
                 </div>
-                @if (_hasApiKey)
+
+                @* 사용 방법 *@
+                <div class="how-steps">
+                    <div class="how-step"><span class="how-num">1</span><span>.wsb 파일을 내려받습니다</span></div>
+                    <div class="how-step"><span class="how-num">2</span><span>파일을 더블클릭하면 Windows Sandbox가 열립니다</span></div>
+                    <div class="how-step"><span class="how-num">3</span><span>샌드박스 안에서 식탁보가 자동으로 실행됩니다</span></div>
+                </div>
+
+                @if (!_isWindowsOS)
                 {
-                    <div class="input-footer">
-                        <span class="character-count @(_isNearLimit ? "warning" : "")">
-                            @(_userInput.Length)/@(_maxInputLength)
-                        </span>
+                    <div class="os-warning">
+                        ⚠️ 이 기능은 <b>Windows 10/11</b>의 Windows Sandbox에서 동작합니다.
+                        현재 기기에서는 .wsb 실행이 지원되지 않을 수 있습니다.
+                    </div>
+                }
+
+                <div class="disclaimer-note">
+                    🔒 생성되는 .wsb는 <b>호스트 폴더를 마운트하지 않아</b> 내 PC의 파일에 접근하지 않으며,
+                    공식 GitHub 릴리스의 서명된 런처만 사용합니다.
+                </div>
+
+                @if (!_sponsorBannerDismissed)
+                {
+                    <div style="margin-top: 24px;">
+                        <SponsorBanner OnDismiss="DismissSponsorBanner" />
                     </div>
                 }
             </div>
