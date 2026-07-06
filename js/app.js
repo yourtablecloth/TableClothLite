@@ -796,3 +796,95 @@ window.getScrollInfo = function(selector) {
         };
     }
 };
+
+// ===== WebMCP (document/navigator.modelContext) =====
+// 지원 브라우저에서만 도구를 등록하고, 미지원(또는 스펙 상이) 브라우저에서는 티 내지 않고 조용히 폴백한다.
+let webmcpController = null;
+
+function getModelContext() {
+    try {
+        // Chrome 150+ 는 document.modelContext, 그 이전 표기는 navigator.modelContext.
+        if (typeof document !== 'undefined' && document.modelContext) return document.modelContext;
+        if (typeof navigator !== 'undefined' && navigator.modelContext) return navigator.modelContext;
+    } catch (e) { /* ignore */ }
+    return null;
+}
+
+// .wsb 문자열을 다운로드로 제공(사용자 제스처 없는 프로그램적 다운로드는 브라우저가 막을 수 있으므로 best-effort).
+window.triggerWsbDownload = function (fileName, xml) {
+    try {
+        const blob = new Blob([xml], { type: 'application/xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+window.registerWebMcpTools = async function (dotNetHelper) {
+    try {
+        const mc = getModelContext();
+        if (!mc || typeof mc.registerTool !== 'function') {
+            // 미지원 브라우저: 조용히 폴백 (에러/알림 없음)
+            return false;
+        }
+
+        // 재등록 대비 기존 도구 해제
+        if (webmcpController) { try { webmcpController.abort(); } catch (e) { /* ignore */ } }
+        webmcpController = new AbortController();
+        const opts = { signal: webmcpController.signal };
+
+        await mc.registerTool({
+            name: 'tablecloth_search_sites',
+            description: 'Search the TableCloth catalog of Korean banking, finance and government sites supported by the no-install Windows Sandbox launcher. Returns matching sites with id, name and category.',
+            inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: [] },
+            annotations: { readOnlyHint: true },
+            execute: async ({ query }) => {
+                try { return await dotNetHelper.invokeMethodAsync('WebMcp_SearchCatalog', query || ''); }
+                catch (e) { return 'Error: ' + (e && e.message ? e.message : String(e)); }
+            }
+        }, opts);
+
+        await mc.registerTool({
+            name: 'tablecloth_get_site',
+            description: 'Get details (name, category, URL, compatibility notes) for one TableCloth catalog site by its id.',
+            inputSchema: { type: 'object', properties: { siteId: { type: 'string' } }, required: ['siteId'] },
+            annotations: { readOnlyHint: true },
+            execute: async ({ siteId }) => {
+                try { return await dotNetHelper.invokeMethodAsync('WebMcp_GetSiteInfo', siteId || ''); }
+                catch (e) { return 'Error: ' + (e && e.message ? e.message : String(e)); }
+            }
+        }, opts);
+
+        await mc.registerTool({
+            name: 'tablecloth_generate_wsb',
+            description: 'Generate a no-install TableCloth .wsb file for Windows Sandbox. Optionally pass a catalog siteId to preselect that site (deep link); omit for the generic launcher. The .wsb is offered as a download; the user must double-click it to launch Windows Sandbox. The sandbox cannot be launched from the browser.',
+            inputSchema: { type: 'object', properties: { siteId: { type: 'string' } }, required: [] },
+            annotations: { readOnlyHint: false },
+            execute: async ({ siteId }) => {
+                try {
+                    const json = await dotNetHelper.invokeMethodAsync('WebMcp_GenerateWsb', siteId || '');
+                    const data = JSON.parse(json);
+                    if (data.xml) { window.triggerWsbDownload(data.fileName, data.xml); }
+                    return data.message;
+                } catch (e) { return 'Error: ' + (e && e.message ? e.message : String(e)); }
+            }
+        }, opts);
+
+        return true;
+    } catch (e) {
+        // 어떤 이유로든 실패하면 조용히 폴백 (미지원/스펙 상이 브라우저 안전)
+        return false;
+    }
+};
+
+window.unregisterWebMcpTools = function () {
+    try { if (webmcpController) { webmcpController.abort(); webmcpController = null; } } catch (e) { /* ignore */ }
+};
